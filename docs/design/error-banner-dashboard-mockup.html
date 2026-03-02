@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker SNS - Error Banner &amp; Dashboard Design Spec</title>
+<style>
+  /* ===== The Felt Table - Design Tokens ===== */
+  :root {
+    --bg: #0d1009;
+    --surface: #131a14;
+    --surface-elevated: #192118;
+    --border: #1f2a1e;
+    --border-medium: #2a3828;
+    --gold: #c9a84c;
+    --gold-dim: #9a7c35;
+    --gold-bright: #d4b965;
+    --text-primary: #ddd6c8;
+    --text-secondary: #7a7260;
+    --text-muted: #4a5245;
+    --sidebar-bg: #080a08;
+    --sidebar-border: #161b14;
+    /* Status Colors */
+    --error-bg: rgba(176, 48, 48, 0.15);
+    --error-border: #b03030;
+    --error-text: #e85c5c;
+    --error-icon: #b03030;
+    --retry-bg: rgba(201, 168, 76, 0.12);
+    --retry-border: #9a7c35;
+    --retry-text: #c9a84c;
+    --retry-icon: #c9a84c;
+    --success-bg: rgba(76, 160, 90, 0.12);
+    --success-border: #3a7a42;
+    --success-text: #5cb868;
+    --success-icon: #4ca05a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Helvetica Neue', Arial, 'Noto Sans JP', sans-serif;
+    line-height: 1.6;
+    padding: 40px 20px;
+  }
+
+  .spec-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    color: var(--gold);
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+  h2 {
+    color: var(--gold-dim);
+    font-size: 20px;
+    font-weight: 500;
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 500;
+    margin: 24px 0 12px;
+  }
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+
+  /* ===== Token Table ===== */
+  .token-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+  }
+  .token-table th,
+  .token-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .token-table th {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-right: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  code {
+    background: var(--surface);
+    color: var(--gold-bright);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* ===== Banner Components ===== */
+  .banner-showcase {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .status-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 3px solid;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+  .status-banner:hover {
+    transform: translateX(2px);
+  }
+
+  .status-banner--error {
+    background: var(--error-bg);
+    border-left-color: var(--error-border);
+    color: var(--error-text);
+  }
+  .status-banner--retry {
+    background: var(--retry-bg);
+    border-left-color: var(--retry-border);
+    color: var(--retry-text);
+  }
+  .status-banner--success {
+    background: var(--success-bg);
+    border-left-color: var(--success-border);
+    color: var(--success-text);
+  }
+
+  .banner-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+  .banner-content {
+    flex: 1;
+  }
+  .banner-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .banner-desc {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+  .banner-action {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+  }
+  .banner-action--error {
+    background: var(--error-border);
+    color: #fff;
+  }
+  .banner-action--error:hover {
+    background: #c43838;
+  }
+  .banner-action--retry {
+    background: var(--gold);
+    color: var(--bg);
+  }
+  .banner-action--retry:hover {
+    background: var(--gold-bright);
+  }
+  .banner-action--success {
+    background: transparent;
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
+  }
+  .banner-action--success:hover {
+    background: var(--success-bg);
+  }
+  .banner-dismiss {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    color: inherit;
+  }
+  .banner-dismiss:hover {
+    opacity: 1;
+  }
+
+  /* ===== Badge / Chip ===== */
+  .alert-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .alert-badge--error {
+    background: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid rgba(176,48,48,0.3);
+  }
+  .alert-badge--retry {
+    background: var(--retry-bg);
+    color: var(--retry-text);
+    border: 1px solid rgba(201,168,76,0.3);
+  }
+  .alert-badge--success {
+    background: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid rgba(76,160,90,0.3);
+  }
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-dot--error { background: var(--error-icon); }
+  .badge-dot--retry { background: var(--retry-icon); animation: pulse-dot 1.5s infinite; }
+  .badge-dot--success { background: var(--success-icon); }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  /* ===== Dashboard Mockup ===== */
+  .dashboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .dashboard-title {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .dashboard-subtitle {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.2;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+  .stat-card--error .stat-value { color: var(--error-text); }
+  .stat-card--success .stat-value { color: var(--success-text); }
+
+  /* Task List */
+  .task-list {
+    list-style: none;
+  }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+  .task-item:hover {
+    background: var(--surface-elevated);
+  }
+  .task-item:last-child {
+    border-bottom: none;
+  }
+  .task-status {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .task-status--pending { background: var(--text-muted); }
+  .task-status--running { background: var(--retry-icon); animation: pulse-dot 1.5s infinite; }
+  .task-status--error { background: var(--error-icon); }
+  .task-status--done { background: var(--success-icon); }
+
+  .task-name {
+    flex: 1;
+    color: var(--text-primary);
+  }
+  .task-time {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-family: 'SF Mono', monospace;
+  }
+  .task-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .task-badge--pending {
+    background: rgba(74,82,69,0.3);
+    color: var(--text-muted);
+  }
+  .task-badge--running {
+    background: var(--retry-bg);
+    color: var(--retry-text);
+  }
+  .task-badge--error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+  .task-badge--done {
+    background: var(--success-bg);
+    color: var(--success-text);
+  }
+
+  /* Progress Bar */
+  .progress-bar-container {
+    margin: 16px 0;
+  }
+  .progress-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+  }
+  .progress-fill--done {
+    background: var(--success-icon);
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+  .progress-fill--running {
+    background: var(--gold);
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+  .progress-fill--error {
+    background: var(--error-icon);
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+
+  /* Timestamp */
+  .last-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ===== Section Separator ===== */
+  .section-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 40px 0;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 640px) {
+    .stat-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .status-banner {
+      flex-wrap: wrap;
+    }
+    .banner-action {
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
+    }
+  }
+
+  /* ===== Annotations (design-only) ===== */
+  .annotation {
+    background: rgba(201,168,76,0.08);
+    border: 1px dashed var(--gold-dim);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 12px 0;
+    line-height: 1.7;
+  }
+  .annotation strong {
+    color: var(--gold);
+  }
+</style>
+</head>
+<body>
+
+<div class="spec-container">
+
+  <!-- ===== HEADER ===== -->
+  <h1>Design Spec: Error Banner &amp; Task Dashboard</h1>
+  <p class="subtitle">Poker SNS - The Felt Table Theme | Design: 宝鐘 / 不知火 | 2026-03-02</p>
+
+  <!-- ===== SECTION 1: COLOR TOKENS ===== -->
+  <h2>1. Status Color Tokens</h2>
+
+  <table class="token-table">
+    <thead>
+      <tr><th>State</th><th>Background</th><th>Border</th><th>Text</th><th>Icon</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Error</td>
+        <td><span class="swatch" style="background:rgba(176,48,48,0.15)"></span><code>rgba(176,48,48,0.15)</code></td>
+        <td><span class="swatch" style="background:#b03030"></span><code>#b03030</code></td>
+        <td><span class="swatch" style="background:#e85c5c"></span><code>#e85c5c</code></td>
+        <td><span class="swatch" style="background:#b03030"></span><code>#b03030</code></td>
+      </tr>
+      <tr>
+        <td>Retry / In Progress</td>
+        <td><span class="swatch" style="background:rgba(201,168,76,0.12)"></span><code>rgba(201,168,76,0.12)</code></td>
+        <td><span class="swatch" style="background:#9a7c35"></span><code>#9a7c35</code></td>
+        <td><span class="swatch" style="background:#c9a84c"></span><code>#c9a84c</code></td>
+        <td><span class="swatch" style="background:#c9a84c"></span><code>#c9a84c</code></td>
+      </tr>
+      <tr>
+        <td>Success / Complete</td>
+        <td><span class="swatch" style="background:rgba(76,160,90,0.12)"></span><code>rgba(76,160,90,0.12)</code></td>
+        <td><span class="swatch" style="background:#3a7a42"></span><code>#3a7a42</code></td>
+        <td><span class="swatch" style="background:#5cb868"></span><code>#5cb868</code></td>
+        <td><span class="swatch" style="background:#4ca05a"></span><code>#4ca05a</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="annotation">
+    <strong>Design Note:</strong> Error uses existing toast error color (<code>#b03030</code>).
+    Retry/in-progress reuses the brand gold (<code>#c9a84c</code>) to match the premium feel.
+    Success introduces green which is complementary to the dark green surface.
+    All background colors use low-alpha to maintain The Felt Table dark atmosphere.
+  </div>
+
+  <!-- ===== SECTION 2: BANNER COMPONENTS ===== -->
+  <h2>2. Error Status Banner UI</h2>
+
+  <h3>2.1 Banner Variants (Live Mockup)</h3>
+  <div class="banner-showcase">
+
+    <!-- Error State -->
+    <div class="status-banner status-banner--error">
+      <svg class="banner-icon" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+      </svg>
+      <div class="banner-content">
+        <div class="banner-title">ExceptionFilter: Unhandled Error</div>
+        <div class="banner-desc">POST /api/posts - Internal Server Error (500) at 14:32:05</div>
+      </div>
+      <button class="banner-action banner-action--error">Details</button>
+      <svg class="banner-dismiss" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+      </svg>
+    </div>
+
+    <!-- Retry State -->
+    <div class="status-banner status-banner--retry">
+      <svg class="banner-icon spinner" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.034l.264.263A7 7 0 0016.76 10.7a.75.75 0 10-1.448-.276zM3.24 9.3a.75.75 0 101.448.276A5.5 5.5 0 0113.89 6.11l.311.311h-2.432a.75.75 0 000 1.5h3.634a.75.75 0 00.75-.75V3.536a.75.75 0 00-1.5 0v2.034l-.264-.264A7 7 0 003.24 9.3z" clip-rule="evenodd"/>
+      </svg>
+      <div class="banner-content">
+        <div class="banner-title">Retrying: POST /api/posts</div>
+        <div class="banner-desc">Attempt 2/3 - Retrying in 5s...</div>
+      </div>
+      <button class="banner-action banner-action--retry">Cancel</button>
+      <svg class="banner-dismiss" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+      </svg>
+    </div>
+
+    <!-- Success State -->
+    <div class="status-banner status-banner--success">
+      <svg class="banner-icon" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
+      </svg>
+      <div class="banner-content">
+        <div class="banner-title">Retry Successful</div>
+        <div class="banner-desc">POST /api/posts resolved after 2 retries</div>
+      </div>
+      <button class="banner-action banner-action--success">Dismiss</button>
+      <svg class="banner-dismiss" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+      </svg>
+    </div>
+
+  </div>
+
+  <div class="annotation">
+    <strong>Layout:</strong> <code>flex</code> row, <code>gap: 12px</code>, <code>border-left: 3px solid</code>,
+    <code>border-radius: 8px</code>, <code>padding: 12px 16px</code>.<br>
+    <strong>Placement:</strong> Fixed top of main content area, below navbar. Stacks vertically if multiple banners active.<br>
+    <strong>Animation:</strong> <code>slideDown 0.3s ease</code> on appear, <code>fadeOut 0.2s</code> on dismiss.<br>
+    <strong>Auto-dismiss:</strong> Success banner auto-dismisses after 5s. Error persists until user action.<br>
+    <strong>Mobile:</strong> Action button wraps to full-width below content on <code>&lt;640px</code>.
+  </div>
+
+  <h3>2.2 Alert Badge / Chip Variants</h3>
+  <div style="display:flex; gap:12px; align-items:center; margin:16px 0;">
+    <span class="alert-badge alert-badge--error"><span class="badge-dot badge-dot--error"></span>Error</span>
+    <span class="alert-badge alert-badge--retry"><span class="badge-dot badge-dot--retry"></span>Retrying</span>
+    <span class="alert-badge alert-badge--success"><span class="badge-dot badge-dot--success"></span>Complete</span>
+  </div>
+
+  <div class="annotation">
+    <strong>Usage:</strong> Inline status indicators for task list items, sidebar nav items, or header notification area.
+    <code>border-radius: 12px</code>, <code>font-size: 11px</code>, <code>font-weight: 600</code>.
+    Retry dot uses <code>pulse-dot</code> animation (1.5s infinite).
+  </div>
+
+  <h3>2.3 Component Spec Summary</h3>
+  <table class="token-table">
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Container</td><td><code>display: flex; align-items: center; gap: 12px</code></td></tr>
+      <tr><td>Padding</td><td><code>12px 16px</code></td></tr>
+      <tr><td>Border Radius</td><td><code>8px</code></td></tr>
+      <tr><td>Left Accent</td><td><code>border-left: 3px solid [state-color]</code></td></tr>
+      <tr><td>Icon Size</td><td><code>20px x 20px</code></td></tr>
+      <tr><td>Title Font</td><td><code>13px / 600 weight</code></td></tr>
+      <tr><td>Description Font</td><td><code>12px / normal / opacity 0.8</code></td></tr>
+      <tr><td>Action Button</td><td><code>6px 14px padding / 12px / 600 weight / radius 6px</code></td></tr>
+      <tr><td>Dismiss Icon</td><td><code>18px / opacity 0.5 -> 1.0 on hover</code></td></tr>
+      <tr><td>Hover Effect</td><td><code>translateX(2px) / 0.2s ease</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-sep"></div>
+
+  <!-- ===== SECTION 3: DASHBOARD ===== -->
+  <h2>3. Task Progress Dashboard</h2>
+
+  <h3>3.1 Dashboard Card (Live Mockup)</h3>
+  <div class="dashboard">
+    <div class="dashboard-header">
+      <div>
+        <div class="dashboard-title">Task Monitor</div>
+        <div class="dashboard-subtitle">System health overview</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <span class="alert-badge alert-badge--error"><span class="badge-dot badge-dot--error"></span>2 Errors</span>
+        <span class="alert-badge alert-badge--retry"><span class="badge-dot badge-dot--retry"></span>1 Running</span>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value">14</div>
+        <div class="stat-label">Total Tasks</div>
+      </div>
+      <div class="stat-card stat-card--success">
+        <div class="stat-value">10</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--retry-text)">1</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-card stat-card--error">
+        <div class="stat-value">2</div>
+        <div class="stat-label">Errors</div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-container">
+      <div class="progress-bar-label">
+        <span>Overall Progress</span>
+        <span>71% (10/14)</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill--done" style="width:71%"></div>
+        <div class="progress-fill--running" style="width:7%"></div>
+        <div class="progress-fill--error" style="width:14%"></div>
+      </div>
+    </div>
+
+    <!-- Task List -->
+    <h3 style="margin:20px 0 12px;font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;">Recent Tasks</h3>
+    <ul class="task-list">
+      <li class="task-item">
+        <span class="task-status task-status--error"></span>
+        <span class="task-name">POST /api/posts - 500 Internal Server Error</span>
+        <span class="task-badge task-badge--error">Error</span>
+        <span class="task-time">14:32:05</span>
+      </li>
+      <li class="task-item">
+        <span class="task-status task-status--error"></span>
+        <span class="task-name">Stripe webhook signature verification failed</span>
+        <span class="task-badge task-badge--error">Error</span>
+        <span class="task-time">14:28:11</span>
+      </li>
+      <li class="task-item">
+        <span class="task-status task-status--running"></span>
+        <span class="task-name">Notification delivery batch #47</span>
+        <span class="task-badge task-badge--running">Running</span>
+        <span class="task-time">14:35:00</span>
+      </li>
+      <li class="task-item">
+        <span class="task-status task-status--done"></span>
+        <span class="task-name">Image upload processing completed</span>
+        <span class="task-badge task-badge--done">Done</span>
+        <span class="task-time">14:27:45</span>
+      </li>
+      <li class="task-item">
+        <span class="task-status task-status--done"></span>
+        <span class="task-name">5-min health check: all services healthy</span>
+        <span class="task-badge task-badge--done">Done</span>
+        <span class="task-time">14:25:00</span>
+      </li>
+      <li class="task-item">
+        <span class="task-status task-status--pending"></span>
+        <span class="task-name">Retry: POST /api/posts (queued)</span>
+        <span class="task-badge task-badge--pending">Pending</span>
+        <span class="task-time">--:--</span>
+      </li>
+    </ul>
+
+    <!-- Last Check -->
+    <div class="last-check">
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd"/>
+      </svg>
+      Last health check: 14:35:00 (every 5 min) | Next check: 14:40:00
+    </div>
+  </div>
+
+  <div class="annotation">
+    <strong>Dashboard Layout:</strong> Single card on <code>#131a14</code> surface, <code>border-radius: 12px</code>,
+    <code>padding: 24px</code>, <code>border: 1px solid #1f2a1e</code>.<br>
+    <strong>Stat Grid:</strong> 4-column on desktop, 2-column on mobile. Cards use <code>#192118</code> elevated surface.<br>
+    <strong>Progress Bar:</strong> 6px height, segmented fill (done=green, running=gold, error=red).<br>
+    <strong>Task List:</strong> Left dot indicator, right-aligned timestamp in monospace.<br>
+    <strong>Placement:</strong> Admin/operator view - accessible from sidebar or <code>/admin/tasks</code> route.<br>
+    <strong>Real-time:</strong> WebSocket or 5s polling for live updates. Dot indicators pulse for active tasks.
+  </div>
+
+  <h3>3.2 Dashboard Component Spec</h3>
+  <table class="token-table">
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Container</td><td><code>bg: #131a14 / border: 1px solid #1f2a1e / radius: 12px / p: 24px</code></td></tr>
+      <tr><td>Stat Card</td><td><code>bg: #192118 / border: 1px solid #1f2a1e / radius: 8px / p: 16px</code></td></tr>
+      <tr><td>Stat Value</td><td><code>28px / 700 weight / color varies by state</code></td></tr>
+      <tr><td>Stat Label</td><td><code>11px / uppercase / letter-spacing: 0.5px / color: #7a7260</code></td></tr>
+      <tr><td>Progress Bar</td><td><code>height: 6px / bg: #1f2a1e / radius: 3px / segmented fill</code></td></tr>
+      <tr><td>Task Row</td><td><code>p: 12px 16px / border-bottom: 1px solid #1f2a1e / hover: bg #192118</code></td></tr>
+      <tr><td>Task Status Dot</td><td><code>8px circle / color by state / pulse anim for active</code></td></tr>
+      <tr><td>Timestamp</td><td><code>11px / monospace / color: #4a5245</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-sep"></div>
+
+  <!-- ===== SECTION 4: IMPLEMENTATION NOTES ===== -->
+  <h2>4. Implementation Notes for Development</h2>
+
+  <h3>4.1 React Component Structure (Proposed)</h3>
+  <table class="token-table">
+    <thead><tr><th>Component</th><th>File Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>StatusBanner</code></td>
+        <td><code>components/StatusBanner.tsx</code></td>
+        <td>Reusable banner with error/retry/success variants. Props: <code>type</code>, <code>title</code>, <code>description</code>, <code>onAction</code>, <code>onDismiss</code></td>
+      </tr>
+      <tr>
+        <td><code>AlertBadge</code></td>
+        <td><code>components/AlertBadge.tsx</code></td>
+        <td>Inline status chip. Props: <code>status</code>, <code>label</code></td>
+      </tr>
+      <tr>
+        <td><code>TaskDashboard</code></td>
+        <td><code>app/admin/tasks/page.tsx</code></td>
+        <td>Dashboard page with stat grid, progress bar, task list</td>
+      </tr>
+      <tr>
+        <td><code>TaskMonitorContext</code></td>
+        <td><code>contexts/TaskMonitorContext.tsx</code></td>
+        <td>Context for task state management and WebSocket/polling</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>4.2 CSS Variables to Add to globals.css</h3>
+  <table class="token-table">
+    <thead><tr><th>Variable</th><th>Value</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>--error-bg</code></td><td><code>rgba(176,48,48,0.15)</code></td><td>Error background tint</td></tr>
+      <tr><td><code>--error-border</code></td><td><code>#b03030</code></td><td>Error accent (reuses existing)</td></tr>
+      <tr><td><code>--error-text</code></td><td><code>#e85c5c</code></td><td>Error readable text</td></tr>
+      <tr><td><code>--success-bg</code></td><td><code>rgba(76,160,90,0.12)</code></td><td>Success background tint</td></tr>
+      <tr><td><code>--success-border</code></td><td><code>#3a7a42</code></td><td>Success accent border</td></tr>
+      <tr><td><code>--success-text</code></td><td><code>#5cb868</code></td><td>Success readable text</td></tr>
+      <tr><td><code>--retry-bg</code></td><td><code>rgba(201,168,76,0.12)</code></td><td>Retry/progress background</td></tr>
+      <tr><td><code>--retry-border</code></td><td><code>#9a7c35</code></td><td>Retry accent (reuses gold-dim)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4.3 Priority & Phase Mapping</h3>
+  <table class="token-table">
+    <thead><tr><th>Component</th><th>Phase</th><th>Est. Effort</th><th>Dependencies</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>CSS Variables (globals.css)</td>
+        <td>Phase 1</td>
+        <td>0.5h</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td>StatusBanner component</td>
+        <td>Phase 1</td>
+        <td>2h</td>
+        <td>CSS Variables</td>
+      </tr>
+      <tr>
+        <td>AlertBadge component</td>
+        <td>Phase 1</td>
+        <td>1h</td>
+        <td>CSS Variables</td>
+      </tr>
+      <tr>
+        <td>TaskDashboard page</td>
+        <td>Phase 2</td>
+        <td>4h</td>
+        <td>StatusBanner, AlertBadge, Backend API</td>
+      </tr>
+      <tr>
+        <td>TaskMonitorContext</td>
+        <td>Phase 2</td>
+        <td>3h</td>
+        <td>Backend WebSocket/API</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+</body>
+</html>
