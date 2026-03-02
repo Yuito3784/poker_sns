@@ -24,12 +24,23 @@ export class SubscriptionsService {
     return this.stripe;
   }
 
-  async createCheckoutSession(userId: string) {
+  async createCheckoutSession(userId: string, plan: 'monthly' | 'annual' = 'monthly') {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException();
 
     if (user.subscriptionStatus === 'active') {
       throw new BadRequestException('既にプレミアム会員です');
+    }
+
+    const priceId =
+      plan === 'annual'
+        ? process.env.STRIPE_ANNUAL_PRICE_ID
+        : process.env.STRIPE_PRICE_ID;
+
+    if (!priceId) {
+      throw new BadRequestException(
+        `${plan === 'annual' ? '年間' : '月額'}プランが設定されていません`,
+      );
     }
 
     // Create or retrieve Stripe customer
@@ -52,13 +63,13 @@ export class SubscriptionsService {
       mode: 'subscription',
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID,
+          price: priceId,
           quantity: 1,
         },
       ],
       success_url: `${frontendUrl}/settings?subscription=success`,
       cancel_url: `${frontendUrl}/settings?subscription=canceled`,
-      metadata: { userId },
+      metadata: { userId, plan },
     });
 
     return { checkoutUrl: session.url };
