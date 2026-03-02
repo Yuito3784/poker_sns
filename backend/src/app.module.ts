@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './auth/auth.module';
 import { PostsModule } from './posts/posts.module';
 import { RepliesModule } from './replies/replies.module';
@@ -12,6 +13,8 @@ import { AffiliatesModule } from './affiliates/affiliates.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { PrismaService } from './prisma.service';
 import { HealthController } from './health.controller';
+import { WebhookNotifierService } from './common/webhook-notifier.service';
+import { TaskAuditService } from './common/task-audit.service';
 
 @Module({
   imports: [
@@ -19,6 +22,7 @@ import { HealthController } from './health.controller';
       ttl: 60000,
       limit: 60,
     }]),
+    ScheduleModule.forRoot(),
     AuthModule,
     PostsModule,
     RepliesModule,
@@ -32,10 +36,13 @@ import { HealthController } from './health.controller';
   controllers: [HealthController],
   providers: [
     PrismaService,
+    WebhookNotifierService,
+    TaskAuditService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
   ],
+  exports: [WebhookNotifierService],
 })
 export class AppModule {}
