@@ -10,6 +10,8 @@ import { SearchModule } from './search/search.module';
 import { AdsModule } from './ads/ads.module';
 import { AffiliatesModule } from './affiliates/affiliates.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { AiAnalysisModule } from './ai-analysis/ai-analysis.module';
+import { StatsModule } from './stats/stats.module';
 import { PrismaService } from './prisma.service';
 import { HealthController } from './health.controller';
 
@@ -28,6 +30,8 @@ import { HealthController } from './health.controller';
     AdsModule,
     AffiliatesModule,
     SubscriptionsModule,
+    AiAnalysisModule,
+    StatsModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -57,6 +57,8 @@ model User {
   stripeSubscriptionId  String?   @unique
   subscriptionPeriodEnd DateTime?
   subscriptionEvents    SubscriptionEvent[]
+  aiAnalyses            AiAnalysis[]
+  aiAnalysisUsages      AiAnalysisUsage[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -146,6 +148,7 @@ model Post {
   pinnedBy      User?       @relation("PinnedPost")
   notifications Notification[]
   hashtags      PostHashtag[]
+  aiAnalysis    AiAnalysis?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -390,5 +393,35 @@ model AffiliateClick {
   createdAt   DateTime          @default(now())
 
   @@index([partnerId, createdAt])
+  @@index([userId])
+}
+
+// --- AI Hand Analysis ---
+
+model AiAnalysis {
+  id          String    @id @default(uuid())
+  postId      String
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysis    String    // AI analysis result (JSON string)
+  modelUsed   String    // e.g. "claude-sonnet-4-6"
+  tokensUsed  Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@unique([postId])
+  @@index([userId, createdAt])
+}
+
+model AiAnalysisUsage {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  yearMonth   String   // "2026-03" format for monthly counting
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, yearMonth])
   @@index([userId])
 }

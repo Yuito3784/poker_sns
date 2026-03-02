@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -24,8 +25,12 @@ export class SubscriptionsController {
   @Post('checkout')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { ttl: 60000, limit: 5 } })
-  createCheckout(@GetUser() user: { userId: string }) {
-    return this.subscriptionsService.createCheckoutSession(user.userId);
+  createCheckout(
+    @GetUser() user: { userId: string },
+    @Body('plan') plan?: 'monthly' | 'annual',
+  ) {
+    const validPlan = plan === 'annual' ? 'annual' : 'monthly';
+    return this.subscriptionsService.createCheckoutSession(user.userId, validPlan);
   }
 
   @Post('cancel')
