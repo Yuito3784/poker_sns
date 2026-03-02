@@ -11,6 +11,23 @@ env:
   IMAGE_PREFIX: ${{ github.repository }}
 
 jobs:
+  # ── Docs Lint ─────────────────────────────────────────────
+  docs-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Markdown files in docs/
+        uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "docs/**/*.md"
+      - name: Check docs file naming convention
+        run: |
+          INVALID=$(find docs/ -name '*.md' -not -path 'docs/design/*' | grep -vE '^docs/[A-Z0-9_]+\.md$|^docs/note-templates/[a-z0-9-]+\.md$|^docs/note-thumbnails/.*|^docs/devsecops/.*' || true)
+          if [ -n "$INVALID" ]; then
+            echo "::warning::Non-standard file names found (expected UPPER_SNAKE.md at root or kebab-case.md in note-templates/):"
+            echo "$INVALID"
+          fi
+
   # ── Backend Tests ──────────────────────────────────────────
   backend-test:
     runs-on: ubuntu-latest
