@@ -1,0 +1,168 @@
+name: Error Notification & Auto-Recovery
+
+on:
+  # Re-usable from other workflows via workflow_call
+  workflow_call:
+    inputs:
+      error_stage:
+        description: 'Stage where the error occurred (build/deploy/healthcheck)'
+        required: true
+        type: string
+      error_details:
+        description: 'Error details for notification'
+        required: false
+        type: string
+        default: 'No additional details'
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: false
+      DISCORD_WEBHOOK_URL:
+        required: false
+      DEPLOY_HOST:
+        required: false
+      DEPLOY_USER:
+        required: false
+      DEPLOY_SSH_KEY:
+        required: false
+
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      error_stage:
+        description: 'Error stage to simulate'
+        required: true
+        type: choice
+        options:
+          - build
+          - deploy
+          - healthcheck
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          STAGE="${{ inputs.error_stage }}"
+          DETAILS="${{ inputs.error_details }}"
+          COMMIT="${GITHUB_SHA::7}"
+          REPO="${GITHUB_REPOSITORY}"
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"blocks\": [
+                {\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"CI/CD Error: ${STAGE}\",\"emoji\":true}},
+                {\"type\":\"section\",\"fields\":[
+                  {\"type\":\"mrkdwn\",\"text\":\"*Repository:*\n${REPO}\"},
+                  {\"type\":\"mrkdwn\",\"text\":\"*Commit:*\n\`${COMMIT}\`\"},
+                  {\"type\":\"mrkdwn\",\"text\":\"*Stage:*\n${STAGE}\"},
+                  {\"type\":\"mrkdwn\",\"text\":\"*Actor:*\n${GITHUB_ACTOR}\"}
+                ]},
+                {\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Details:*\n${DETAILS}\"}},
+                {\"type\":\"actions\",\"elements\":[{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\"View Run\"},\"url\":\"${RUN_URL}\"}]}
+              ]
+            }" || true
+
+      - name: Send Discord notification
+        if: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
+        run: |
+          STAGE="${{ inputs.error_stage }}"
+          DETAILS="${{ inputs.error_details }}"
+          COMMIT="${GITHUB_SHA::7}"
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          curl -s -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{
+              \"title\":\"CI/CD Error: ${STAGE}\",
+              \"description\":\"**Commit:** \`${COMMIT}\`\n**Actor:** ${GITHUB_ACTOR}\n**Details:** ${DETAILS}\n[View Run](${RUN_URL})\",
+              \"color\":15158332,
+              \"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }]}" \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}" || true
+
+  auto-recover:
+    needs: notify
+    if: ${{ inputs.error_stage == 'deploy' || inputs.error_stage == 'healthcheck' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Attempt rollback to previous image
+        if: ${{ secrets.DEPLOY_HOST != '' }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/poker_sns
+            echo "=== Auto-Recovery: Rolling back to previous image ==="
+
+            # Get the previous image digest (second latest)
+            PREV_BACKEND=$(docker images ghcr.io/*/poker_sns/backend --format '{{.Tag}}' | grep -v latest | head -1)
+            PREV_FRONTEND=$(docker images ghcr.io/*/poker_sns/frontend --format '{{.Tag}}' | grep -v latest | head -1)
+
+            if [ -n "$PREV_BACKEND" ] && [ -n "$PREV_FRONTEND" ]; then
+              echo "Rolling back to backend:$PREV_BACKEND, frontend:$PREV_FRONTEND"
+              # Tag previous images as rollback
+              docker tag "$(docker images ghcr.io/*/poker_sns/backend:$PREV_BACKEND -q)" rollback-backend:latest 2>/dev/null || true
+              docker tag "$(docker images ghcr.io/*/poker_sns/frontend:$PREV_FRONTEND -q)" rollback-frontend:latest 2>/dev/null || true
+
+              # Restart services
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+              echo "Rollback completed. Services restarted."
+            else
+              echo "No previous images found for rollback. Restarting current services..."
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml restart backend frontend
+            fi
+
+      - name: Post-rollback health check
+        if: ${{ secrets.DEPLOY_HOST != '' }}
+        run: |
+          sleep 20
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ secrets.DEPLOY_HOST }}/api/health" || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Post-rollback health check passed"
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS, retrying in 10s..."
+            sleep 10
+          done
+          echo "Post-rollback health check also failed - manual intervention required"
+          exit 1
+
+      - name: Notify recovery result (Slack)
+        if: ${{ always() && secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            COLOR="good"
+            TITLE="Auto-Recovery Succeeded"
+            MSG="Service restored via automatic rollback."
+          else
+            COLOR="danger"
+            TITLE="Auto-Recovery FAILED"
+            MSG="Manual intervention required. Check server immediately."
+          fi
+
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"attachments\":[{\"color\":\"${COLOR}\",\"title\":\"${TITLE}\",\"text\":\"${MSG}\",\"footer\":\"poker_sns CI/CD\"}]}" || true
+
+      - name: Notify recovery result (Discord)
+        if: ${{ always() && secrets.DISCORD_WEBHOOK_URL != '' }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            COLOR=3066993
+            TITLE="Auto-Recovery Succeeded"
+            MSG="Service restored via automatic rollback."
+          else
+            COLOR=15158332
+            TITLE="Auto-Recovery FAILED - Manual Intervention Required"
+            MSG="Automatic rollback failed. Check server immediately."
+          fi
+
+          curl -s -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"${TITLE}\",\"description\":\"${MSG}\",\"color\":${COLOR},\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}]}" \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}" || true
