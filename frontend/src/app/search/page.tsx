@@ -265,7 +265,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#eef3ea]"><span className="text-neutral-500">読み込み中...</span></div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center" style={{ background: "#0d1009" }}><span style={{ color: "#7a7260" }}>読み込み中...</span></div>}>
       <SearchContent />
     </Suspense>
   );

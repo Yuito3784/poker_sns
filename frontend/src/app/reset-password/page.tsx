@@ -156,7 +156,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><span className="text-neutral-500">読み込み中...</span></div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center" style={{ background: "#0d1009" }}><span style={{ color: "#7a7260" }}>読み込み中...</span></div>}>
       <ResetPasswordContent />
     </Suspense>
   );
