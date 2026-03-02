@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="670" viewBox="0 0 1280 670">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1009"/>
+      <stop offset="50%" style="stop-color:#131a14"/>
+      <stop offset="100%" style="stop-color:#0d1009"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4b965"/>
+      <stop offset="100%" style="stop-color:#9a7c35"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2a3828;stop-opacity:0"/>
+      <stop offset="20%" style="stop-color:#c9a84c;stop-opacity:0.6"/>
+      <stop offset="80%" style="stop-color:#c9a84c;stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:#2a3828;stop-opacity:0"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="670" fill="url(#bg)"/>
+
+  <!-- Subtle tech watermarks -->
+  <text x="850" y="350" font-size="240" fill="rgba(201,168,76,0.015)" font-family="monospace">def</text>
+  <text x="50" y="600" font-size="180" fill="rgba(201,168,76,0.012)" font-family="monospace">///</text>
+
+  <!-- Decorative border -->
+  <rect x="48" y="48" width="1184" height="574" rx="4" ry="4" fill="none" stroke="#2a3828" stroke-width="1" opacity="0.5"/>
+
+  <!-- Gold accent corners -->
+  <line x1="48" y1="48" x2="128" y2="48" stroke="url(#goldGrad)" stroke-width="2"/>
+  <line x1="48" y1="48" x2="48" y2="128" stroke="url(#goldGrad)" stroke-width="2"/>
+  <line x1="1152" y1="48" x2="1232" y2="48" stroke="url(#goldGrad)" stroke-width="2"/>
+  <line x1="1232" y1="48" x2="1232" y2="128" stroke="url(#goldGrad)" stroke-width="2"/>
+  <line x1="48" y1="542" x2="48" y2="622" stroke="url(#goldGrad)" stroke-width="2"/>
+  <line x1="48" y1="622" x2="128" y2="622" stroke="url(#goldGrad)" stroke-width="2"/>
+  <line x1="1152" y1="622" x2="1232" y2="622" stroke="url(#goldGrad)" stroke-width="2"/>
+  <line x1="1232" y1="542" x2="1232" y2="622" stroke="url(#goldGrad)" stroke-width="2"/>
+
+  <!-- Category badge (top-left, pill) -->
+  <rect x="80" y="72" width="120" height="36" rx="18" fill="rgba(201,168,76,0.15)" stroke="#c9a84c" stroke-width="1"/>
+  <text x="140" y="96" text-anchor="middle" font-family="'Noto Sans JP', sans-serif" font-size="14" font-weight="600" fill="#c9a84c">{{CATEGORY}}</text>
+
+  <!-- Gold divider -->
+  <rect x="80" y="140" width="60" height="3" rx="1.5" fill="url(#goldGrad)"/>
+
+  <!-- Main title -->
+  <text x="80" y="200" font-family="'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif" font-size="42" font-weight="700" fill="#ddd6c8" letter-spacing="-0.5">
+    <tspan x="80" dy="0">{{TITLE_LINE1}}</tspan>
+    <tspan x="80" dy="56">{{TITLE_LINE2}}</tspan>
+  </text>
+
+  <!-- Step/bullet area (3 key points) -->
+  <!-- Step 1 -->
+  <circle cx="100" cy="330" r="14" fill="rgba(201,168,76,0.15)" stroke="#c9a84c" stroke-width="1"/>
+  <text x="100" y="335" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="14" font-weight="700" fill="#c9a84c">1</text>
+  <text x="130" y="336" font-family="'Noto Sans JP', sans-serif" font-size="18" fill="#ddd6c8">{{STEP1}}</text>
+
+  <!-- Step 2 -->
+  <circle cx="100" cy="374" r="14" fill="rgba(201,168,76,0.15)" stroke="#c9a84c" stroke-width="1"/>
+  <text x="100" y="379" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="14" font-weight="700" fill="#c9a84c">2</text>
+  <text x="130" y="380" font-family="'Noto Sans JP', sans-serif" font-size="18" fill="#ddd6c8">{{STEP2}}</text>
+
+  <!-- Step 3 -->
+  <circle cx="100" cy="418" r="14" fill="rgba(201,168,76,0.15)" stroke="#c9a84c" stroke-width="1"/>
+  <text x="100" y="423" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="14" font-weight="700" fill="#c9a84c">3</text>
+  <text x="130" y="424" font-family="'Noto Sans JP', sans-serif" font-size="18" fill="#ddd6c8">{{STEP3}}</text>
+
+  <!-- Accent: right-side key metric box -->
+  <rect x="820" y="310" width="380" height="130" rx="6" fill="#192118" stroke="#2a3828" stroke-width="1"/>
+  <text x="1010" y="360" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="48" font-weight="800" fill="#c9a84c" filter="url(#glow)">{{METRIC}}</text>
+  <text x="1010" y="420" text-anchor="middle" font-family="'Noto Sans JP', sans-serif" font-size="16" fill="#7a7260">{{METRIC_LABEL}}</text>
+
+  <!-- Bottom divider -->
+  <rect x="80" y="480" width="1120" height="1" fill="url(#borderGrad)"/>
+
+  <!-- Bottom bar: personal brand -->
+  <text x="80" y="540" font-family="monospace" font-size="28" fill="#c9a84c" filter="url(#glow)">&gt;_</text>
+  <text x="126" y="536" font-family="'Noto Sans JP', sans-serif" font-size="18" font-weight="600" fill="#ddd6c8" letter-spacing="1">AI x Individual Dev</text>
+
+  <!-- Bottom bar: tagline -->
+  <text x="1200" y="536" text-anchor="end" font-family="'Noto Sans JP', sans-serif" font-size="14" fill="#4a5245">経験則に基づくAI活用と個人開発のノウハウ</text>
+
+  <!-- Tags -->
+  <text x="80" y="600" font-family="'Noto Sans JP', sans-serif" font-size="14" fill="#9a7c35">{{TAGS}}</text>
+</svg>
