@@ -1,0 +1,13 @@
+記事No.,テーマ,シリーズ,構成着手日(D-3),ドラフト完成日(D-1.5),QAレビュー日,セキュリティレビュー日,修正完了日(D-0.5),公開予定日(D-0),ステータス,担当者,文字数,PV(D+1),PV(D+7),スキ数(D+1),スキ数(D+7),poker_sns流入数,UTMパラメータ,公開URL,備考
+#001,なぜポーカー専用SNSを作ったのか — The Felt Table の誕生秘話,誕生編,2026-03-02,2026-03-03,2026-03-04,2026-03-04,2026-03-04,2026-03-05,構成中,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_001",,
+#002,ポーカーハンドレビューが上達の鍵 — 効率的な振り返り方法,ポーカー戦略編,2026-03-05,2026-03-06,2026-03-07,2026-03-07,2026-03-07,2026-03-08,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_002",,
+#003,個人開発者がMVPを1ヶ月で作った技術スタック,技術編,2026-03-08,2026-03-09,2026-03-10,2026-03-10,2026-03-10,2026-03-11,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_003",,
+#004,GTO vs エクスプロイト — ポーカー戦略の基礎,ポーカー戦略編,2026-03-11,2026-03-12,2026-03-13,2026-03-13,2026-03-13,2026-03-14,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_004",,
+#005,SNSのマネタイズ戦略 — 広告・課金・アフィリエイト,マネタイズ編,2026-03-14,2026-03-15,2026-03-16,2026-03-16,2026-03-16,2026-03-17,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_005",,
+#006,ポーカーで使える確率計算 — 基本のオッズとアウツ,ポーカー戦略編,2026-03-17,2026-03-18,2026-03-19,2026-03-19,2026-03-19,2026-03-20,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_006",,
+#007,日本のポーカーコミュニティの現状と未来,コミュニティ編,2026-03-20,2026-03-21,2026-03-22,2026-03-22,2026-03-22,2026-03-23,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_007",,
+#008,Next.js + NestJS でSNSを作る — アーキテクチャ解説,技術編,2026-03-23,2026-03-24,2026-03-25,2026-03-25,2026-03-25,2026-03-26,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_008",,
+#009,ポーカートーナメント攻略 — MTT vs SNG の違い,ポーカー戦略編,2026-03-26,2026-03-27,2026-03-28,2026-03-28,2026-03-28,2026-03-29,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_009",,
+#010,月100万円を目指すWebサービスの成長戦略,マネタイズ編,2026-03-29,2026-03-30,2026-03-31,2026-03-31,2026-03-31,2026-04-01,未着手,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_010",,
+STOCK-01,ポーカー用語集 — 初心者が知っておくべき50の基本用語,汎用,,,,,,,,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_stock01",,バッファ記事（時事性低い汎用テーマ）
+STOCK-02,ポーカーで学ぶ意思決定 — 日常生活に活かせる思考法,汎用,,,,,,,,CEO,,,,,,,"utm_source=note&utm_medium=article&utm_campaign=article_stock02",,バッファ記事（時事性低い汎用テーマ）

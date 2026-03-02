@@ -1,0 +1,43 @@
+# Environment
+.env
+.env.local
+.env*.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# Build outputs
+backend/dist/
+frontend/.next/
+frontend/out/
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+
+# Uploads (user-generated content)
+backend/uploads/avatars/*
+backend/uploads/posts/*
+!backend/uploads/avatars/.gitkeep
+!backend/uploads/posts/.gitkeep
+
+# Prisma generated client (regenerated via `npx prisma generate`)
+backend/src/prisma/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker volumes (local data)
+postgres-data/

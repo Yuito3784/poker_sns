@@ -1,0 +1,394 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum NotificationType {
+  LIKE
+  FOLLOW
+  REPLY
+  MENTION
+  REPOST
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String?   // null for OAuth-only users (Google/LINE/X)
+  googleId      String?   @unique
+  lineId        String?   @unique
+  xId           String?   @unique
+  name          String
+  username      String   @unique
+  bio           String?
+  avatarUrl     String?
+  emailVerified Boolean  @default(false)
+  pinnedPostId  String?    @unique
+  pinnedPost    Post?    @relation("PinnedPost", fields: [pinnedPostId], references: [id])
+  posts         Post[]
+  likes         Like[]
+  replies       Reply[]
+  reposts       Repost[]
+  bookmarks     Bookmark[]
+  followers     Follow[] @relation("Followers")
+  following     Follow[] @relation("Following")
+  notifications Notification[] @relation("UserNotifications")
+  sentNotifications Notification[] @relation("NotificationFromUser")
+  refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  magicLinkTokens MagicLinkToken[]
+  blockedUsers  Block[]  @relation("Blocker")
+  blockedBy     Block[]  @relation("Blocked")
+  mutedUsers    Mute[]   @relation("Muter")
+  mutedBy       Mute[]   @relation("Muted")
+  subscriptionStatus    String    @default("free")  // "free" | "active" | "canceled" | "past_due"
+  stripeCustomerId      String?   @unique
+  stripeSubscriptionId  String?   @unique
+  subscriptionPeriodEnd DateTime?
+  subscriptionEvents    SubscriptionEvent[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Block {
+  blocker    User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockerId  String
+  blocked    User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  blockedId  String
+  createdAt  DateTime @default(now())
+
+  @@id([blockerId, blockedId])
+}
+
+model Mute {
+  muter     User     @relation("Muter", fields: [muterId], references: [id], onDelete: Cascade)
+  muterId   String
+  muted     User     @relation("Muted", fields: [mutedId], references: [id], onDelete: Cascade)
+  mutedId   String
+  createdAt DateTime @default(now())
+
+  @@id([muterId, mutedId])
+}
+
+enum TableType {
+  CASH
+  MTT
+  SNG
+  ZOOM
+}
+
+enum Position {
+  UTG
+  UTG1
+  UTG2
+  MP
+  MP1
+  MP2
+  CO
+  BTN
+  SB
+  BB
+}
+
+enum Street {
+  PREFLOP
+  FLOP
+  TURN
+  RIVER
+}
+
+enum ActionType {
+  FOLD
+  CHECK
+  CALL
+  BET
+  RAISE
+  ALL_IN
+}
+
+model Post {
+  id            String      @id @default(uuid())
+  author        User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId      String
+  content       String
+  imageUrl      String?
+  parentPostId  String?
+  parentPost    Post?       @relation("QuotePost", fields: [parentPostId], references: [id])
+  quotePosts    Post[]      @relation("QuotePost")
+  isPokerHand   Boolean     @default(false)
+  pokerHand     PokerHand?
+  likes         Like[]
+  replies       Reply[]
+  reposts       Repost[]
+  bookmarks     Bookmark[]
+  pinnedBy      User?       @relation("PinnedPost")
+  notifications Notification[]
+  hashtags      PostHashtag[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([authorId, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+}
+
+model Hashtag {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  posts     PostHashtag[]
+  createdAt DateTime      @default(now())
+}
+
+model PostHashtag {
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  hashtagId String
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
+}
+
+model Repost {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model PokerHand {
+  id          String        @id @default(uuid())
+  post        Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String        @unique
+  tableType   TableType
+  blinds      String        // "25/50" or "0.25/0.50"
+  tableSize   String        // "6-max", "9-max"
+  heroStack   String        // "100bb", "150bb"
+  heroPosition Position
+  heroHand    String?       // "AA", "AKs", "72o"
+  result      String?       // "Won 50bb", "Lost 25bb", etc.
+  streets     PokerStreet[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model PokerStreet {
+  id          String        @id @default(uuid())
+  pokerHand   PokerHand     @relation(fields: [pokerHandId], references: [id], onDelete: Cascade)
+  pokerHandId String
+  street      Street
+  boardCards  String?       // "As Kd 7c" for flop, "2h" for turn, "Qc" for river
+  potSize     String?       // "50bb", "125bb"
+  order       Int           // 0=preflop, 1=flop, 2=turn, 3=river
+  actions     PokerAction[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([pokerHandId, street])
+}
+
+model PokerAction {
+  id          String      @id @default(uuid())
+  street      PokerStreet @relation(fields: [streetId], references: [id], onDelete: Cascade)
+  streetId    String
+  position  Position    // 誰が
+  actionType  ActionType // 何を
+  amount      String?    // いくら (例: "2.5bb", "50bb", "all-in")
+  order       Int        // アクションの順序
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([streetId, order])
+}
+
+model Follow {
+  follower    User   @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId  String
+  following   User   @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followingId])
+}
+
+model Like {
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  post      Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
+}
+
+model Reply {
+  id        String   @id @default(uuid())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId, createdAt])
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  user       User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  type       NotificationType
+  fromUser   User             @relation("NotificationFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  fromUserId String
+  post       Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId     String?
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, isRead])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model MagicLinkToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Ad {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String?
+  linkUrl     String
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  startAt     DateTime?
+  endAt       DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+// --- Subscription ---
+
+model SubscriptionEvent {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeEventId   String   @unique
+  eventType       String
+  status          String
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+// --- Affiliate ---
+
+enum AffiliateCategory {
+  POKER_ROOM
+  TOOL
+  LEARNING
+  GOODS
+}
+
+model AffiliatePartner {
+  id              String             @id @default(uuid())
+  name            String
+  slug            String             @unique
+  description     String
+  longDescription String?
+  category        AffiliateCategory
+  logoUrl         String?
+  bannerUrl       String?
+  affiliateUrl    String
+  bonus           String?
+  sortOrder       Int                @default(0)
+  isActive        Boolean            @default(true)
+  isFeatured      Boolean            @default(false)
+  clicks          AffiliateClick[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([isActive, category, sortOrder])
+  @@index([isActive, isFeatured, sortOrder])
+}
+
+model AffiliateClick {
+  id          String            @id @default(uuid())
+  partner     AffiliatePartner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId   String
+  userId      String?
+  referrer    String?
+  createdAt   DateTime          @default(now())
+
+  @@index([partnerId, createdAt])
+  @@index([userId])
+}

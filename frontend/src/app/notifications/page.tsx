@@ -1,0 +1,158 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { API_BASE, fetchWithAuth } from "../../lib/api";
+import { formatRelativeTime } from "../../lib/utils";
+import { useAuth } from "../../contexts/AuthContext";
+import type { Notification } from "../../lib/types";
+
+export default function NotificationsPage() {
+  const router = useRouter();
+  const { auth, isInitialized } = useAuth();
+  const token = auth?.token ?? null;
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isInitialized && !auth) {
+      router.push("/");
+    }
+  }, [isInitialized, auth, router]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchNotifications();
+  }, [token]);
+
+  const fetchNotifications = async () => {
+    if (!token) return;
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/notifications`);
+      if (res.status === 401) {
+        router.push("/");
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClick = async (notif: Notification) => {
+    if (!notif.isRead && token) {
+      try {
+        await fetchWithAuth(`${API_BASE}/notifications/${notif.id}/read`, { method: "PATCH" });
+        setNotifications((prev) => prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n)));
+      } catch {
+        /* ignore */
+      }
+    }
+    if ((notif.type === "LIKE" || notif.type === "REPLY" || notif.type === "MENTION" || notif.type === "REPOST") && notif.postId) {
+      router.push(`/post/${notif.postId}`);
+    } else if (notif.type === "FOLLOW" && notif.fromUser?.username) {
+      router.push(`/profile/${notif.fromUser.username}`);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    if (!token) return;
+    try {
+      await fetchWithAuth(`${API_BASE}/notifications/read-all`, { method: "PATCH" });
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  return (
+    <div className="min-h-screen" style={{ background: "#0d1009", color: "#ddd6c8" }}>
+      <div className="mx-auto max-w-xl min-h-screen">
+        <div className="sticky top-0 z-50 flex items-center justify-between border-b px-4 py-3.5" style={{ background: "#080a08", borderColor: "#161b14" }}>
+          <button onClick={() => router.back()} className="rounded p-1.5 transition-colors" style={{ color: "#4a5245" }}>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+          </button>
+          <h1 className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight" style={{ color: "#ddd6c8" }}>通知</h1>
+          {unreadCount > 0 && (
+            <button
+              onClick={handleMarkAllRead}
+              className="rounded px-3 py-1.5 text-xs font-semibold transition-colors"
+              style={{ color: "#c9a84c" }}
+            >
+              すべて既読
+            </button>
+          )}
+          {unreadCount === 0 && <div className="w-20" />}
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <p className="text-sm" style={{ color: "#4a5245" }}>読み込み中...</p>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="px-4 py-16 text-center">
+            <svg className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
+            <p className="mt-3 text-sm" style={{ color: "#4a5245" }}>通知はありません</p>
+          </div>
+        ) : (
+          <div className="divide-y" style={{ borderColor: "#161b14" }}>
+            {notifications.map((notif) => (
+              <button
+                key={notif.id}
+                className="flex w-full gap-3 p-4 text-left transition-colors"
+                style={{
+                  background: !notif.isRead ? "rgba(201,168,76,0.03)" : "transparent",
+                  borderLeft: !notif.isRead ? "2px solid rgba(201,168,76,0.3)" : "2px solid transparent",
+                }}
+                onClick={() => handleClick(notif)}
+              >
+                <span
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+                  style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
+                >
+                  {notif.type === "LIKE" && (
+                    <svg className="h-4 w-4" fill="#f06060" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" /></svg>
+                  )}
+                  {notif.type === "FOLLOW" && (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#c9a84c" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                  )}
+                  {notif.type === "REPLY" && (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#c9a84c" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" /></svg>
+                  )}
+                  {notif.type === "MENTION" && (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#c9a84c" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.676.39-1.027.59-1.336.59-.31 0-.66-.2-1.336-.59l-.656-.38c-.524-.3-.71-.96-.464-1.51.4-.89.731-1.82.984-2.784m8.016 0c-.688.06-1.386.09-2.09.09H16.5a4.5 4.5 0 110-9h.75c.704 0 1.402.03 2.09.09m0 9.18c-.253.962-.584 1.892-.985 2.783-.247.55-.06 1.21.463 1.511l.657.38c.676.39 1.027.59 1.336.59.31 0 .66-.2 1.336-.59l.656-.38c.524-.3.71-.96.465-1.51-.4-.89-.732-1.82-.984-2.784z" /></svg>
+                  )}
+                  {notif.type === "REPOST" && (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#c9a84c" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M4.5 12c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662" /></svg>
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm" style={{ color: "#ddd6c8" }}>
+                    <span className="font-semibold">{notif.fromUser.name}</span>{" "}
+                    <span style={{ color: "#4a5245" }}>@{notif.fromUser.username}</span>
+                    {notif.type === "LIKE" && " があなたの投稿にいいねしました"}
+                    {notif.type === "FOLLOW" && " があなたをフォローしました"}
+                    {notif.type === "REPLY" && " があなたの投稿に返信しました"}
+                    {notif.type === "MENTION" && " があなたをメンションしました"}
+                    {notif.type === "REPOST" && " があなたの投稿をリポストしました"}
+                  </p>
+                  {notif.post && (
+                    <p className="mt-1 line-clamp-2 text-xs" style={{ color: "#4a5245" }}>{notif.post.content}</p>
+                  )}
+                  <p className="mt-1 text-xs" style={{ color: "#2a3828" }}>{formatRelativeTime(notif.createdAt)}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

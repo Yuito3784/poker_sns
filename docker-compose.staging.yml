@@ -1,0 +1,41 @@
+# ステージング環境用オーバーライド
+# 使い方: docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+#
+# 本番との違い:
+#   - ポート 8080/8443 で公開 (本番と併存可)
+#   - GHCR プリビルドイメージを使用
+#   - ボリューム名を staging_ プレフィックスで分離
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - staging_pgdata:/var/lib/postgresql/data
+
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/your-org/poker_sns/backend:latest}
+    build: !reset null
+    ports: []
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:?}@db:5432/poker_sns
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      NODE_ENV: staging
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:-}
+    volumes:
+      - staging_uploads:/app/uploads
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/your-org/poker_sns/frontend:latest}
+    build: !reset null
+    ports: []
+
+  nginx:
+    ports:
+      - "8080:80"
+      - "8443:443"
+
+volumes:
+  staging_pgdata:
+  staging_uploads:

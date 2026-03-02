@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* The Felt Table — Dark Luxury Poker Design System */
+:root {
+  --background: #0d1009;
+  --foreground: #ddd6c8;
+  --muted: #7a7260;
+  --accent: #c9a84c;
+  --accent-dark: #9a7c35;
+  --gold: #c9a84c;
+  --gold-light: #e0c068;
+  --card: #131a14;
+  --card-hover: #192118;
+  --border: #1f2a1e;
+  --sidebar-bg: #080a08;
+  --sidebar-text: #ddd6c8;
+  --sidebar-muted: #4a5245;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-noto-sans-jp), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-noto-sans-jp), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.01em;
+  line-height: 1.65;
+}
+
+::selection {
+  background: rgba(201, 168, 76, 0.22);
+  color: #e8dfc8;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(201, 168, 76, 0.5);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(74, 82, 69, 0.4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 82, 69, 0.7);
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.02em;
+}
+
+@keyframes like-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.45); }
+  60%  { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+
+.animate-like-pop {
+  animation: like-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out both;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
