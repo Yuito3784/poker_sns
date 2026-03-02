@@ -49,6 +49,31 @@ jobs:
           NEXT_PUBLIC_API_URL: https://example.com/api
           NEXT_PUBLIC_SITE_URL: https://example.com
 
+  # ── Build Error Notification ───────────────────────────────
+  notify-build-failure:
+    if: ${{ always() && (needs.backend-test.result == 'failure' || needs.frontend-build.result == 'failure') }}
+    needs: [backend-test, frontend-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify build failure (Discord)
+        if: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
+        run: |
+          BACKEND_RESULT="${{ needs.backend-test.result }}"
+          FRONTEND_RESULT="${{ needs.frontend-build.result }}"
+          DETAILS="Backend: ${BACKEND_RESULT}, Frontend: ${FRONTEND_RESULT}"
+          curl -s -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"Build FAILED\",\"description\":\"**Commit:** \`${GITHUB_SHA::7}\`\n**${DETAILS}**\n[View Run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})\",\"color\":15158332,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}]}" \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}" || true
+
+      - name: Notify build failure (Slack)
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          BACKEND_RESULT="${{ needs.backend-test.result }}"
+          FRONTEND_RESULT="${{ needs.frontend-build.result }}"
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"attachments\":[{\"color\":\"danger\",\"title\":\"Build FAILED\",\"text\":\"Commit: \`${GITHUB_SHA::7}\`\nBackend: ${BACKEND_RESULT}, Frontend: ${FRONTEND_RESULT}\n<${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|View Run>\",\"footer\":\"poker_sns CI/CD\"}]}" || true
+
   # ── Docker Build & Push (main only) ────────────────────────
   docker-build:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -127,16 +152,47 @@ jobs:
           echo "Health check failed after 5 attempts"
           exit 1
 
-      - name: Notify Discord on success
+      - name: Notify success (Discord)
         if: success()
         run: |
           curl -s -H "Content-Type: application/json" \
             -d "{\"embeds\":[{\"title\":\"Deploy Success\",\"description\":\"poker_sns deployed: \`${GITHUB_SHA::7}\`\",\"color\":3066993}]}" \
             "${{ secrets.DISCORD_WEBHOOK_URL }}" || true
 
-      - name: Notify Discord on failure
+      - name: Notify success (Slack)
+        if: ${{ success() && secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"attachments\":[{\"color\":\"good\",\"title\":\"Deploy Success\",\"text\":\"poker_sns deployed: \`${GITHUB_SHA::7}\`\",\"footer\":\"poker_sns CI/CD\"}]}" || true
+
+      - name: Notify failure (Discord)
         if: failure()
         run: |
           curl -s -H "Content-Type: application/json" \
-            -d "{\"embeds\":[{\"title\":\"Deploy FAILED\",\"description\":\"poker_sns deploy failed: \`${GITHUB_SHA::7}\`\",\"color\":15158332}]}" \
+            -d "{\"embeds\":[{\"title\":\"Deploy FAILED\",\"description\":\"poker_sns deploy failed: \`${GITHUB_SHA::7}\`\nRun: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"color\":15158332}]}" \
             "${{ secrets.DISCORD_WEBHOOK_URL }}" || true
+
+      - name: Notify failure (Slack)
+        if: ${{ failure() && secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"attachments\":[{\"color\":\"danger\",\"title\":\"Deploy FAILED\",\"text\":\"poker_sns deploy failed: \`${GITHUB_SHA::7}\`\n<${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|View Run>\",\"footer\":\"poker_sns CI/CD\"}]}" || true
+
+      - name: Trigger auto-recovery on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'notify-and-recover.yml',
+              ref: 'main',
+              inputs: {
+                error_stage: 'deploy',
+                error_details: `Deploy failed for commit ${context.sha.substring(0, 7)}`
+              }
+            });
+        continue-on-error: true
