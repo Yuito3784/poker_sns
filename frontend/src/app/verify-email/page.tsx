@@ -87,8 +87,8 @@ function VerifyEmailContent() {
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <p className="text-neutral-500">読み込み中...</p>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "#0d1009" }}>
+        <p style={{ color: "#7a7260" }}>読み込み中...</p>
       </div>
     }>
       <VerifyEmailContent />
