@@ -48,6 +48,7 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:-}
     volumes:
       - uploads:/app/uploads
     ports:
