@@ -13,7 +13,7 @@ services:
       - staging_pgdata:/var/lib/postgresql/data
 
   backend:
-    image: ${BACKEND_IMAGE:-ghcr.io/your-org/poker_sns/backend:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/yuito3784/poker_sns/backend:latest}
     build: !reset null
     ports: []
     environment:
@@ -27,7 +27,7 @@ services:
       - staging_uploads:/app/uploads
 
   frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/your-org/poker_sns/frontend:latest}
+    image: ${FRONTEND_IMAGE:-ghcr.io/yuito3784/poker_sns/frontend:latest}
     build: !reset null
     ports: []
 
