@@ -6,11 +6,17 @@ import * as express from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { SanitizeInputPipe } from './common/sanitize.pipe';
+import { GlobalExceptionFilter } from './common/global-exception.filter';
+import { WebhookNotifierService } from './common/webhook-notifier.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
   });
+
+  // Register global exception filter with webhook notification
+  const webhookNotifier = app.get(WebhookNotifierService);
+  app.useGlobalFilters(new GlobalExceptionFilter(webhookNotifier));
 
   // Stripe webhook needs raw body for signature verification
   app.use('/subscriptions/webhook', express.raw({ type: 'application/json' }));
