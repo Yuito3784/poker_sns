@@ -60,6 +60,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Lowercase image prefix
+        run: echo "IMAGE_PREFIX=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
