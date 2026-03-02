@@ -18,7 +18,7 @@ import type { User, Post, Notification, Ad, AffiliatePartner } from "../lib/type
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#f8faf5]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#0d1009]" />}>
       <HomeContent />
     </Suspense>
   );
