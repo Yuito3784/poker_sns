@@ -1,0 +1,30 @@
+# markdownlint configuration for poker_sns docs
+# Applied to: docs/**/*.md, docs/note-templates/**/*.md
+
+default: true
+
+# Allow long lines in docs (article templates may have long content)
+MD013:
+  line_length: 300
+  heading_line_length: 120
+  code_block_line_length: 300
+
+# Allow multiple top-level headings (templates may have placeholder headings)
+MD025: false
+
+# Allow trailing punctuation in headings (Japanese content uses these)
+MD026:
+  punctuation: ".,;:"
+
+# Allow inline HTML (SVG badges, custom elements in templates)
+MD033: false
+
+# Allow bare URLs in docs
+MD034: false
+
+# Allow duplicate headings in different sections
+MD024:
+  siblings_only: true
+
+# Allow emphasis as heading (used in Japanese article templates)
+MD036: false
