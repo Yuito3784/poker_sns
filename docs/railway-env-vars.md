@@ -4,6 +4,21 @@ Railway の「Suggested Variables」で表示される変数のうち、**バッ
 
 ---
 
+## Prisma / OpenSSL でクラッシュする場合: Dockerfile でビルドする
+
+Railpack のランタイムだと Prisma が OpenSSL 1.1 を参照して落ちることがあります。  
+**Dockerfile ビルド** に切り替えると、Debian ベースで OpenSSL 3 が使われ、安定して動きます。
+
+1. Railway のバックエンドサービス → **Settings** → **Build**
+2. **Builder** で **「Dockerfile」** を選択（Railpack のままにしない）
+3. **Dockerfile path** が `Dockerfile` または `./Dockerfile` になっていることを確認（Root Directory が `backend` なら `Dockerfile` で OK）
+4. **Build Command / Start Command** は空で OK（Dockerfile の `CMD` が使われます）
+5. 保存して **Redeploy**
+
+※ マイグレーションはコンテナ内では実行しません。初回のみローカルで `prisma migrate deploy` を実行してください（下記「DBマイグレーション」参照）。
+
+---
+
 ## 重要: バックエンドには NEXT_PUBLIC_* を入れない
 
 `NEXT_PUBLIC_*` は **フロントエンド（Vercel）用** です。Railway のバックエンドサービスには追加しないでください。
@@ -36,6 +51,16 @@ Railway のランタイムでは Prisma の OpenSSL 互換性の都合で `prism
    DATABASE_URL="postgresql://..." npx prisma migrate deploy
    ```
 3. 成功したら Railway のバックエンドは再デプロイ不要で、アプリから DB にアクセスできます。
+
+**マイグレーションが「type already exists」などで失敗した場合:**  
+重複する init マイグレーションを「適用済み」として記録する:
+
+```bash
+cd backend
+DATABASE_URL="postgresql://..." npx prisma migrate resolve --applied 20260218000000_init
+```
+
+その後、必要なら再度 `npx prisma migrate deploy` を実行。
 
 ---
 

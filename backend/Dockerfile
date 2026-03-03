@@ -1,4 +1,5 @@
-FROM node:20-alpine AS builder
+# Debian ベースで OpenSSL 3 を確保（Prisma の debian-openssl-3.0.x 用）
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -7,7 +8,7 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -18,14 +19,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
 
-RUN mkdir -p uploads/avatars uploads/posts && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 -G nodejs && \
-    chown -R nestjs:nodejs /app
-
-USER nestjs
+RUN mkdir -p uploads/avatars uploads/posts
 
 EXPOSE 3001
-ENTRYPOINT ["sh", "entrypoint.sh"]
+CMD ["node", "dist/src/main.js"]
