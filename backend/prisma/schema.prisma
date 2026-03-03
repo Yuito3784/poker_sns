@@ -6,8 +6,6 @@
 
 generator client {
   provider      = "prisma-client-js"
-  # native を外し OpenSSL 3 のみ指定（Railway で libssl.so.1.1 不足を防ぐ）
-  # ローカル Mac: darwin / darwin-arm64、本番 Linux: debian または musl の OpenSSL 3
   binaryTargets = ["darwin", "darwin-arm64", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
