@@ -12,6 +12,8 @@ FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
+# プラットフォーム検出が 1.1.x になることがあるため、OpenSSL 3 用エンジンを明示
+ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
 RUN npm ci --omit=dev
