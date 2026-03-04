@@ -52,15 +52,18 @@ Railway のランタイムでは Prisma の OpenSSL 互換性の都合で `prism
    ```
 3. 成功したら Railway のバックエンドは再デプロイ不要で、アプリから DB にアクセスできます。
 
-**マイグレーションが「type already exists」などで失敗した場合:**  
-重複する init マイグレーションを「適用済み」として記録する:
+**マイグレーションが「type already exists」などで失敗した場合（古い init 適用済みの DB）:**  
+1. 失敗したマイグレーションをロールバック扱いにし、2. 重複する init を「適用済み」として記録してから、3. 追加用マイグレーションを適用する:
 
 ```bash
 cd backend
+# 1. 失敗を解消
+DATABASE_URL="postgresql://..." npx prisma migrate resolve --rolled-back 20260218000000_init
+# 2. 重複する init は実行せず「適用済み」にする（次の deploy で 20260304... だけが走る）
 DATABASE_URL="postgresql://..." npx prisma migrate resolve --applied 20260218000000_init
+# 3. 追加のみのマイグレーションを適用
+DATABASE_URL="postgresql://..." npx prisma migrate deploy
 ```
-
-その後、必要なら再度 `npx prisma migrate deploy` を実行。
 
 ---
 
@@ -75,6 +78,29 @@ DATABASE_URL="postgresql://..." npx prisma migrate resolve --applied 20260218000
 | `CORS_ORIGINS` | Vercel の URL と同じ（例: `https://poker-sns.vercel.app`）。複数ならカンマ区切り。 |
 
 ※ `PORT` は Railway が自動で入れるので、**追加しない** でOK。
+
+---
+
+## dev ブランチで CORS エラーになる場合（Vercel プレビュー ↔ Railway dev）
+
+**症状:** Vercel の dev プレビュー（例: `https://poker-sns-git-dev-yuito3784s-projects.vercel.app`）から新規登録などすると、  
+`Access to fetch at 'https://pokersns-dev.up.railway.app/...' has been blocked by CORS policy` となる。
+
+**原因:** dev 用の Railway バックエンドの `CORS_ORIGINS` に、**Vercel の dev プレビュー URL が含まれていない**。
+
+**対処:** Railway の **dev 用バックエンド** の **Variables** で、`CORS_ORIGINS` にプレビュー URL を追加する（複数ならカンマ区切り）。
+
+| 環境 | CORS_ORIGINS に含める URL 例 |
+|------|------------------------------|
+| 本番 | `https://あなたの本番ドメイン.vercel.app` |
+| dev プレビュー | `https://poker-sns-git-dev-yuito3784s-projects.vercel.app` |
+
+例（dev 用バックエンドで両方許可する場合）:
+```
+CORS_ORIGINS=https://poker-sns-git-dev-yuito3784s-projects.vercel.app,https://本番のURL
+```
+
+※ Vercel のプレビュー URL は「Vercel ダッシュボード → プロジェクト → Deployments → 該当デプロイの URL」で確認できます。ブランチごとに `poker-sns-git-<branch>-<team>.vercel.app` のような形式です。
 
 ---
 
