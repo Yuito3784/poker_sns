@@ -26,6 +26,11 @@ Thumbs.db
 # Claude Code
 .claude/
 
+# Cursor (editor settingsは無視するが、skillsは共有したい)
+.cursor/*
+!.cursor/skills/
+!.cursor/skills/**
+
 # Uploads (user-generated content)
 backend/uploads/avatars/*
 backend/uploads/posts/*

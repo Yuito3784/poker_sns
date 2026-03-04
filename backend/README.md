@@ -31,6 +31,17 @@
 $ npm install
 ```
 
+### データベース（Docker 開発環境）
+
+コンテナ起動後、未適用のマイグレーションがある場合は以下でスキーマを反映してください。
+
+```bash
+# コンテナ内でマイグレーション適用
+$ docker compose exec backend npx prisma migrate deploy
+```
+
+`RefreshToken` などのテーブルが無いというエラーが出る場合は、上記を実行してください。
+
 ## Compile and run the project
 
 ```bash
