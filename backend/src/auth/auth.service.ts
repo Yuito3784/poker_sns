@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma.service';
 import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -140,9 +141,7 @@ export class AuthService {
     const verifyUrl = `${frontendUrl}/verify-email?token=${token}`;
 
     try {
-      const transporter = await this.createMailTransporterAsync();
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@pokersns.com',
+      await this.sendEmail({
         to: email,
         subject: 'メールアドレスの確認 - Poker SNS',
         html: `
@@ -251,9 +250,7 @@ export class AuthService {
     const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
     try {
-      const transporter = await this.createMailTransporterAsync();
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@pokersns.com',
+      await this.sendEmail({
         to: email,
         subject: 'パスワードリセット - Poker SNS',
         html: `
@@ -263,9 +260,8 @@ export class AuthService {
           <p>このメールに心当たりがない場合は無視してください。</p>
         `,
       });
-    } catch {
-      // Log but don't fail - in dev, SMTP might not be configured
-      console.warn('Failed to send password reset email');
+    } catch (err) {
+      this.logger.warn(`Password reset email send failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     return { message: 'パスワードリセットのメールを送信しました。' };
@@ -295,6 +291,39 @@ export class AuthService {
     ]);
 
     return { message: 'パスワードがリセットされました。' };
+  }
+
+  /**
+   * メール送信。RESEND_API_KEY があれば Resend API（HTTPS）を優先（Railway 等で SMTP がブロックされても届く）。
+   */
+  private async sendEmail(options: {
+    to: string;
+    subject: string;
+    html: string;
+  }): Promise<void> {
+    const from = process.env.SMTP_FROM || 'noreply@pokersns.com';
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      const resend = new Resend(resendKey);
+      const result = await resend.emails.send({
+        from,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      });
+      const err = result.error;
+      if (err && typeof err === 'object' && 'message' in err) {
+        throw new Error(String((err as { message: unknown }).message));
+      }
+      return;
+    }
+    const transporter = await this.createMailTransporterAsync();
+    await transporter.sendMail({
+      from,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
   }
 
   /**
@@ -526,13 +555,10 @@ export class AuthService {
       data: { token, userId: user.id, expiresAt },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const magicUrl = `${process.env.API_URL || 'http://localhost:4000'}/auth/magic-link/verify?token=${token}`;
+    const magicUrl = `${(process.env.API_URL || 'http://localhost:4000').replace(/\/$/, '')}/auth/magic-link/verify?token=${token}`;
 
     try {
-      const transporter = await this.createMailTransporterAsync();
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@pokersns.com',
+      await this.sendEmail({
         to: email,
         subject: 'ログインリンク - Poker SNS',
         html: `
@@ -544,8 +570,8 @@ export class AuthService {
           <p>このメールに心当たりがない場合は無視してください。</p>
         `,
       });
-    } catch {
-      console.warn('Failed to send magic link email');
+    } catch (err) {
+      this.logger.warn(`Magic link email send failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     return { message: 'ログインリンクをメールに送信しました。メールをご確認ください。' };

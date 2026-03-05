@@ -1,6 +1,6 @@
-# SMTP 設定ガイド
+# メール送信設定ガイド
 
-メール認証・パスワードリセットなどで送信に使う SMTP の設定方法です。
+メール認証・パスワードリセットなどで送信に使う設定です。**Railway などクラウドでは SMTP がブロックされ Connection timeout になりやすいため、Resend API（`RESEND_API_KEY`）を推奨**します。
 
 ---
 
@@ -8,17 +8,29 @@
 
 バックエンド（NestJS）で参照する変数です。**Railway の Variables** または **ローカルの .env / docker-compose** に設定します。
 
+### Resend API（推奨・Railway で確実に届く）
+
+| 変数名 | 説明 | 例 |
+|--------|------|-----|
+| `RESEND_API_KEY` | [Resend](https://resend.com) の API キー（Dashboard → API Keys） | `re_xxxx` |
+| `SMTP_FROM` | 送信元アドレス（Resend で認証済みドメイン or `onboarding@resend.dev`） | `noreply@yourdomain.com` |
+
+- **`RESEND_API_KEY` を設定すると、SMTP は使わず HTTPS で Resend に送信します。** Railway などで「Connection timeout」が出る場合はこちらを設定してください。
+- Resend は無料枠 3,000 通/月。送信元は Resend でドメイン認証するか、テスト用に `onboarding@resend.dev` が使えます。
+
+### SMTP（ローカル・Resend 未使用時）
+
 | 変数名 | 説明 | 例 |
 |--------|------|-----|
 | `SMTP_HOST` | SMTP サーバーのホスト名 | `smtp.gmail.com` |
 | `SMTP_PORT` | ポート番号（通常 587 または 465） | `587` |
 | `SMTP_SECURE` | 465 番ポートで SSL を使う場合 `true` | `false`（587 のときは false） |
-| `SMTP_USER` | 認証ユーザー（メールアドレス or ユーザー名） | サービス側のログイン名 |
+| `SMTP_USER` | 認証ユーザー | サービス側のログイン名 |
 | `SMTP_PASS` | 認証パスワード（Gmail の場合は「アプリパスワード」） | ******** |
-| `SMTP_FROM` | 送信元として表示するアドレス（From） | `noreply@yourdomain.com` |
+| `SMTP_FROM` | 送信元アドレス | `noreply@yourdomain.com` |
 
 - **認証なし SMTP**（例: ローカル MailHog）の場合は `SMTP_USER` / `SMTP_PASS` を**空のまま**にすると、auth なしで接続します。
-- `SMTP_HOST` が空のときはメール送信は行われず、開発時は「再送信」で認証リンクが API から返ります（[backend/README.md](../backend/README.md) 参照）。
+- `RESEND_API_KEY` も `SMTP_HOST` も未設定のときはメール送信は行われず、開発時は「再送信」で認証リンクが API から返ります（[backend/README.md](../backend/README.md) 参照）。
 
 ---
 

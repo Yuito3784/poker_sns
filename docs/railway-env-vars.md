@@ -125,7 +125,8 @@ CORS_ORIGINS=https://poker-sns-git-dev-yuito3784s-projects.vercel.app,https://�
 | Name | いつ設定するか |
 |------|----------------|
 | `DB_PASSWORD` | 自前で PostgreSQL を立てる場合のみ。Railway の PostgreSQL を使う場合は不要（DATABASE_URL に含まれる） |
-| `SMTP_*` | メール認証・パスワードリセット等でメールを送る場合。詳細は [docs/smtp-setup.md](./smtp-setup.md) を参照。 |
+| `RESEND_API_KEY` + `SMTP_FROM` | メール認証・パスワードリセット（推奨）。Railway では SMTP がブロックされやすいため Resend API を使用。 |
+| `SMTP_*` | Resend を使わない場合の SMTP。詳細は [docs/smtp-setup.md](./smtp-setup.md) を参照。 |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google ログインを有効にするとき |
 | `LINE_CLIENT_ID` / `LINE_CLIENT_SECRET` | LINE ログインを有効にするとき |
 | `X_CLIENT_ID` / `X_CLIENT_SECRET` | X ログインを有効にするとき |
