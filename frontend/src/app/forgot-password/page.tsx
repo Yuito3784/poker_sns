@@ -33,34 +33,34 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#f8faf5] to-[#e8f0e6] text-neutral-900">
-      <div className="w-full max-w-sm rounded-2xl border border-[#d1e0cc] bg-white p-8 shadow-lg shadow-neutral-200/50">
+    <div className="flex min-h-screen items-center justify-center bg-[#0d1009] text-[#ddd6c8]">
+      <div className="w-full max-w-sm rounded-2xl border border-[#2a3828] bg-[#131a14] p-8 shadow-lg shadow-black/30">
         <div className="mb-6 text-center">
-          <span className="text-4xl">♠</span>
-          <h1 className="mt-2 text-xl font-bold tracking-tight">パスワードリセット</h1>
+          <span className="text-4xl text-[#c9a84c]">&#9824;</span>
+          <h1 className="mt-2 text-xl font-bold tracking-tight text-[#ddd6c8]">パスワードリセット</h1>
         </div>
 
         {sent ? (
           <div className="space-y-4 text-center">
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-[#9a8e7a]">
               パスワードリセットのメールを送信しました。メールに記載されたリンクからパスワードをリセットしてください。
             </p>
-            <a href="/" className="inline-block text-sm text-teal-600 hover:underline">
+            <a href="/" className="inline-block text-sm text-[#c9a84c] hover:underline">
               ログインに戻る
             </a>
           </div>
         ) : (
           <>
-            <p className="mb-4 text-sm text-neutral-500">
+            <p className="mb-4 text-sm text-[#7a7260]">
               登録済みのメールアドレスを入力してください。パスワードリセット用のリンクを送信します。
             </p>
-            {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+            {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1">
-                <label className="block text-xs font-medium text-neutral-600">メールアドレス</label>
+                <label className="block text-xs font-medium text-[#9a8e7a]">メールアドレス</label>
                 <input
                   type="email"
-                  className="w-full rounded-md border border-[#d1e0cc] px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  className="w-full rounded-md border border-[#2a3828] bg-[#192118] px-3 py-2 text-sm text-[#ddd6c8] outline-none placeholder:text-[#4a5245] focus:border-[#c9a84c] focus:ring-1 focus:ring-[#c9a84c]"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
@@ -70,13 +70,13 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-2 w-full rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-50"
+                className="mt-2 w-full rounded-lg bg-[#c9a84c] px-4 py-2 text-sm font-semibold text-[#0d1009] hover:bg-[#d4b965] disabled:opacity-50"
               >
                 {loading ? "送信中..." : "リセットリンクを送信"}
               </button>
             </form>
             <div className="mt-4 text-center">
-              <a href="/" className="text-xs text-teal-600 hover:underline">
+              <a href="/" className="text-xs text-[#c9a84c] hover:underline">
                 ログインに戻る
               </a>
             </div>

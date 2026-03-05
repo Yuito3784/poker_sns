@@ -175,25 +175,25 @@ export default function PostDetailClient() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <p className="text-neutral-500">読み込み中...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#0d1009]">
+        <p className="text-[#7a7260]">読み込み中...</p>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#0d1009]">
         <div className="text-center">
-          <p className="text-red-600">投稿が見つかりません</p>
-          <button onClick={() => router.push("/")} className="mt-4 text-sm text-blue-600 hover:underline">ホームに戻る</button>
+          <p className="text-red-400">投稿が見つかりません</p>
+          <button onClick={() => router.push("/")} className="mt-4 text-sm text-[#c9a84c] hover:underline">ホームに戻る</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] text-neutral-900">
+    <div className="min-h-screen bg-[#0d1009] text-[#ddd6c8]">
       <div className="mx-auto max-w-xl min-h-screen">
         {/* Header */}
         <div className="sticky top-0 z-50 flex items-center gap-4 rounded-b-xl border-b border-amber-500/10 bg-[#1a2f1c] px-4 py-3.5 shadow-[0_2px_12px_rgba(0,0,0,0.15)]">
@@ -221,7 +221,7 @@ export default function PostDetailClient() {
                 <button onClick={() => window.location.href = `/profile/${post.author.username}`} className="text-sm font-semibold hover:underline">
                   {post.author.name}
                 </button>
-                <p className="text-xs text-neutral-500">@{post.author.username}</p>
+                <p className="text-xs text-[#7a7260]">@{post.author.username}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -231,15 +231,15 @@ export default function PostDetailClient() {
                   disabled={actionLoading === "follow"}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
                     post.isFollowingAuthor
-                      ? "border border-neutral-200 text-neutral-500 hover:border-red-200 hover:text-red-500"
-                      : "bg-neutral-900 text-white hover:bg-neutral-700"
+                      ? "border border-[#2a3828] text-[#7a7260] hover:border-red-900 hover:text-red-400"
+                      : "bg-[#c9a84c] text-[#0d1009] hover:bg-[#d4b965]"
                   }`}
                 >
                   {post.isFollowingAuthor ? "フォロー中" : "フォロー"}
                 </button>
               )}
               {currentUser && post.author.id === currentUser.id && (
-                <button onClick={() => setShowDeleteConfirm(true)} className="rounded-full px-2.5 py-1 text-xs text-red-500 hover:bg-red-50">
+                <button onClick={() => setShowDeleteConfirm(true)} className="rounded-full px-2.5 py-1 text-xs text-red-400 hover:bg-red-900/20">
                   削除
                 </button>
               )}
@@ -248,8 +248,8 @@ export default function PostDetailClient() {
 
           {/* Quote post */}
           {post.parentPost && (
-            <div className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
-              <span className="font-medium text-neutral-500">{post.parentPost.author.name} <span className="text-neutral-500">@{post.parentPost.author.username}</span></span>
+            <div className="mb-3 rounded-xl border border-[#1f2a1e] bg-[#131a14] p-3 text-xs text-[#9a8e7a]">
+              <span className="font-medium text-[#7a7260]">{post.parentPost.author.name} <span className="text-[#7a7260]">@{post.parentPost.author.username}</span></span>
               <p className="mt-1 line-clamp-2">{post.parentPost.content}</p>
             </div>
           )}
@@ -272,12 +272,12 @@ export default function PostDetailClient() {
               <img
                 src={`${API_BASE}${post.imageUrl}`}
                 alt="投稿画像"
-                className="max-h-96 rounded-xl border border-neutral-200 object-cover"
+                className="max-h-96 rounded-xl border border-[#1f2a1e] object-cover"
                 onError={(e) => {
                   const target = e.currentTarget;
                   target.style.display = "none";
                   const fallback = document.createElement("div");
-                  fallback.className = "flex h-32 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 text-xs text-neutral-400";
+                  fallback.className = "flex h-32 items-center justify-center rounded-xl border border-[#1f2a1e] bg-[#131a14] text-xs text-[#4a5245]";
                   fallback.textContent = "画像を読み込めませんでした";
                   target.parentElement?.appendChild(fallback);
                 }}
@@ -286,23 +286,23 @@ export default function PostDetailClient() {
           )}
 
           {/* Timestamp */}
-          <p className="mt-3 text-xs text-neutral-500">
+          <p className="mt-3 text-xs text-[#7a7260]">
             {new Date(post.createdAt).toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
           </p>
 
           {/* Stats */}
-          <div className="mt-3 flex gap-4 border-t border-[#1f2a1e] pt-3 text-xs text-neutral-500">
+          <div className="mt-3 flex gap-4 border-t border-[#1f2a1e] pt-3 text-xs text-[#7a7260]">
             <span className="flex items-center gap-1.5">
               <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-              <span><span className="font-semibold text-neutral-900">{post._count?.likes ?? 0}</span> いいね</span>
+              <span><span className="font-semibold text-[#ddd6c8]">{post._count?.likes ?? 0}</span> いいね</span>
             </span>
             <span className="flex items-center gap-1.5">
               <svg className="h-4 w-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" /></svg>
-              <span><span className="font-semibold text-neutral-900">{post._count?.replies ?? 0}</span> 返信</span>
+              <span><span className="font-semibold text-[#ddd6c8]">{post._count?.replies ?? 0}</span> 返信</span>
             </span>
             <span className="flex items-center gap-1.5">
               <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M4.5 12c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662" /></svg>
-              <span><span className="font-semibold text-neutral-900">{post._count?.reposts ?? 0}</span> リポスト</span>
+              <span><span className="font-semibold text-[#ddd6c8]">{post._count?.reposts ?? 0}</span> リポスト</span>
             </span>
           </div>
 
@@ -314,7 +314,7 @@ export default function PostDetailClient() {
                   onClick={handleToggleLike}
                   disabled={actionLoading === "like"}
                   className={`group flex items-center gap-1.5 rounded-full px-3 py-2 text-xs transition-colors disabled:opacity-50 ${
-                    post.isLiked ? "text-red-500" : "text-neutral-500 hover:text-red-500"
+                    post.isLiked ? "text-red-500" : "text-[#7a7260] hover:text-red-500"
                   }`}
                 >
                   <svg className="h-5 w-5 transition-transform group-hover:scale-110" fill={post.isLiked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={post.isLiked ? 0 : 1.5}>
@@ -326,7 +326,7 @@ export default function PostDetailClient() {
                   onClick={handleToggleRepost}
                   disabled={actionLoading === "repost"}
                   className={`group flex items-center gap-1.5 rounded-full px-3 py-2 text-xs transition-colors disabled:opacity-50 ${
-                    post.isReposted ? "text-emerald-500" : "text-neutral-500 hover:text-emerald-500"
+                    post.isReposted ? "text-emerald-500" : "text-[#7a7260] hover:text-emerald-500"
                   }`}
                 >
                   <svg className="h-5 w-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -338,7 +338,7 @@ export default function PostDetailClient() {
                   onClick={handleToggleBookmark}
                   disabled={actionLoading === "bookmark"}
                   className={`group flex items-center gap-1.5 rounded-full px-3 py-2 text-xs transition-colors disabled:opacity-50 ${
-                    post.isBookmarked ? "text-blue-500" : "text-neutral-500 hover:text-blue-500"
+                    post.isBookmarked ? "text-blue-500" : "text-[#7a7260] hover:text-blue-500"
                   }`}
                 >
                   <svg className="h-5 w-5 transition-transform group-hover:scale-110" fill={post.isBookmarked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -348,7 +348,7 @@ export default function PostDetailClient() {
                 </button>
                 <a
                   href={`/?quote=${post.id}`}
-                  className="group flex items-center gap-1.5 rounded-full px-3 py-2 text-xs text-neutral-500 transition-colors hover:text-blue-500"
+                  className="group flex items-center gap-1.5 rounded-full px-3 py-2 text-xs text-[#7a7260] transition-colors hover:text-blue-500"
                 >
               <svg className="h-5 w-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
@@ -482,7 +482,7 @@ export default function PostDetailClient() {
         {/* Reply form / CTA */}
         <div className="border-b border-[#1f2a1e] px-4 py-3">
           {error && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>
+            <div className="mb-3 rounded-lg border border-red-900/50 bg-red-900/20 px-3 py-2 text-sm text-red-400">{error}</div>
           )}
           {currentUser ? (
             <form onSubmit={handleReply} className="flex gap-3">
@@ -495,7 +495,7 @@ export default function PostDetailClient() {
               )}
               <div className="flex-1">
                 <textarea
-                  className="w-full resize-none rounded-lg border-0 bg-transparent px-1 py-1 text-sm outline-none placeholder:text-neutral-500"
+                  className="w-full resize-none rounded-lg border-0 bg-transparent px-1 py-1 text-sm outline-none placeholder:text-[#7a7260]"
                   rows={2}
                   placeholder="返信を投稿..."
                   value={replyContent}
@@ -504,7 +504,7 @@ export default function PostDetailClient() {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-40"
+                    className="rounded-full bg-[#c9a84c] px-4 py-1.5 text-xs font-semibold text-[#0d1009] transition-colors hover:bg-[#d4b965] disabled:opacity-40"
                     disabled={!replyContent.trim()}
                   >
                     返信
@@ -534,7 +534,7 @@ export default function PostDetailClient() {
         {/* Replies */}
         <div>
           {replies.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-neutral-500">まだ返信がありません</p>
+            <p className="px-4 py-8 text-center text-sm text-[#7a7260]">まだ返信がありません</p>
           ) : (
             <ul>
               {replies.map((reply) => (
@@ -550,10 +550,10 @@ export default function PostDetailClient() {
                         <button onClick={() => window.location.href = `/profile/${reply.author.username}`} className="text-sm font-semibold hover:underline">
                           {reply.author.name}
                         </button>
-                        <span className="text-xs text-neutral-500">@{reply.author.username}</span>
-                        <span className="text-xs text-neutral-500">{formatRelativeTime(reply.createdAt)}</span>
+                        <span className="text-xs text-[#7a7260]">@{reply.author.username}</span>
+                        <span className="text-xs text-[#7a7260]">{formatRelativeTime(reply.createdAt)}</span>
                       </div>
-                      <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-neutral-900">{reply.content}</p>
+                      <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-[#ddd6c8]">{reply.content}</p>
                     </div>
                   </div>
                 </li>
@@ -566,13 +566,13 @@ export default function PostDetailClient() {
       {/* Delete confirmation dialog */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-neutral-900">投稿を削除しますか？</h3>
-            <p className="mt-2 text-sm text-neutral-500">この操作は取り消せません。</p>
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-[#2a3828] bg-[#131a14] p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-[#ddd6c8]">投稿を削除しますか？</h3>
+            <p className="mt-2 text-sm text-[#7a7260]">この操作は取り消せません。</p>
             <div className="mt-4 flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 rounded-full border border-neutral-200 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                className="flex-1 rounded-full border border-[#2a3828] py-2 text-sm font-medium text-[#9a8e7a] transition-colors hover:bg-[#192118]"
               >
                 キャンセル
               </button>
