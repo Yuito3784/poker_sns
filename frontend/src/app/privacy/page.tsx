@@ -15,7 +15,7 @@ export default function PrivacyPage() {
         </Link>
         <h1 className="mb-8 text-2xl font-bold tracking-tight text-[#ddd6c8]">プライバシーポリシー</h1>
 
-        <div className="space-y-6 text-sm leading-relaxed text-[#7a7260]">
+        <div className="space-y-6 text-sm leading-relaxed text-[#9a8e7a]">
           <section>
             <h2 className="mb-2 text-base font-semibold text-[#ddd6c8]">1. 収集する情報</h2>
             <p>本サービスでは以下の情報を収集します。</p>

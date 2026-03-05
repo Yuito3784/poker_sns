@@ -15,7 +15,7 @@ export default function TermsPage() {
         </Link>
         <h1 className="mb-8 text-2xl font-bold tracking-tight text-[#ddd6c8]">利用規約</h1>
 
-        <div className="space-y-6 text-sm leading-relaxed text-[#7a7260]">
+        <div className="space-y-6 text-sm leading-relaxed text-[#9a8e7a]">
           <section>
             <h2 className="mb-2 text-base font-semibold text-[#ddd6c8]">第1条（適用）</h2>
             <p>本規約は、Poker SNS（以下「本サービス」）の利用に関する条件を定めるものです。ユーザーは本規約に同意の上、本サービスを利用するものとします。</p>
