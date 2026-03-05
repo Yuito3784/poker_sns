@@ -153,7 +153,8 @@ export class AuthService {
       });
       return { message: '確認メールを送信しました。' };
     } catch (err) {
-      this.logger.warn('Verification email send failed (SMTP may be unset)', err instanceof Error ? err.message : err);
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Verification email send failed: ${msg}`);
       this.logger.log(`[DEV] 認証リンク（SMTP未設定時はこのURLをブラウザで開く）: ${verifyUrl}`);
       const isDev = process.env.NODE_ENV !== 'production';
       if (isDev) {
