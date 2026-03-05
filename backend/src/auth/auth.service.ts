@@ -301,9 +301,10 @@ export class AuthService {
     subject: string;
     html: string;
   }): Promise<void> {
-    const from = process.env.SMTP_FROM || 'noreply@pokersns.com';
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
+      // Resend 未認証ドメインだと送れないため、未設定時はテスト用送信元を使う
+      const from = process.env.SMTP_FROM || 'onboarding@resend.dev';
       const resend = new Resend(resendKey);
       const result = await resend.emails.send({
         from,
@@ -317,6 +318,7 @@ export class AuthService {
       }
       return;
     }
+    const from = process.env.SMTP_FROM || 'noreply@pokersns.com';
     const transporter = await this.createMailTransporterAsync();
     await transporter.sendMail({
       from,
