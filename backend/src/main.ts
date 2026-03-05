@@ -3,11 +3,17 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as express from 'express';
+import * as dns from 'dns';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { SanitizeInputPipe } from './common/sanitize.pipe';
 import { GlobalExceptionFilter } from './common/global-exception.filter';
 import { WebhookNotifierService } from './common/webhook-notifier.service';
+
+// SMTP 接続で IPv6 が選ばれると Railway 等で ENETUNREACH になることがあるため、IPv4 を優先する
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {

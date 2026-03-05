@@ -301,6 +301,8 @@ export class AuthService {
       host: process.env.SMTP_HOST || 'localhost',
       port: parseInt(process.env.SMTP_PORT || '587', 10),
       secure: process.env.SMTP_SECURE === 'true',
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
       auth: process.env.SMTP_USER
         ? {
             user: process.env.SMTP_USER,
