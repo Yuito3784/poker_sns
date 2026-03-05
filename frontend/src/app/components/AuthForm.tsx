@@ -208,7 +208,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
         >
           Poker SNS
         </h1>
-        <p className="mt-0.5 text-xs" style={{ color: "#4a5245" }}>
+        <p className="mt-0.5 text-xs" style={{ color: "#6b7a66" }}>
           ポーカーハンドを共有しよう
         </p>
       </div>
@@ -250,7 +250,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
       {/* Divider */}
       <div className="my-5 flex items-center gap-3">
         <div className="h-px flex-1" style={{ background: "#1f2a1e" }} />
-        <span className="text-xs" style={{ color: "#4a5245" }}>またはメールで</span>
+        <span className="text-xs" style={{ color: "#6b7a66" }}>またはメールで</span>
         <div className="h-px flex-1" style={{ background: "#1f2a1e" }} />
       </div>
 
@@ -299,7 +299,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
                 </svg>
               </div>
               <p className="text-sm font-medium" style={{ color: "#c9a84c" }}>メールを送信しました</p>
-              <p className="mt-1 text-xs" style={{ color: "#7a7260" }}>
+              <p className="mt-1 text-xs" style={{ color: "#9a8e7a" }}>
                 <span className="font-medium">{magicLinkEmail}</span> にログインリンクを送りました。
                 メールをご確認ください（15分間有効）。
               </p>
@@ -345,7 +345,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
         {mode === "register" && (
           <>
             <div className="space-y-1">
-              <label className="block text-xs font-medium" style={{ color: "#7a7260" }}>名前</label>
+              <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>名前</label>
               <input
                 className={inputClass("name")}
                 style={{
@@ -362,7 +362,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
               {touched.name && fieldErrors.name && <p className="text-xs" style={{ color: "#f09090" }}>{fieldErrors.name}</p>}
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-medium" style={{ color: "#7a7260" }}>ユーザー名（@）</label>
+              <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>ユーザー名（@）</label>
               <input
                 className={inputClass("username")}
                 style={{
@@ -381,7 +381,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           </>
         )}
         <div className="space-y-1">
-          <label className="block text-xs font-medium" style={{ color: "#7a7260" }}>メールアドレス</label>
+          <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>メールアドレス</label>
           <input
             type="email"
             className={inputClass("email")}
@@ -400,7 +400,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           {touched.email && fieldErrors.email && <p className="text-xs" style={{ color: "#f09090" }}>{fieldErrors.email}</p>}
         </div>
         <div className="space-y-1">
-          <label className="block text-xs font-medium" style={{ color: "#7a7260" }}>パスワード</label>
+          <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>パスワード</label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -421,7 +421,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
               type="button"
               onClick={() => setShowPassword((p) => !p)}
               className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-              style={{ color: "#4a5245" }}
+              style={{ color: "#6b7a66" }}
               aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
             >
               {showPassword ? (
@@ -464,7 +464,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           <a
             href="/forgot-password"
             className="text-xs hover:underline"
-            style={{ color: "#4a5245" }}
+            style={{ color: "#6b7a66" }}
           >
             パスワードをお忘れですか？
           </a>
@@ -473,14 +473,14 @@ export default function AuthForm({ onAuthSuccess }: Props) {
             type="button"
             onClick={() => { setShowMagicLink((p) => !p); setError(null); setMagicLinkState("idle"); setMagicLinkEmail(""); }}
             className="text-xs hover:underline"
-            style={{ color: "#4a5245" }}
+            style={{ color: "#6b7a66" }}
           >
             {showMagicLink ? "パスワードでログイン" : "メールリンクでログイン"}
           </button>
         </div>
       )}
       {mode === "register" && (
-        <p className="mt-4 text-center text-[11px]" style={{ color: "#4a5245" }}>
+        <p className="mt-4 text-center text-[11px]" style={{ color: "#6b7a66" }}>
           登録することで、
           <a href="/terms" className="hover:underline" style={{ color: "#c9a84c" }}>利用規約</a>
           と

@@ -39,7 +39,7 @@ const SUIT: Record<string, { sym: string; color: string }> = {
 };
 
 const ACTION: Record<string, { label: string; bg: string; fg: string; bd: string }> = {
-  FOLD:   { label: "Fold",   bg: "rgba(74,82,69,.13)",    fg: "#4a5245",  bd: "rgba(74,82,69,.25)" },
+  FOLD:   { label: "Fold",   bg: "rgba(74,82,69,.13)",    fg: "#6b7a66",  bd: "rgba(74,82,69,.25)" },
   CHECK:  { label: "Check",  bg: "rgba(100,110,90,.14)",  fg: "#5e6e56",  bd: "rgba(100,110,90,.28)" },
   CALL:   { label: "Call",   bg: "rgba(120,110,75,.14)",  fg: "#7a7050",  bd: "rgba(120,110,75,.28)" },
   BET:    { label: "Bet",    bg: "rgba(201,168,76,.14)",  fg: "#a89040",  bd: "rgba(201,168,76,.3)" },
@@ -110,7 +110,7 @@ function PosBadge({ label, isHero }: { label: string; isHero: boolean }) {
   return (
     <span style={{
       background: isHero ? "rgba(201,168,76,.1)" : "rgba(42,56,40,.45)",
-      color: isHero ? "#c9a84c" : "#4a5245",
+      color: isHero ? "#c9a84c" : "#6b7a66",
       border: isHero ? "1px solid rgba(201,168,76,.22)" : "1px solid #1f2a1e",
       fontSize: 8, fontWeight: 700, padding: "1.5px 5px",
       borderRadius: 3, letterSpacing: 0.3, flexShrink: 0,
@@ -359,7 +359,7 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
                   fontSize: pi.pos.length > 2 ? 6.5 : 8,
                   fontWeight: 800,
                   letterSpacing: .3,
-                  color: isHero ? "#c9a84c" : "#4a5245",
+                  color: isHero ? "#c9a84c" : "#6b7a66",
                   textTransform: "uppercase",
                   fontFamily: "monospace",
                 }}>
