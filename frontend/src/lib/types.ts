@@ -50,7 +50,7 @@ export type Reply = {
 
 export type Notification = {
   id: string;
-  type: "LIKE" | "FOLLOW" | "REPLY" | "MENTION" | "REPOST";
+  type: "LIKE" | "FOLLOW" | "REPLY" | "MENTION" | "REPOST" | "TIP" | "CONTENT_PURCHASE" | "SALON_JOIN" | "TOURNAMENT_JOIN" | "COACHING_BOOKING";
   isRead: boolean;
   createdAt: string;
   postId?: string | null;
@@ -115,4 +115,155 @@ export type AffiliatePartner = {
   bannerUrl?: string | null;
   bonus?: string | null;
   sortOrder: number;
+};
+
+// --- Tipping ---
+export type Tip = {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  postId?: string | null;
+  amount: number;
+  message?: string | null;
+  status: string;
+  createdAt: string;
+  sender?: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
+};
+
+// --- Paid Content ---
+export type PaidContent = {
+  id: string;
+  postId: string;
+  price: number;
+  previewText?: string | null;
+  content?: string | null;
+  hasPurchased?: boolean;
+  isAuthor?: boolean;
+  post?: Post;
+};
+
+// --- Salon ---
+export type Salon = {
+  id: string;
+  ownerId: string;
+  name: string;
+  slug: string;
+  description: string;
+  imageUrl?: string | null;
+  monthlyPrice: number;
+  isActive: boolean;
+  createdAt: string;
+  owner?: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
+  _count?: {
+    members: number;
+    posts: number;
+  };
+  isMember?: boolean;
+  isOwner?: boolean;
+};
+
+export type SalonPost = {
+  id: string;
+  salonId: string;
+  content: string;
+  imageUrl?: string | null;
+  createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
+};
+
+// --- Tournament ---
+export type Tournament = {
+  id: string;
+  organizerId: string;
+  name: string;
+  description: string;
+  entryFee: number;
+  maxPlayers: number;
+  prizePool?: string | null;
+  startAt: string;
+  status: string;
+  createdAt: string;
+  organizer?: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
+  _count?: {
+    participants: number;
+  };
+  isRegistered?: boolean;
+  participants?: TournamentParticipant[];
+};
+
+export type TournamentParticipant = {
+  id: string;
+  userId: string;
+  placement?: number | null;
+  status: string;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
+};
+
+// --- Coaching ---
+export type CoachProfile = {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  hourlyRate: number;
+  specialties: string;
+  experience?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string | null;
+    bio?: string | null;
+    subscriptionStatus?: string;
+  };
+  _count?: {
+    bookings: number;
+  };
+};
+
+export type CoachBooking = {
+  id: string;
+  coachId: string;
+  studentId: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  amount: number;
+  status: string;
+  notes?: string | null;
+  createdAt: string;
+  coach?: CoachProfile;
+  student?: {
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
 };
