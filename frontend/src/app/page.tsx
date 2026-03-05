@@ -60,6 +60,7 @@ function HomeContent() {
   const [xEmailError, setXEmailError] = useState<string | null>(null);
   const [xEmailSubmitting, setXEmailSubmitting] = useState(false);
   const [showComposeModal, setShowComposeModal] = useState(false);
+  const [resendVerificationLoading, setResendVerificationLoading] = useState(false);
   const [showPokerForm, setShowPokerForm] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -1753,9 +1754,36 @@ function HomeContent() {
             <h1 className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight" style={{ color: "#ddd6c8" }}>ホーム</h1>
           </div>
           {currentUser && !currentUser.emailVerified && (
-            <div className="flex items-center justify-between border-b px-4 py-2.5" style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}>
+            <div className="relative z-[45] flex items-center justify-between border-b px-4 py-2.5" style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}>
               <p className="text-xs" style={{ color: "#c9a84c" }}>メールアドレスが未認証です。投稿するには認証が必要です。</p>
-              <button onClick={async () => { try { const res = await fetchWithAuth(`${API_BASE}/auth/resend-verification`, { method: "POST" }); const data = await res.json().catch(() => ({})); if (data.verificationLink) { if (typeof window !== "undefined") window.location.href = data.verificationLink; return; } if (!res.ok) { showToast(data.message ?? "再送信に失敗しました", "error"); return; } showToast("確認メールを再送信しました"); } catch { showToast("再送信に失敗しました。通信またはログイン状態を確認してください。", "error"); } }} className="ml-2 flex-shrink-0 rounded px-3 py-1 text-xs font-semibold" style={{ background: "#c9a84c", color: "#0d1009" }}>再送信</button>
+              <button
+                type="button"
+                disabled={resendVerificationLoading}
+                onClick={async () => {
+                  setResendVerificationLoading(true);
+                  try {
+                    const res = await fetchWithAuth(`${API_BASE}/auth/resend-verification`, { method: "POST" });
+                    const data = await res.json().catch(() => ({}));
+                    if (data.verificationLink) {
+                      if (typeof window !== "undefined") window.location.href = data.verificationLink;
+                      return;
+                    }
+                    if (!res.ok) {
+                      showToast(data.message ?? "再送信に失敗しました", "error");
+                      return;
+                    }
+                    showToast("確認メールを再送信しました");
+                  } catch {
+                    showToast("再送信に失敗しました。通信またはログイン状態を確認してください。", "error");
+                  } finally {
+                    setResendVerificationLoading(false);
+                  }
+                }}
+                className="ml-2 flex-shrink-0 cursor-pointer rounded px-3 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-70"
+                style={{ background: "#c9a84c", color: "#0d1009" }}
+              >
+                {resendVerificationLoading ? "送信中…" : "再送信"}
+              </button>
             </div>
           )}
           {/* past_due payment warning banner */}
