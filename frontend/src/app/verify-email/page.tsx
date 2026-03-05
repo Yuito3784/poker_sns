@@ -88,7 +88,7 @@ export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
       <div className="flex min-h-screen items-center justify-center" style={{ background: "#0d1009" }}>
-        <p style={{ color: "#7a7260" }}>読み込み中...</p>
+        <p style={{ color: "#9a8e7a" }}>読み込み中...</p>
       </div>
     }>
       <VerifyEmailContent />

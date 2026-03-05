@@ -75,8 +75,8 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen" style={{ background: "#0d1009", color: "#ddd6c8" }}>
       <div className="mx-auto max-w-xl min-h-screen">
-        <div className="sticky top-0 z-50 flex items-center justify-between border-b px-4 py-3.5" style={{ background: "#080a08", borderColor: "#161b14" }}>
-          <button onClick={() => router.back()} className="rounded p-1.5 transition-colors" style={{ color: "#4a5245" }}>
+        <div className="sticky top-0 z-50 flex items-center justify-between border-b px-4 py-3.5" style={{ background: "#131a14", borderColor: "#2a3828" }}>
+          <button onClick={() => router.back()} className="rounded p-1.5 transition-colors" style={{ color: "#6b7a66" }}>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
           </button>
           <h1 className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight" style={{ color: "#ddd6c8" }}>通知</h1>
@@ -94,15 +94,15 @@ export default function NotificationsPage() {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <p className="text-sm" style={{ color: "#4a5245" }}>読み込み中...</p>
+            <p className="text-sm" style={{ color: "#6b7a66" }}>読み込み中...</p>
           </div>
         ) : notifications.length === 0 ? (
           <div className="px-4 py-16 text-center">
             <svg className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
-            <p className="mt-3 text-sm" style={{ color: "#4a5245" }}>通知はありません</p>
+            <p className="mt-3 text-sm" style={{ color: "#6b7a66" }}>通知はありません</p>
           </div>
         ) : (
-          <div className="divide-y" style={{ borderColor: "#161b14" }}>
+          <div className="divide-y" style={{ borderColor: "#1f2a1e" }}>
             {notifications.map((notif) => (
               <button
                 key={notif.id}
@@ -136,7 +136,7 @@ export default function NotificationsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm" style={{ color: "#ddd6c8" }}>
                     <span className="font-semibold">{notif.fromUser.name}</span>{" "}
-                    <span style={{ color: "#4a5245" }}>@{notif.fromUser.username}</span>
+                    <span style={{ color: "#6b7a66" }}>@{notif.fromUser.username}</span>
                     {notif.type === "LIKE" && " があなたの投稿にいいねしました"}
                     {notif.type === "FOLLOW" && " があなたをフォローしました"}
                     {notif.type === "REPLY" && " があなたの投稿に返信しました"}
@@ -144,9 +144,9 @@ export default function NotificationsPage() {
                     {notif.type === "REPOST" && " があなたの投稿をリポストしました"}
                   </p>
                   {notif.post && (
-                    <p className="mt-1 line-clamp-2 text-xs" style={{ color: "#4a5245" }}>{notif.post.content}</p>
+                    <p className="mt-1 line-clamp-2 text-xs" style={{ color: "#6b7a66" }}>{notif.post.content}</p>
                   )}
-                  <p className="mt-1 text-xs" style={{ color: "#2a3828" }}>{formatRelativeTime(notif.createdAt)}</p>
+                  <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>{formatRelativeTime(notif.createdAt)}</p>
                 </div>
               </button>
             ))}

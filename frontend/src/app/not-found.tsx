@@ -12,7 +12,7 @@ export default function NotFound() {
       >
         404
       </h1>
-      <p className="mb-6 text-lg" style={{ color: "#7a7260" }}>
+      <p className="mb-6 text-lg" style={{ color: "#9a8e7a" }}>
         ページが見つかりませんでした
       </p>
       <Link

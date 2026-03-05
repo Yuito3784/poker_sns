@@ -62,7 +62,7 @@ function FeatureCard({ icon, title, body }: { icon: React.ReactNode; title: stri
           {icon}
         </div>
         <h3 className="mb-3 font-display text-xl font-semibold text-[#ddd6c8]">{title}</h3>
-        <p className="text-sm leading-relaxed text-[#7a7260]">{body}</p>
+        <p className="text-sm leading-relaxed text-[#9a8e7a]">{body}</p>
       </div>
     </div>
   );
@@ -77,7 +77,7 @@ function StepCard({ num, title, body }: { num: string; title: string; body: stri
       </div>
       <div>
         <h4 className="mb-1 font-semibold text-[#ddd6c8]">{title}</h4>
-        <p className="text-sm leading-relaxed text-[#7a7260]">{body}</p>
+        <p className="text-sm leading-relaxed text-[#9a8e7a]">{body}</p>
       </div>
     </div>
   );
@@ -118,7 +118,7 @@ export default function LandingClient() {
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="hidden text-sm text-[#7a7260] transition-colors hover:text-[#ddd6c8] sm:inline"
+              className="hidden text-sm text-[#9a8e7a] transition-colors hover:text-[#ddd6c8] sm:inline"
             >
               ログイン
             </Link>
@@ -165,7 +165,7 @@ export default function LandingClient() {
           </span>
         </h1>
 
-        <p className="relative mb-10 max-w-xl text-center text-lg leading-relaxed text-[#7a7260]">
+        <p className="relative mb-10 max-w-xl text-center text-lg leading-relaxed text-[#9a8e7a]">
           ハンドを共有し、戦略を議論し、上達を加速する。
           <br className="hidden sm:block" />
           ポーカープレイヤーのための専用コミュニティ。
@@ -184,7 +184,7 @@ export default function LandingClient() {
           </Link>
           <a
             href="#features"
-            className="inline-flex items-center gap-2 rounded-xl border border-[#2a3828] px-8 py-4 text-base font-medium text-[#7a7260] transition-all hover:border-[#3a4838] hover:text-[#ddd6c8]"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#2a3828] px-8 py-4 text-base font-medium text-[#9a8e7a] transition-all hover:border-[#3a4838] hover:text-[#ddd6c8]"
           >
             機能を見る
           </a>
@@ -192,7 +192,7 @@ export default function LandingClient() {
 
         {/* Scroll indicator */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[#4a5245]">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-[#6b7a66]">
             <path d="M10 4v12M4 10l6 6 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
@@ -210,7 +210,7 @@ export default function LandingClient() {
             ].map(({ val, label }) => (
               <div key={label} className="flex flex-col items-center gap-1">
                 <span className="font-display text-xl font-bold text-[#c9a84c]">{val}</span>
-                <span className="text-xs text-[#4a5245]">{label}</span>
+                <span className="text-xs text-[#6b7a66]">{label}</span>
               </div>
             ))}
           </div>
@@ -225,7 +225,7 @@ export default function LandingClient() {
             <h2 className="font-display text-4xl font-bold text-[#ddd6c8] sm:text-5xl">
               ポーカーに特化した、<br className="hidden sm:block" />すべての機能。
             </h2>
-            <p className="mt-4 text-[#7a7260]">一般SNSでは得られない、ポーカー専用の体験を。</p>
+            <p className="mt-4 text-[#9a8e7a]">一般SNSでは得られない、ポーカー専用の体験を。</p>
           </FadeSection>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -347,7 +347,7 @@ export default function LandingClient() {
                 <h2 className="mb-4 font-display text-3xl font-bold text-[#ddd6c8] sm:text-4xl">
                   上位1%の<br />プレイヤーへ
                 </h2>
-                <p className="mb-8 text-sm leading-relaxed text-[#7a7260]">
+                <p className="mb-8 text-sm leading-relaxed text-[#9a8e7a]">
                   本気で強くなりたいプレイヤーのためのプレミアムプランで、制限なくコミュニティを活用しよう。
                 </p>
                 <ul className="mb-10 space-y-3.5">
@@ -397,7 +397,7 @@ export default function LandingClient() {
             <h2 className="font-display text-4xl font-bold text-[#ddd6c8] sm:text-5xl">
               アフィリエイトパートナー
             </h2>
-            <p className="mt-4 max-w-xl mx-auto text-[#7a7260]">
+            <p className="mt-4 max-w-xl mx-auto text-[#9a8e7a]">
               ポーカー関連サービスとの連携により、ユーザーに価値ある情報を提供します。
               パートナー企業はブランド力を持つポーカーコミュニティにリーチできます。
             </p>
@@ -414,7 +414,7 @@ export default function LandingClient() {
                 <div className="rounded-2xl border border-[#1f2a1e] bg-[#131a14] p-6 text-center transition-all hover:border-[#c9a84c]/30">
                   <div className="mb-3 text-3xl text-[#c9a84c]/60">{icon}</div>
                   <div className="mb-1 font-semibold text-[#ddd6c8]">{label}</div>
-                  <div className="text-xs text-[#4a5245]">{desc}</div>
+                  <div className="text-xs text-[#6b7a66]">{desc}</div>
                 </div>
               </FadeSection>
             ))}
@@ -425,7 +425,7 @@ export default function LandingClient() {
               <h3 className="mb-3 font-display text-2xl font-semibold text-[#ddd6c8]">
                 パートナーシップのメリット
               </h3>
-              <div className="mb-8 grid gap-4 text-sm text-[#7a7260] sm:grid-cols-3">
+              <div className="mb-8 grid gap-4 text-sm text-[#9a8e7a] sm:grid-cols-3">
                 <div className="rounded-xl border border-[#1f2a1e] p-4">
                   <div className="mb-2 font-semibold text-[#c9a84c]">ターゲット精度</div>
                   ポーカーに特化したユーザーベース。趣味・熱量の高い層に直接リーチ。
@@ -467,7 +467,7 @@ export default function LandingClient() {
               あなたのポーカーライフを、<br className="hidden sm:block" />
               次のステージへ。
             </h2>
-            <p className="mb-10 text-[#7a7260]">
+            <p className="mb-10 text-[#9a8e7a]">
               今すぐ無料で参加。ハンドを共有し、議論し、強くなろう。
             </p>
             <Link
@@ -479,7 +479,7 @@ export default function LandingClient() {
                 <path d="M3 9h12M9 3.5l5.5 5.5L9 14.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
-            <p className="mt-4 text-xs text-[#4a5245]">クレジットカード不要 · 登録30秒</p>
+            <p className="mt-4 text-xs text-[#6b7a66]">クレジットカード不要 · 登録30秒</p>
           </div>
         </FadeSection>
       </section>
@@ -494,14 +494,14 @@ export default function LandingClient() {
               </div>
               <span className="font-display text-base font-semibold text-[#ddd6c8]">Poker SNS</span>
             </div>
-            <div className="flex flex-wrap justify-center gap-6 text-sm text-[#4a5245]">
-              <Link href="/terms" className="transition-colors hover:text-[#7a7260]">利用規約</Link>
-              <Link href="/privacy" className="transition-colors hover:text-[#7a7260]">プライバシーポリシー</Link>
-              <Link href="/partners" className="transition-colors hover:text-[#7a7260]">パートナー</Link>
-              <a href="mailto:contact@pokersns.jp" className="transition-colors hover:text-[#7a7260]">お問い合わせ</a>
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-[#6b7a66]">
+              <Link href="/terms" className="transition-colors hover:text-[#9a8e7a]">利用規約</Link>
+              <Link href="/privacy" className="transition-colors hover:text-[#9a8e7a]">プライバシーポリシー</Link>
+              <Link href="/partners" className="transition-colors hover:text-[#9a8e7a]">パートナー</Link>
+              <a href="mailto:contact@pokersns.jp" className="transition-colors hover:text-[#9a8e7a]">お問い合わせ</a>
             </div>
           </div>
-          <div className="border-t border-[#1f2a1e] pt-6 text-center text-xs text-[#4a5245]">
+          <div className="border-t border-[#1f2a1e] pt-6 text-center text-xs text-[#6b7a66]">
             &copy; {new Date().getFullYear()} Poker SNS. All rights reserved.
           </div>
         </div>

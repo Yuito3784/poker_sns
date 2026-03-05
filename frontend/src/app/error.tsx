@@ -17,7 +17,7 @@ export default function Error({
       >
         500
       </h1>
-      <p className="mb-6 text-lg" style={{ color: "#7a7260" }}>
+      <p className="mb-6 text-lg" style={{ color: "#9a8e7a" }}>
         サーバーエラーが発生しました
       </p>
       <button

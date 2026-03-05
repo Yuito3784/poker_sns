@@ -79,17 +79,17 @@ export default function AffiliateCard({ partner, referrer = "partners_page", com
           )}
           <div>
             <h3 className="font-semibold" style={{ color: "#ddd6c8" }}>{partner.name}</h3>
-            <span className="text-xs" style={{ color: "#4a5245" }}>{categoryLabel[partner.category]}</span>
+            <span className="text-xs" style={{ color: "#6b7a66" }}>{categoryLabel[partner.category]}</span>
           </div>
         </div>
         <span
           className="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider"
-          style={{ background: "#161b14", color: "#4a5245" }}
+          style={{ background: "#1f2a1e", color: "#6b7a66" }}
         >
           提携
         </span>
       </div>
-      <p className="mb-2 text-sm line-clamp-2" style={{ color: "#7a7260" }}>{partner.description}</p>
+      <p className="mb-2 text-sm line-clamp-2" style={{ color: "#9a8e7a" }}>{partner.description}</p>
       {partner.bonus && (
         <div
           className="mb-3 rounded-lg px-3 py-2"

@@ -71,12 +71,12 @@ export default function PostItem({
     <li
       className="group rounded-lg transition-all"
       style={{
-        background: "#131a14",
-        border: "1px solid #1f2a1e",
+        background: "#151c15",
+        border: "1px solid #2a3828",
         boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
       }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLLIElement).style.borderColor = "#2a3828"; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLLIElement).style.borderColor = "#1f2a1e"; }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLLIElement).style.borderColor = "#3a4a38"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLLIElement).style.borderColor = "#2a3828"; }}
     >
       <div className="px-4 pt-4 pb-2">
         {/* Header */}
@@ -119,7 +119,7 @@ export default function PostItem({
                 {(post.author.subscriptionStatus === "active" || post.author.subscriptionStatus === "canceled") && (
                   <PremiumBadge />
                 )}
-                <span className="text-xs" style={{ color: "#4a5245" }}>
+                <span className="text-xs" style={{ color: "#6b7a66" }}>
                   @{post.author.username}
                 </span>
               </div>
@@ -132,7 +132,7 @@ export default function PostItem({
                   post.isFollowingAuthor
                     ? {
                         border: "1px solid #2a3828",
-                        color: "#7a7260",
+                        color: "#9a8e7a",
                         background: "transparent",
                         letterSpacing: "0.04em",
                       }
@@ -149,7 +149,7 @@ export default function PostItem({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: "#4a5245" }}>
+            <span className="text-xs" style={{ color: "#6b7a66" }}>
               {formatRelativeTime(post.createdAt)}
             </span>
             {currentUser && post.author.id === currentUser.id && (
@@ -157,9 +157,9 @@ export default function PostItem({
                 <button
                   onClick={() => setPostMenuOpen(!postMenuOpen)}
                   className="rounded p-1 transition-colors"
-                  style={{ color: "#4a5245" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7a7260"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}
+                  style={{ color: "#6b7a66" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}
                   aria-label="メニュー"
                 >
                   <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -202,11 +202,11 @@ export default function PostItem({
                 border: "1px solid #1f2a1e",
               }}
             >
-              <span className="font-semibold" style={{ color: "#7a7260" }}>
+              <span className="font-semibold" style={{ color: "#9a8e7a" }}>
                 {post.parentPost.author.name}{" "}
-                <span style={{ color: "#4a5245" }}>@{post.parentPost.author.username}</span>
+                <span style={{ color: "#6b7a66" }}>@{post.parentPost.author.username}</span>
               </span>
-              <p className="mt-1 line-clamp-2" style={{ color: "#7a7260" }}>
+              <p className="mt-1 line-clamp-2" style={{ color: "#9a8e7a" }}>
                 {post.parentPost.content}
               </p>
             </div>
@@ -264,7 +264,7 @@ export default function PostItem({
           className={`group flex items-center gap-1 rounded px-2 py-1.5 text-xs transition-colors disabled:opacity-50 ${
             post.isLiked ? "text-red-400" : "hover:text-red-400"
           }`}
-          style={{ color: post.isLiked ? "#f06060" : "#4a5245" }}
+          style={{ color: post.isLiked ? "#f06060" : "#6b7a66" }}
           aria-label="いいね"
         >
           <svg
@@ -287,7 +287,7 @@ export default function PostItem({
             onSetReplyContent("");
           }}
           className="group flex items-center gap-1 rounded px-2 py-1.5 text-xs transition-colors"
-          style={{ color: replyingTo === post.id ? "#c9a84c" : "#4a5245" }}
+          style={{ color: replyingTo === post.id ? "#c9a84c" : "#6b7a66" }}
           aria-label="返信"
         >
           <svg className="h-[17px] w-[17px] transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -301,7 +301,7 @@ export default function PostItem({
           onClick={(e) => { e.stopPropagation(); onToggleRepost(post.id); }}
           disabled={actionLoading === `repost-${post.id}`}
           className="group flex items-center gap-1 rounded px-2 py-1.5 text-xs transition-colors disabled:opacity-50"
-          style={{ color: post.isReposted ? "#c9a84c" : "#4a5245" }}
+          style={{ color: post.isReposted ? "#c9a84c" : "#6b7a66" }}
           aria-label="リポスト"
         >
           <svg className="h-[17px] w-[17px] transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -315,7 +315,7 @@ export default function PostItem({
           onClick={(e) => { e.stopPropagation(); onToggleBookmark(post.id); }}
           disabled={actionLoading === `bookmark-${post.id}`}
           className="group rounded px-2 py-1.5 text-xs transition-colors disabled:opacity-50"
-          style={{ color: post.isBookmarked ? "#c9a84c" : "#4a5245" }}
+          style={{ color: post.isBookmarked ? "#c9a84c" : "#6b7a66" }}
           aria-label="ブックマーク"
         >
           <svg className="h-[17px] w-[17px] transition-transform group-hover:scale-110" fill={post.isBookmarked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -328,7 +328,7 @@ export default function PostItem({
           href={`/?quote=${post.id}`}
           onClick={(e) => e.stopPropagation()}
           className="group rounded px-2 py-1.5 transition-colors"
-          style={{ color: "#4a5245" }}
+          style={{ color: "#6b7a66" }}
           aria-label="引用ポスト"
           title="引用ポスト"
         >
@@ -350,7 +350,7 @@ export default function PostItem({
               analytics.shareClick("native");
             }}
             className="group rounded px-2 py-1.5 transition-colors hover:text-[#c9a84c]"
-            style={{ color: "#4a5245" }}
+            style={{ color: "#6b7a66" }}
             aria-label="シェア"
             title="シェア"
           >
@@ -373,7 +373,7 @@ export default function PostItem({
             }).catch(() => {});
           }}
           className="group rounded px-2 py-1.5 transition-colors hover:text-[#c9a84c]"
-          style={{ color: "#4a5245" }}
+          style={{ color: "#6b7a66" }}
           aria-label="リンクをコピー"
           title="リンクをコピー"
         >
@@ -401,7 +401,7 @@ export default function PostItem({
           rel="noopener noreferrer"
           onClick={(e) => { e.stopPropagation(); analytics.shareClick("x"); }}
           className="group rounded px-2 py-1.5 transition-colors hover:text-[#ddd6c8]"
-          style={{ color: "#4a5245" }}
+          style={{ color: "#6b7a66" }}
           aria-label="Xでシェア"
           title="Xでシェア"
         >
@@ -422,7 +422,7 @@ export default function PostItem({
           rel="noopener noreferrer"
           onClick={(e) => { e.stopPropagation(); analytics.shareClick("line"); }}
           className="group rounded px-2 py-1.5 transition-colors hover:text-[#00b900]"
-          style={{ color: "#4a5245" }}
+          style={{ color: "#6b7a66" }}
           aria-label="LINEでシェア"
           title="LINEでシェア"
         >
@@ -443,7 +443,7 @@ export default function PostItem({
           rel="noopener noreferrer"
           onClick={(e) => { e.stopPropagation(); analytics.shareClick("discord"); }}
           className="group rounded px-2 py-1.5 transition-colors hover:text-[#5865F2]"
-          style={{ color: "#4a5245" }}
+          style={{ color: "#6b7a66" }}
           aria-label="Discordでシェア"
           title="Discordでシェア"
         >
@@ -478,7 +478,7 @@ export default function PostItem({
             <button
               onClick={() => { onSetReplyingTo(null); onSetReplyContent(""); }}
               className="rounded px-3 py-1.5 text-xs transition-colors"
-              style={{ color: "#7a7260" }}
+              style={{ color: "#9a8e7a" }}
             >
               キャンセル
             </button>
@@ -513,14 +513,14 @@ export default function PostItem({
             <h3 className="mb-2 text-base font-semibold" style={{ color: "#ddd6c8" }}>
               投稿を削除しますか？
             </h3>
-            <p className="mb-4 text-sm" style={{ color: "#7a7260" }}>
+            <p className="mb-4 text-sm" style={{ color: "#9a8e7a" }}>
               この操作は取り消せません。
             </p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="rounded px-4 py-2 text-sm font-medium transition-colors"
-                style={{ border: "1px solid #2a3828", color: "#7a7260" }}
+                style={{ border: "1px solid #2a3828", color: "#9a8e7a" }}
               >
                 キャンセル
               </button>
