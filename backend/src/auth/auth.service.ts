@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomBytes, createHash } from 'crypto';
+import * as dns from 'dns';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -135,11 +136,11 @@ export class AuthService {
       data: { token, userId, expiresAt },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
     const verifyUrl = `${frontendUrl}/verify-email?token=${token}`;
 
     try {
-      const transporter = this.createMailTransporter();
+      const transporter = await this.createMailTransporterAsync();
       await transporter.sendMail({
         from: process.env.SMTP_FROM || 'noreply@pokersns.com',
         to: email,
@@ -246,11 +247,11 @@ export class AuthService {
     });
 
     // Send email
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
     const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
     try {
-      const transporter = this.createMailTransporter();
+      const transporter = await this.createMailTransporterAsync();
       await transporter.sendMail({
         from: process.env.SMTP_FROM || 'noreply@pokersns.com',
         to: email,
@@ -296,20 +297,45 @@ export class AuthService {
     return { message: 'パスワードがリセットされました。' };
   }
 
-  private createMailTransporter() {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'localhost',
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: process.env.SMTP_SECURE === 'true',
-      connectionTimeout: 15000,
-      greetingTimeout: 10000,
+  /**
+   * Railway 等で IPv6 が選ばれると ENETUNREACH になるため、リモート SMTP ホストは IPv4 に解決してから接続する。
+   */
+  private async createMailTransporterAsync(): Promise<nodemailer.Transporter> {
+    const host = process.env.SMTP_HOST || 'localhost';
+    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const secure = process.env.SMTP_SECURE === 'true';
+    const isLocal = host === 'localhost' || host === 'mailhog' || host.startsWith('127.') || /^\[?[\d.]+\]?$/.test(host);
+
+    let connectHost = host;
+    let tlsServername: string | undefined;
+
+    if (!isLocal && /[a-zA-Z]/.test(host)) {
+      try {
+        const resolved = await dns.promises.lookup(host, { family: 4 });
+        connectHost = resolved.address;
+        tlsServername = host;
+      } catch {
+        // 解決に失敗したらそのまま host を使用
+      }
+    }
+
+    const options: Record<string, unknown> = {
+      host: connectHost,
+      port,
+      secure,
+      connectionTimeout: 10000,
+      greetingTimeout: 8000,
       auth: process.env.SMTP_USER
         ? {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           }
         : undefined,
-    });
+    };
+    if (tlsServername) {
+      options.tls = { servername: tlsServername };
+    }
+    return nodemailer.createTransport(options as nodemailer.TransportOptions);
   }
 
   private async generateRefreshToken(userId: string): Promise<string> {
@@ -504,7 +530,7 @@ export class AuthService {
     const magicUrl = `${process.env.API_URL || 'http://localhost:4000'}/auth/magic-link/verify?token=${token}`;
 
     try {
-      const transporter = this.createMailTransporter();
+      const transporter = await this.createMailTransporterAsync();
       await transporter.sendMail({
         from: process.env.SMTP_FROM || 'noreply@pokersns.com',
         to: email,
