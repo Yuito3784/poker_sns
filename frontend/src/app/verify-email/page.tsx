@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { API_BASE } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -12,6 +12,8 @@ function VerifyEmailContent() {
   const verifyToken = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
+  // 同一トークンで2回リクエストしない（成功時の setAuth で effect 再実行＆Strict Mode 二重実行を防ぐ）
+  const attemptedTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!verifyToken) {
@@ -19,6 +21,10 @@ function VerifyEmailContent() {
       setMessage("無効なリンクです。");
       return;
     }
+    if (attemptedTokenRef.current === verifyToken) {
+      return;
+    }
+    attemptedTokenRef.current = verifyToken;
 
     fetch(`${API_BASE}/auth/verify-email`, {
       method: "POST",
@@ -30,11 +36,10 @@ function VerifyEmailContent() {
         if (res.ok) {
           setStatus("success");
           setMessage(data.message || "メールアドレスが確認されました。");
-          // Sync AuthContext
+          // Sync AuthContext（auth は deps に含めず、成功時の setAuth で effect が再実行されないようにする）
           if (auth) {
             try {
-              const updatedUser = { ...auth.user, emailVerified: true };
-              setAuth(auth.token, updatedUser);
+              setAuth(auth.token, { ...auth.user, emailVerified: true });
             } catch { /* ignore */ }
           }
         } else {
@@ -46,7 +51,9 @@ function VerifyEmailContent() {
         setStatus("error");
         setMessage("エラーが発生しました。");
       });
-  }, [verifyToken, auth, setAuth]);
+    // auth を deps に入れると成功時の setAuth で effect が再実行され、2回目でトークン消費済みエラーになるため意図的に除外
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verifyToken, setAuth]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0d1009] text-[#ddd6c8]">
