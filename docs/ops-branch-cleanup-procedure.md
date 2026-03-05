@@ -1,122 +1,117 @@
-# Operations: `climpire/*` ブランチ棚卸し・クリーンアップ手順書
+# Operations: climpire/ ブランチ棚卸し・クリーンアップ手順書
 
-**作成日**: 2026-03-05
-**担当**: Operations (白上)
-**ステータス**: CEO承認待ち
-
----
-
-## 1. 現状分析
-
-### 問題
-`climpire/*` プレフィックスのブランチが **19本** ローカルに存在し、`feature/*` / `fix/*` の命名規則（`.cursor/skills/git-workflow/SKILL.md`）に違反している。
-
-### 影響
-- git-workflow ルール違反がログに残存（`Merge climpire task ...` 形式のマージコミット）
-- ブランチ一覧が肥大化し、運用上の可視性低下
-- CI/CD トリガーが `feature/*` / `fix/*` に限定されている場合、これらブランチは対象外
+**作成日:** 2026-03-05
+**担当:** Operations (星街/音乃瀬)
+**ステータス:** CEO確認待ち
 
 ---
 
-## 2. `climpire/*` ブランチ一覧（19本）
+## 1. 現状把握
 
-| # | ブランチ名 | 最新コミット | 分類 |
-|---|-----------|-------------|------|
-| 1 | `climpire/10d97a6d` | `docs(qa): ブランチリネーム対応のQA検証レポート` | docs |
-| 2 | `climpire/1343a3e6` | `chore: CLAUDE.md, package-lock...` | chore |
-| 3 | `climpire/13d019fd` | `fix(git): pre-pushフックによるブランチ命名規則の強制` | fix |
-| 4 | `climpire/2396a0dc` | `docs(qa): dark theme unification audit report` | docs |
-| 5 | `climpire/2f6fddae` | `chore(devsecops): CI/CD branch filter audit` | chore |
-| 6 | `climpire/368938ba` | `docs(ops): climpire/ブランチ棚卸し手順書` | docs |
-| 7 | `climpire/40e3703c` | `fix(ui): 全ページダークテーマ統一` | fix |
-| 8 | `climpire/55624ccc` | `fix(ui): 全画面ダークテーマ統一` | fix |
-| 9 | `climpire/75f8fe41` | `chore: CLAUDE.md, package-lock...` | chore |
-| 10 | `climpire/77f33030` | `docs(design): ブランチリネーム対応表にUI関連分類` | docs |
-| 11 | `climpire/80f38ed7` | `chore: CLAUDE.md, package-lock...` | **現在の作業ブランチ** |
-| 12 | `climpire/a5509a42` | `docs: add DevSecOps security audit report` | docs |
-| 13 | `climpire/a9a0e596` | `docs(design): Git Workflow チートシート` | docs |
-| 14 | `climpire/ae22cfbb` | `fix(ui): 全画面ダークテーマ統一` | fix |
-| 15 | `climpire/c2877e3a` | `docs(qa): ブランチ命名規則違反の監査レポート` | docs |
-| 16 | `climpire/cca7a17c` | `Merge climpire task fd2df0cb` | merge |
-| 17 | `climpire/e6cca97e` | `docs(design): ブランチ命名規則のビジュアルフォーマット仕様` | docs |
-| 18 | `climpire/f7a1e707` | `docs(planning): climpire/ブランチ問題の調査レポート` | docs |
-| 19 | `climpire/ff4eedd9` | `docs(ops): ダークテーマ統一のステージング確認チェックリスト` | docs |
+### 対象ブランチ一覧 (ローカルのみ、リモートには未push)
 
----
+| # | 旧ブランチ名 | ahead(main) | 固有コミット | 推奨リネーム先 | 備考 |
+|---|-------------|-------------|-------------|---------------|------|
+| 1 | `climpire/10d97a6d` | 12 | `docs(qa): ブランチリネーム対応のQA検証レポート` | `docs/qa-branch-rename-report` | QA検証レポート追加 |
+| 2 | `climpire/13d019fd` | 11 | (共通コミットのみ) | 削除候補 | main対比で固有変更なし |
+| 3 | `climpire/368938ba` | 11 | (共通コミットのみ) | 削除候補 | 現在のworktreeブランチ |
+| 4 | `climpire/40e3703c` | 11 | `fix(ui): 全ページダークテーマ統一` | `fix/dark-theme-remaining-pages` | UI修正 |
+| 5 | `climpire/55624ccc` | 11 | (共通コミットのみ) | 削除候補 | main対比で固有変更なし |
+| 6 | `climpire/77f33030` | 12 | `docs(design): ブランチリネーム対応表にUI関連分類追加` | `docs/design-branch-rename-classification` | Design成果物 |
+| 7 | `climpire/ae22cfbb` | 11 | `fix(ui): 全画面ダークテーマ統一 - 白背景ページを修正` | `fix/dark-theme-white-bg-fix` | UI修正(#4と類似) |
+| 8 | `climpire/cca7a17c` | 10 | (共通コミットのみ) | 削除候補 | main対比で固有変更なし |
+| 9 | `climpire/f7a1e707` | 11 | (共通コミットのみ) | 削除候補 | 現タスク用ブランチ |
 
-## 3. クリーンアップ手順チェックリスト
+### 重要な事実
 
-### Phase 1: 事前確認（破壊的操作の前に必ず実施）
-
-- [ ] 各 `climpire/*` ブランチの変更が `main` または `dev` にマージ済みか確認
-  ```bash
-  for b in $(git branch --list 'climpire/*' | sed 's/^[* ]*//'); do
-    merged=$(git branch --contains "$b" -a 2>/dev/null | grep -E '(main|dev)' | head -1)
-    echo "$b -> ${merged:-NOT_MERGED}"
-  done
-  ```
-- [ ] 未マージの変更がある場合、必要な成果物を `fix/branch-cleanup` ブランチにチェリーピック
-- [ ] リモートに `climpire/*` ブランチが push されていないことを確認
-  ```bash
-  git branch -r --list 'origin/climpire/*'
-  ```
-
-### Phase 2: ローカルブランチ削除
-
-- [ ] 現在の作業ブランチ（`climpire/80f38ed7`）の成果物をコミット・push
-- [ ] `dev` ブランチに切り替え
-  ```bash
-  git checkout dev
-  ```
-- [ ] マージ済みの `climpire/*` ブランチを一括削除
-  ```bash
-  git branch --list 'climpire/*' | xargs git branch -d
-  ```
-- [ ] 未マージブランチは `-D`（強制削除）が必要 — CEO承認後に実行
-  ```bash
-  git branch --list 'climpire/*' | xargs git branch -D
-  ```
-
-### Phase 3: リモートクリーンアップ（リモートに存在する場合のみ）
-
-- [ ] リモートの `climpire/*` ブランチを削除
-  ```bash
-  git push origin --delete <branch-name>
-  ```
-- [ ] ローカルのリモート追跡参照をプルーニング
-  ```bash
-  git fetch --prune
-  ```
-
-### Phase 4: 事後検証
-
-- [ ] `git branch -a | grep climpire` で残存ブランチがないことを確認
-- [ ] `git log --oneline -30` でマージ履歴のトレーサビリティを確認
+- **リモートにclimpire/ブランチは存在しない** → リモート削除作業は不要
+- **全ブランチがmain未マージ** → 固有変更のあるブランチは内容精査が必要
+- **固有変更があるブランチ:** #1, #4, #6, #7 の4本
+- **削除候補(固有変更なし):** #2, #3, #5, #8, #9 の5本
 
 ---
 
-## 4. 再発防止策（Operations視点）
+## 2. クリーンアップ手順
 
-### 即時対応
-1. **pre-push フック**: `climpire/13d019fd` ブランチで作成済みの pre-push フックを `dev` にマージし、`feature/*`/`fix/*` 以外のブランチ名での push を拒否する
+### Step 1: 固有変更なしブランチの削除
 
-### 中期対応
-2. **GitHub Branch Protection**: `dev` ブランチの protection rule で、マージ元ブランチ名のパターンを制限（GitHub Actions による自動チェック）
-3. **定期棚卸し**: 月次で不要ブランチの棚卸しを実施、5本以上溜まったらアラート
+```bash
+# 固有変更がないブランチを削除 (ローカルのみ)
+git branch -D climpire/13d019fd
+git branch -D climpire/55624ccc
+git branch -D climpire/cca7a17c
+# climpire/368938ba と climpire/f7a1e707 はworktree使用中のため、worktree削除後に対応
+```
+
+### Step 2: 固有変更ありブランチのリネーム
+
+```bash
+# #1: QA検証レポート
+git branch -m climpire/10d97a6d docs/qa-branch-rename-report
+
+# #4: ダークテーマ修正
+git branch -m climpire/40e3703c fix/dark-theme-remaining-pages
+
+# #6: Design分類追加
+git branch -m climpire/77f33030 docs/design-branch-rename-classification
+
+# #7: ダークテーマ白背景修正 (#4と重複の可能性あり、要確認)
+git branch -m climpire/ae22cfbb fix/dark-theme-white-bg-fix
+```
+
+### Step 3: リネーム後の検証
+
+```bash
+# climpire/ プレフィックスのブランチが残っていないことを確認
+git branch | grep climpire/
+# worktree使用中の2本のみが表示されるはず
+
+# リネーム後のブランチ一覧確認
+git branch | grep -E '^  (fix|feature|docs)/'
+```
+
+### Step 4: worktreeブランチの後処理
+
+worktree作業完了後に以下を実行:
+```bash
+# worktreeの削除
+git worktree remove .climpire-worktrees/368938ba
+git worktree remove .climpire-worktrees/f7a1e707  # パスは要確認
+
+# 残ったブランチの削除
+git branch -D climpire/368938ba
+git branch -D climpire/f7a1e707
+```
 
 ---
 
-## 5. 運用上の注意事項
+## 3. 原因分析
 
-- **作業ブランチ自体の問題**: この手順書作成も `climpire/80f38ed7` 上で行われている（ルール違反）。今後の作業は必ず `fix/branch-naming-convention` 等の正規名称で行うこと
-- **マージコミットメッセージ**: 既存の `Merge climpire task xxx` メッセージはgit historyに残るが、rebase/rewriteは行わない（破壊的操作回避）
-- **ワークツリー**: `.climpire-worktrees/` ディレクトリ内のワークツリーも、ブランチ削除時に orphan にならないよう `git worktree list` で確認してから削除する
+**なぜ `climpire/` プレフィックスが発生したか:**
+
+climpire (Claw Empire) ツールが自動的にworktreeブランチを `climpire/<hash>` 形式で作成している。これはgit-workflow SKILL.mdで定義された `feature/*` / `fix/*` 命名規則に準拠していない。
+
+**再発防止策:**
+
+1. **pre-pushフック導入** (DevSecOps担当): `climpire/` プレフィックスでのpushを拒否
+2. **climpireツール設定の確認**: ブランチ名生成ルールのカスタマイズが可能か調査
+3. **CLAUDE.md への明記**: climpire worktree使用時もブランチ命名規則に従う旨を追記
 
 ---
 
-## 6. CEO承認事項
+## 4. 注意事項・リスク
 
-以下について承認をお願いします:
-1. 未マージの `climpire/*` ブランチの強制削除（`-D`）の許可
-2. pre-push フックの `dev` マージ
-3. クリーンアップ作業の実施タイミング
+| リスク | 影響度 | 対策 |
+|--------|--------|------|
+| worktree使用中ブランチの強制削除 | HIGH | worktree作業完了後に削除する |
+| #4と#7のダークテーマ修正が重複 | MEDIUM | diff比較で内容確認後、片方を採用 |
+| リネーム後のCI/CD影響 | LOW | リモート未pushのためCI影響なし |
+
+---
+
+## 5. CEO確認依頼事項
+
+1. 固有変更なしの5ブランチ(#2,#3,#5,#8,#9)を削除してよいか
+2. 固有変更ありの4ブランチ(#1,#4,#6,#7)のリネーム先名称は適切か
+3. #4と#7のダークテーマ修正の重複をどう扱うか(統合 or 両方残す)
+4. 削除実行のタイミング(即時 or worktree作業全完了後)
