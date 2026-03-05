@@ -44,10 +44,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       errorName = 'UnknownError';
     }
 
-    // Log all errors
-    this.logger.error(
-      `${request.method} ${request.url} → ${status} ${errorName}: ${message}`,
-    );
+    // 想定内の 401（期限切れトークン・未認証）や 400（バリデーション）は WARN にし、重要エラーだけ ERROR で追いやすくする
+    const isExpectedClientError =
+      status === 401 || (status === 400 && errorName === 'BadRequestException');
+    if (isExpectedClientError) {
+      this.logger.warn(
+        `${request.method} ${request.url} → ${status} ${errorName}: ${message}`,
+      );
+    } else {
+      this.logger.error(
+        `${request.method} ${request.url} → ${status} ${errorName}: ${message}`,
+      );
+    }
 
     // Send webhook notification for server errors (5xx) only
     if (status >= 500) {

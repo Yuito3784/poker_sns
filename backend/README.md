@@ -36,11 +36,15 @@ $ npm install
 コンテナ起動後、未適用のマイグレーションがある場合は以下でスキーマを反映してください。
 
 ```bash
-# コンテナ内でマイグレーション適用
-$ docker compose exec backend npx prisma migrate deploy
+# コンテナを新イメージで作り直してから実行（未作成の場合は --force-recreate 不要）
+$ docker compose up -d --force-recreate backend
+# コンテナ内の Prisma 5 を絶対パスで実行
+$ docker compose exec backend /app/node_modules/.bin/prisma migrate deploy
 ```
 
 `RefreshToken` などのテーブルが無いというエラーが出る場合は、上記を実行してください。
+
+**Railway など既存 DB で「type already exists」で失敗する場合**は、リポジトリ直下の [docs/railway-env-vars.md](../docs/railway-env-vars.md) の「既存 DB 向けマイグレーション」を参照し、`migrate resolve` の手順で追加専用マイグレーションのみ適用してください。
 
 ## Compile and run the project
 

@@ -61,6 +61,7 @@ async function bootstrap() {
     }),
   );
 
+  // CORS: dev は dev 用フロント URL のみ、本番は本番ドメインのみ。運用ルールは docs/ENV_CONFIG_SUMMARY.md 参照
   app.enableCors({
     origin: (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:3001').split(',').map((o) => o.trim()),
     credentials: true,

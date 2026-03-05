@@ -2,6 +2,9 @@
 
 Railway の「Suggested Variables」で表示される変数のうち、**バックエンドサービスに設定するもの**を整理しました。
 
+**環境ごとの URL・CORS の運用ルール**は [docs/ENV_CONFIG_SUMMARY.md](./ENV_CONFIG_SUMMARY.md) にまとめています。  
+開発は **dev の Preview URL のみ**使用し、**CORS_ORIGINS は dev 用には dev 用フロント URL のみ**、本番用には本番ドメインのみを許可する運用に固定してください。
+
 ---
 
 ## Prisma / OpenSSL でクラッシュする場合: Dockerfile でビルドする
@@ -52,8 +55,17 @@ Railway のランタイムでは Prisma の OpenSSL 互換性の都合で `prism
    ```
 3. 成功したら Railway のバックエンドは再デプロイ不要で、アプリから DB にアクセスできます。
 
-**マイグレーションが「type already exists」などで失敗した場合（古い init 適用済みの DB）:**  
-1. 失敗したマイグレーションをロールバック扱いにし、2. 重複する init を「適用済み」として記録してから、3. 追加用マイグレーションを適用する:
+### 既存 DB 向けマイグレーション（type already exists など）
+
+既存の DB に古い `init` が入っている場合、**追加専用**のマイグレーションだけを適用する手順です。  
+今後のメンテでも「既存 DB を壊さずにスキーマを足す」ときはこの流れを踏襲してください。
+
+1. **失敗したマイグレーションをロールバック扱いにする**  
+   → `migrate resolve --rolled-back <マイグレーション名>`
+2. **重複する init を「適用済み」として記録する**  
+   → `migrate resolve --applied <マイグレーション名>`
+3. **追加のみのマイグレーションを適用する**  
+   → `migrate deploy`
 
 ```bash
 cd backend
@@ -64,6 +76,8 @@ DATABASE_URL="postgresql://..." npx prisma migrate resolve --applied 20260218000
 # 3. 追加のみのマイグレーションを適用
 DATABASE_URL="postgresql://..." npx prisma migrate deploy
 ```
+
+※ 追加専用マイグレーションの例: `20260304000000_add_missing_after_old_init`（`migrations/` 内）。
 
 ---
 
