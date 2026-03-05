@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomBytes, createHash } from 'crypto';
@@ -18,6 +19,8 @@ type OAuthSessionData =
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -148,11 +151,16 @@ export class AuthService {
           <p>このメールに心当たりがない場合は無視してください。</p>
         `,
       });
-    } catch {
-      console.warn('Failed to send verification email');
+      return { message: '確認メールを送信しました。' };
+    } catch (err) {
+      this.logger.warn('Verification email send failed (SMTP may be unset)', err instanceof Error ? err.message : err);
+      this.logger.log(`[DEV] 認証リンク（SMTP未設定時はこのURLをブラウザで開く）: ${verifyUrl}`);
+      const isDev = process.env.NODE_ENV !== 'production';
+      if (isDev) {
+        return { message: 'メール送信に失敗しました（SMTP未設定）。下記リンクで認証できます。', verificationLink: verifyUrl };
+      }
+      return { message: 'メール送信に失敗しました。しばらく経ってから再送信してください。' };
     }
-
-    return { message: '確認メールを送信しました。' };
   }
 
   async verifyEmail(token: string) {
