@@ -46,6 +46,8 @@ $ docker compose exec backend /app/node_modules/.bin/prisma migrate deploy
 
 **Railway など既存 DB で「type already exists」で失敗する場合**は、リポジトリ直下の [docs/railway-env-vars.md](../docs/railway-env-vars.md) の「既存 DB 向けマイグレーション」を参照し、`migrate resolve` の手順で追加専用マイグレーションのみ適用してください。
 
+**ローカルでメール認証メールが届かない場合:** SMTP 未設定だとメールは送信されません。開発時は画面上の「再送信」を押すと、API が認証リンクを返すためそのまま認証ページへ飛び、メールなしで認証完了できます。バックエンドログにも `[DEV] 認証リンク` が出力されます。
+
 ## Compile and run the project
 
 ```bash

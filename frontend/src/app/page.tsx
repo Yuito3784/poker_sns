@@ -1687,7 +1687,7 @@ function HomeContent() {
               </button>
             </nav>
             <button
-              onClick={() => setShowComposeModal(true)}
+              onClick={() => { if (currentUser && !currentUser.emailVerified) { showToast("メールアドレスの認証が必要です", "error"); return; } setShowComposeModal(true); }}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all"
               style={{ background: "#c9a84c", color: "#0d1009" }}
             >
@@ -1755,7 +1755,7 @@ function HomeContent() {
           {currentUser && !currentUser.emailVerified && (
             <div className="flex items-center justify-between border-b px-4 py-2.5" style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}>
               <p className="text-xs" style={{ color: "#c9a84c" }}>メールアドレスが未認証です。投稿するには認証が必要です。</p>
-              <button onClick={async () => { try { await fetchWithAuth(`${API_BASE}/auth/resend-verification`, { method: "POST" }); alert("確認メールを再送信しました"); } catch { /* ignore */ } }} className="ml-2 flex-shrink-0 rounded px-3 py-1 text-xs font-semibold" style={{ background: "#c9a84c", color: "#0d1009" }}>再送信</button>
+              <button onClick={async () => { try { const res = await fetchWithAuth(`${API_BASE}/auth/resend-verification`, { method: "POST" }); const data = await res.json().catch(() => ({})); if (data.verificationLink) { if (typeof window !== "undefined") window.location.href = data.verificationLink; return; } if (!res.ok) { showToast(data.message ?? "再送信に失敗しました", "error"); return; } showToast("確認メールを再送信しました"); } catch { showToast("再送信に失敗しました。通信またはログイン状態を確認してください。", "error"); } }} className="ml-2 flex-shrink-0 rounded px-3 py-1 text-xs font-semibold" style={{ background: "#c9a84c", color: "#0d1009" }}>再送信</button>
             </div>
           )}
           {/* past_due payment warning banner */}
@@ -1771,7 +1771,7 @@ function HomeContent() {
           <div
             className="mx-3 mt-3 cursor-pointer rounded-lg px-4 py-3.5 transition-all"
             style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
-            onClick={() => setShowComposeModal(true)}
+            onClick={() => { if (currentUser && !currentUser.emailVerified) { showToast("メールアドレスの認証が必要です", "error"); return; } setShowComposeModal(true); }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(201,168,76,0.3)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#1f2a1e"; }}
           >
@@ -1964,7 +1964,7 @@ function HomeContent() {
 
       {/* Mobile FAB */}
       <button
-        onClick={() => setShowComposeModal(true)}
+        onClick={() => { if (currentUser && !currentUser.emailVerified) { showToast("メールアドレスの認証が必要です", "error"); return; } setShowComposeModal(true); }}
         className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full transition-all md:hidden"
         style={{ background: "#c9a84c", color: "#0d1009", boxShadow: "0 4px 20px rgba(201,168,76,0.35)" }}
       >
