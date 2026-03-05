@@ -266,6 +266,28 @@ export class SalonsService {
     }
   }
 
+  /** Handle Stripe webhook for salon subscriptions */
+  async handleWebhook(rawBody: Buffer, signature: string) {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new BadRequestException('Webhook secret not configured');
+    }
+
+    let event: Stripe.Event;
+    try {
+      event = this.getStripe().webhooks.constructEvent(rawBody, signature, webhookSecret);
+    } catch {
+      throw new BadRequestException('Invalid webhook signature');
+    }
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      await this.handleCheckoutCompleted(session);
+    }
+
+    return { received: true };
+  }
+
   /** Get salons owned by user */
   async getOwnedSalons(userId: string) {
     return this.prisma.salon.findMany({

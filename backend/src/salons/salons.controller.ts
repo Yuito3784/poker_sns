@@ -2,13 +2,16 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
+  HttpCode,
   Param,
   Post,
   Query,
+  RawBody,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SalonsService } from './salons.service';
 
@@ -92,5 +95,15 @@ export class SalonsController {
     @Body() dto: { content: string; imageUrl?: string },
   ) {
     return this.salonsService.createSalonPost(salonId, req.user.userId, dto);
+  }
+
+  @Post('webhook')
+  @SkipThrottle()
+  @HttpCode(200)
+  async handleWebhook(
+    @RawBody() rawBody: Buffer,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    return this.salonsService.handleWebhook(rawBody, signature);
   }
 }

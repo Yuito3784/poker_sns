@@ -80,7 +80,7 @@ export class TippingService {
     const tip = await this.prisma.tip.findUnique({
       where: { stripePaymentId },
     });
-    if (!tip) return;
+    if (!tip || tip.status === 'completed') return;
 
     await this.prisma.tip.update({
       where: { id: tip.id },
