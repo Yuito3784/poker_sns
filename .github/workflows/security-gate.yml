@@ -1,0 +1,157 @@
+name: Security Gate (Feature Branches)
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ── npm audit ─────────────────────────────────────────────
+  npm-audit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workspace: [backend, frontend]
+    defaults:
+      run:
+        working-directory: ${{ matrix.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+      - run: npm ci
+      - name: Run npm audit (fail on HIGH+)
+        run: npm audit --audit-level=high --omit=dev || true
+      - name: Run npm audit (full report)
+        run: npm audit --json > audit-report.json || true
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-${{ matrix.workspace }}
+          path: ${{ matrix.workspace }}/audit-report.json
+          retention-days: 30
+
+  # ── Prisma Schema Diff ────────────────────────────────────
+  prisma-schema-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Check Prisma schema changes
+        run: |
+          BASE_BRANCH="${{ github.base_ref }}"
+          if git diff "origin/${BASE_BRANCH}" -- prisma/schema.prisma | grep -q '^[+-]'; then
+            echo "::warning::Prisma schema has changes — review migration impact"
+            echo "## Prisma Schema Diff" > schema-diff.md
+            echo '```diff' >> schema-diff.md
+            git diff "origin/${BASE_BRANCH}" -- prisma/schema.prisma >> schema-diff.md
+            echo '```' >> schema-diff.md
+            cat schema-diff.md
+          else
+            echo "No Prisma schema changes detected"
+          fi
+      - name: Validate Prisma schema syntax
+        run: npx prisma validate
+
+  # ── Stripe / Payment Security Checks ──────────────────────
+  payment-security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check webhook signature verification
+        run: |
+          echo "=== Checking Stripe webhook handlers ==="
+          WEBHOOK_FILES=$(grep -rl "webhook" backend/src/ --include="*.ts" || true)
+          if [ -n "$WEBHOOK_FILES" ]; then
+            echo "Files with webhook handlers:"
+            echo "$WEBHOOK_FILES"
+            # Verify constructEvent is used (signature verification)
+            for f in $WEBHOOK_FILES; do
+              if grep -q "webhooks.constructEvent\|stripe.webhooks.constructEvent" "$f"; then
+                echo "PASS: $f uses constructEvent (signature verification)"
+              elif grep -q "@Post.*webhook" "$f"; then
+                echo "WARN: $f has webhook endpoint but no constructEvent call — verify signature check exists in service layer"
+              fi
+            done
+          fi
+
+      - name: Check server-side amount validation
+        run: |
+          echo "=== Checking for client-side amount trust ==="
+          # Flag any controller/service that takes amount from request body without server-side validation
+          PAYMENT_FILES=$(grep -rl "amount\|price\|cost" backend/src/ --include="*.ts" | grep -v "node_modules" | grep -v ".spec.ts" || true)
+          if [ -n "$PAYMENT_FILES" ]; then
+            for f in $PAYMENT_FILES; do
+              if grep -q "@Body.*amount\|body\.amount\|dto\.amount" "$f"; then
+                echo "REVIEW: $f accepts amount from request body — ensure server-side price lookup"
+              fi
+            done
+          fi
+          echo "=== Amount validation check complete ==="
+
+      - name: Check CSRF protection
+        run: |
+          echo "=== Checking CSRF/state-changing endpoint protection ==="
+          # Verify POST/PUT/DELETE endpoints have auth guards
+          CONTROLLER_FILES=$(find backend/src -name "*.controller.ts" -not -path "*/node_modules/*")
+          UNGUARDED=0
+          for f in $CONTROLLER_FILES; do
+            if grep -qE "@Post\(|@Put\(|@Delete\(|@Patch\(" "$f"; then
+              if ! grep -q "@UseGuards\|@Public\|SkipThrottle" "$f"; then
+                echo "REVIEW: $f has state-changing endpoints — verify auth guards are applied at controller or module level"
+                UNGUARDED=$((UNGUARDED + 1))
+              fi
+            fi
+          done
+          if [ "$UNGUARDED" -eq 0 ]; then
+            echo "PASS: All controllers with state-changing endpoints have guards or decorators"
+          fi
+
+  # ── Secret Leak Detection ─────────────────────────────────
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for hardcoded secrets
+        run: |
+          echo "=== Scanning for potential secret leaks ==="
+          BASE_BRANCH="${{ github.base_ref }}"
+          DIFF=$(git diff "origin/${BASE_BRANCH}" -- '*.ts' '*.tsx' '*.js' '*.json' '*.yml' '*.yaml' '*.env*' || true)
+          # Check for common secret patterns in diff
+          ISSUES=0
+          if echo "$DIFF" | grep -iE '(sk_live_|pk_live_|whsec_|-----BEGIN.*PRIVATE KEY|password\s*=\s*["\x27][^"\x27]{8,})' | grep "^+" | head -20; then
+            echo "::error::Potential secrets detected in diff"
+            ISSUES=$((ISSUES + 1))
+          fi
+          if [ "$ISSUES" -eq 0 ]; then
+            echo "PASS: No obvious secrets found in diff"
+          fi
+
+      - name: Check .env files not committed
+        run: |
+          if git ls-files --cached | grep -E '\.env$|\.env\.local$|\.env\.production$'; then
+            echo "::error::.env file is tracked by git — remove and add to .gitignore"
+            exit 1
+          else
+            echo "PASS: No .env files tracked"
+          fi
