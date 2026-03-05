@@ -19,6 +19,8 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends libssl3 ca-c
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
 RUN npm ci --omit=dev
+# Prisma CLI を 5.x で入れておく（migrate deploy 用。devDependency なので ci --omit=dev では入らない）
+RUN npm install prisma@5.22.0 --no-save --ignore-scripts
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
