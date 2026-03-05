@@ -145,9 +145,7 @@ export class PaidContentService {
   }
 
   /** Confirm purchase after payment */
-  async confirmPurchase(stripePaymentId: string) {
-    // Extract metadata from Stripe
-    const pi = await this.getStripe().paymentIntents.retrieve(stripePaymentId);
+  async confirmPurchase(pi: { id: string; metadata: Record<string, string> }) {
     if (pi.metadata?.type !== 'paid_content') return;
 
     const { buyerId, paidContentId } = pi.metadata;
@@ -165,7 +163,7 @@ export class PaidContentService {
         data: {
           buyerId,
           paidContentId,
-          stripePaymentId,
+          stripePaymentId: pi.id,
           amount: paidContent.price,
         },
       });
@@ -247,7 +245,7 @@ export class PaidContentService {
     if (event.type === 'payment_intent.succeeded') {
       const pi = event.data.object as Stripe.PaymentIntent;
       if (pi.metadata?.type === 'paid_content') {
-        await this.confirmPurchase(pi.id);
+        await this.confirmPurchase({ id: pi.id, metadata: pi.metadata as Record<string, string> });
       }
     }
 

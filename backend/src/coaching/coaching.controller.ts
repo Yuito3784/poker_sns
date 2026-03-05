@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -11,7 +12,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CoachingService } from './coaching.service';
 
@@ -111,6 +112,8 @@ export class CoachingController {
   }
 
   @Post('webhook')
+  @SkipThrottle()
+  @HttpCode(200)
   async handleWebhook(
     @RawBody() rawBody: Buffer,
     @Headers('stripe-signature') signature: string,

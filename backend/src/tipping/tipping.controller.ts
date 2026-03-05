@@ -3,13 +3,14 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
   Post,
   Query,
   RawBody,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TippingService } from './tipping.service';
 
@@ -48,6 +49,8 @@ export class TippingController {
   }
 
   @Post('webhook')
+  @SkipThrottle()
+  @HttpCode(200)
   async handleWebhook(
     @RawBody() rawBody: Buffer,
     @Headers('stripe-signature') signature: string,

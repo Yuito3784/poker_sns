@@ -172,8 +172,7 @@ export class CoachingService {
   }
 
   /** Confirm booking after payment */
-  async confirmBooking(stripePaymentId: string) {
-    const pi = await this.getStripe().paymentIntents.retrieve(stripePaymentId);
+  async confirmBooking(pi: { id: string; amount: number | null; metadata: Record<string, string> }) {
     if (pi.metadata?.type !== 'coaching') return;
 
     const { coachId, studentId, scheduledAt, durationMinutes } = pi.metadata;
@@ -190,7 +189,7 @@ export class CoachingService {
           scheduledAt: new Date(scheduledAt),
           durationMinutes: parseInt(durationMinutes) || 60,
           amount: pi.amount || 0,
-          stripePaymentId,
+          stripePaymentId: pi.id,
           status: 'confirmed',
           notes: null,
         },
@@ -265,7 +264,7 @@ export class CoachingService {
     if (event.type === 'payment_intent.succeeded') {
       const pi = event.data.object as Stripe.PaymentIntent;
       if (pi.metadata?.type === 'coaching') {
-        await this.confirmBooking(pi.id);
+        await this.confirmBooking({ id: pi.id, amount: pi.amount, metadata: pi.metadata as Record<string, string> });
       }
     }
 

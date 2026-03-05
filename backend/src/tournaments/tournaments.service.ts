@@ -186,8 +186,7 @@ export class TournamentsService {
   }
 
   /** Confirm tournament registration after payment */
-  async confirmRegistration(stripePaymentId: string) {
-    const pi = await this.getStripe().paymentIntents.retrieve(stripePaymentId);
+  async confirmRegistration(pi: { id: string; metadata: Record<string, string> }) {
     if (pi.metadata?.type !== 'tournament') return;
 
     const { tournamentId, userId } = pi.metadata;
@@ -198,7 +197,7 @@ export class TournamentsService {
         data: {
           tournamentId,
           userId,
-          stripePaymentId,
+          stripePaymentId: pi.id,
           status: 'registered',
         },
       });
@@ -235,7 +234,7 @@ export class TournamentsService {
     if (event.type === 'payment_intent.succeeded') {
       const pi = event.data.object as Stripe.PaymentIntent;
       if (pi.metadata?.type === 'tournament') {
-        await this.confirmRegistration(pi.id);
+        await this.confirmRegistration({ id: pi.id, metadata: pi.metadata as Record<string, string> });
       }
     }
 

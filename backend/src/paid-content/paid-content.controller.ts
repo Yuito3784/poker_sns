@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
   Param,
   Post,
   Query,
@@ -10,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PaidContentService } from './paid-content.service';
 
@@ -67,6 +68,8 @@ export class PaidContentController {
   }
 
   @Post('webhook')
+  @SkipThrottle()
+  @HttpCode(200)
   async handleWebhook(
     @RawBody() rawBody: Buffer,
     @Headers('stripe-signature') signature: string,
