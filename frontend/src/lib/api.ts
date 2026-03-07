@@ -1,4 +1,5 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+// デフォルトは docker-compose のバックエンドポートに合わせる（.env.local で上書き可）
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;

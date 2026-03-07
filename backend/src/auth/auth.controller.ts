@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Logger, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
@@ -17,6 +17,8 @@ import { CompleteXRegistrationDto } from './dto/complete-x-registration.dto';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
@@ -115,7 +117,10 @@ export class AuthController {
   @Get('line')
   lineAuth(@Res() res: Response) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    if (!process.env.LINE_CLIENT_ID) {
+    if (!process.env.LINE_CLIENT_ID || !process.env.LINE_CLIENT_SECRET) {
+      this.logger.warn(
+        'LINE login skipped: LINE_CLIENT_ID or LINE_CLIENT_SECRET is not set. Check backend .env and restart (e.g. docker compose restart backend).',
+      );
       return res.redirect(`${frontendUrl}/?authError=true`);
     }
     return res.redirect(this.authService.getLineAuthUrl());
@@ -124,12 +129,24 @@ export class AuthController {
   @Get('line/callback')
   async lineCallback(
     @Query('code') code: string,
+    @Query('state') state: string,
+    @Query('error') lineError: string,
+    @Query('error_description') errorDescription: string,
     @Res() res: Response,
   ) {
+    this.logger.log(`LINE callback received (code=${!!code}, state=${!!state}, error=${lineError || 'none'})`);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    if (!code) return res.redirect(`${frontendUrl}/?authError=true`);
+    // LINE がエラーでリダイレクトしてきた場合（ユーザーキャンセル等）
+    if (lineError) {
+      this.logger.warn(`LINE callback error: ${lineError} - ${errorDescription || ''}`);
+      return res.redirect(`${frontendUrl}/?authError=true`);
+    }
+    if (!code) {
+      this.logger.warn('LINE callback: code is missing');
+      return res.redirect(`${frontendUrl}/?authError=true`);
+    }
     try {
-      const result = await this.authService.handleLineCallback(code);
+      const result = await this.authService.handleLineCallback(code, state);
       const sessionId = this.authService.storeOAuthSession({
         kind: 'auth',
         accessToken: result.accessToken,
@@ -137,7 +154,8 @@ export class AuthController {
         user: result.user as Record<string, unknown>,
       });
       return res.redirect(`${frontendUrl}/?oauthSession=${sessionId}`);
-    } catch {
+    } catch (err) {
+      this.logger.error('LINE login failed', err instanceof Error ? err.stack : String(err));
       return res.redirect(`${frontendUrl}/?authError=true`);
     }
   }

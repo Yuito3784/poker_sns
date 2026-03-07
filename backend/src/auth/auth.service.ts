@@ -31,6 +31,9 @@ export class AuthService {
   // ── OAuth セッション (一時トークン、5分TTL) ─────────────────────
   private readonly oauthSessions = new Map<string, { data: OAuthSessionData; expiresAt: Date }>();
 
+  // ── LINE OAuth state (CSRF対策、10分TTL) ─────────────────────────
+  private readonly lineStateStore = new Map<string, { expiresAt: Date }>();
+
   storeOAuthSession(data: OAuthSessionData): string {
     const sessionId = randomBytes(16).toString('hex');
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5分
@@ -450,30 +453,54 @@ export class AuthService {
   }
 
   getLineAuthUrl(): string {
+    const state = randomBytes(16).toString('hex');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10分
+    this.lineStateStore.set(state, { expiresAt });
+    // 期限切れを掃除
+    for (const [key, val] of this.lineStateStore.entries()) {
+      if (val.expiresAt < new Date()) this.lineStateStore.delete(key);
+    }
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.LINE_CLIENT_ID || '',
-      redirect_uri: `${process.env.API_URL || 'http://localhost:4000'}/auth/line/callback`,
-      state: randomBytes(8).toString('hex'),
+      redirect_uri: this.getLineRedirectUri(),
+      state,
       scope: 'profile openid email',
     });
     return `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`;
   }
 
-  async handleLineCallback(code: string) {
+  private getLineRedirectUri(): string {
+    return `${process.env.API_URL || 'http://localhost:3001'}/auth/line/callback`;
+  }
+
+  async handleLineCallback(code: string, state: string | undefined) {
+    // state 検証（CSRF対策）
+    if (!state) {
+      throw new BadRequestException('LINE認証のstateがありません。');
+    }
+    const stored = this.lineStateStore.get(state);
+    this.lineStateStore.delete(state);
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new BadRequestException('LINE認証のstateが無効または期限切れです。');
+    }
+
+    const redirectUri = this.getLineRedirectUri();
     const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: `${process.env.API_URL || 'http://localhost:4000'}/auth/line/callback`,
+        redirect_uri: redirectUri,
         client_id: process.env.LINE_CLIENT_ID || '',
         client_secret: process.env.LINE_CLIENT_SECRET || '',
       }).toString(),
     });
 
     if (!tokenRes.ok) {
+      const errBody = await tokenRes.text();
+      this.logger.warn(`LINE token error: ${tokenRes.status} ${errBody}`);
       throw new BadRequestException('LINE認証に失敗しました。');
     }
     const tokenData = (await tokenRes.json()) as { access_token: string };
@@ -482,37 +509,43 @@ export class AuthService {
     const profileRes = await fetch('https://api.line.me/v2/profile', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
+    if (!profileRes.ok) {
+      this.logger.warn(`LINE profile error: ${profileRes.status}`);
+      throw new BadRequestException('LINEプロフィールの取得に失敗しました。');
+    }
     const profile = (await profileRes.json()) as {
       userId: string;
       displayName: string;
       pictureUrl?: string;
     };
 
-    // Email via userinfo (requires email scope)
+    // Email via userinfo (LINEはメールを返さない場合がある)
     let email: string | null = null;
     try {
       const userInfoRes = await fetch(
         'https://api.line.me/oauth2/v2.1/userinfo',
         { headers: { Authorization: `Bearer ${tokenData.access_token}` } },
       );
-      const userInfo = (await userInfoRes.json()) as { email?: string };
-      email = userInfo.email ?? null;
+      if (userInfoRes.ok) {
+        const userInfo = (await userInfoRes.json()) as { email?: string };
+        email = userInfo.email ?? null;
+      }
     } catch {
       /* email not available */
     }
 
-    if (!email) {
-      throw new BadRequestException(
-        'LINEアカウントにメールアドレスが設定されていないため、ログインできません。メールアドレスとパスワードでご登録ください。',
-      );
-    }
+    // メールが無い場合はプレースホルダー（LINEのみでログイン可能にする）
+    const emailToUse =
+      email ||
+      `line-${profile.userId.replace(/[^a-zA-Z0-9_-]/g, '_')}@users.poker-sns.local`;
+    const emailVerified = !!email;
 
     let user = await this.prisma.user.findUnique({
       where: { lineId: profile.userId },
     });
     if (user) return this.buildAuthResponse(user);
 
-    user = await this.prisma.user.findUnique({ where: { email } });
+    user = await this.prisma.user.findUnique({ where: { email: emailToUse } });
     if (user) {
       user = await this.prisma.user.update({
         where: { id: user.id },
@@ -521,16 +554,17 @@ export class AuthService {
       return this.buildAuthResponse(user);
     }
 
-    const username = await this.generateUniqueUsername(email.split('@')[0]);
+    const baseName = email ? email.split('@')[0] : profile.displayName.replace(/\s/g, '_');
+    const username = await this.generateUniqueUsername(baseName);
     user = await this.prisma.user.create({
       data: {
-        email,
+        email: emailToUse,
         name: profile.displayName,
         username,
         passwordHash: null,
         lineId: profile.userId,
         avatarUrl: profile.pictureUrl ?? null,
-        emailVerified: true,
+        emailVerified,
       },
     });
     return this.buildAuthResponse(user);

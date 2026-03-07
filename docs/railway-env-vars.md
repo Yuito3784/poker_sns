@@ -128,7 +128,7 @@ CORS_ORIGINS=https://poker-sns-git-dev-yuito3784s-projects.vercel.app,https://�
 | `RESEND_API_KEY` + `SMTP_FROM` | メール認証・パスワードリセット（推奨）。Railway では SMTP がブロックされやすいため Resend API を使用。 |
 | `SMTP_*` | Resend を使わない場合の SMTP。詳細は [docs/smtp-setup.md](./smtp-setup.md) を参照。 |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google ログインを有効にするとき |
-| `LINE_CLIENT_ID` / `LINE_CLIENT_SECRET` | LINE ログインを有効にするとき |
+| `LINE_CLIENT_ID` / `LINE_CLIENT_SECRET` | LINE ログインを有効にするとき。**LINEログイン設定**のコールバックURLに `{API_URL}/auth/line/callback` を登録すること（本番例: `https://pokersns-production.up.railway.app/auth/line/callback`）。詳細は [docs/LINE_LOGIN_PRODUCTION_CHECKLIST.md](./LINE_LOGIN_PRODUCTION_CHECKLIST.md) 参照。 |
 | `X_CLIENT_ID` / `X_CLIENT_SECRET` | X ログインを有効にするとき |
 | `STRIPE_*` | 決済を有効にするとき |
 | `ANTHROPIC_API_KEY` | AI 機能を使うとき |
