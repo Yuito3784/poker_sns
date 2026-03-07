@@ -39,7 +39,7 @@ async function bootstrap() {
           connectSrc: ["'self'"],
           fontSrc: ["'self'", 'https:'],
           objectSrc: ["'none'"],
-          frameSrc: ["'none'"],
+          frameSrc: ["'self'", 'https://www.youtube-nocookie.com', 'https://js.stripe.com'],
           upgradeInsecureRequests: [],
         },
       },
