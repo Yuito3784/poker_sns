@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# pre-push hook: ブランチ命名規則の強制
+# 許可パターン: feature/*, fix/*, hotfix/*, dev, main
+# .cursor/skills/git-workflow/SKILL.md に準拠
+
+branch_name=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+if [ -z "$branch_name" ]; then
+  # detached HEAD (rebase 中など) は許可
+  exit 0
+fi
+
+allowed_pattern="^(feature|fix|hotfix)/.+$|^(dev|main)$"
+
+if ! echo "$branch_name" | grep -qE "$allowed_pattern"; then
+  echo ""
+  echo "ERROR: ブランチ名 '$branch_name' は命名規則に違反しています。"
+  echo ""
+  echo "許可されているブランチ名パターン:"
+  echo "  feature/<タスク名>  — 新機能・UI変更・リファクタ"
+  echo "  fix/<タスク名>      — バグ修正"
+  echo "  hotfix/<タスク名>   — 緊急修正"
+  echo "  dev                 — 統合ブランチ"
+  echo "  main                — 本番デプロイ専用"
+  echo ""
+  echo "参照: .cursor/skills/git-workflow/SKILL.md"
+  echo ""
+  exit 1
+fi

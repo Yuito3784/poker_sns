@@ -39,7 +39,7 @@ export default function AdCard({ ad }: Props) {
         )}
         <h3 className="font-semibold" style={{ color: "#ddd6c8" }}>{ad.title}</h3>
         {ad.description && (
-          <p className="mt-1 text-sm line-clamp-2" style={{ color: "#7a7260" }}>
+          <p className="mt-1 text-sm line-clamp-2" style={{ color: "#9a8e7a" }}>
             {ad.description}
           </p>
         )}
@@ -55,7 +55,7 @@ export default function AdCard({ ad }: Props) {
           <a
             href="/settings"
             className="text-[10px] transition-colors hover:underline"
-            style={{ color: "#4a5245" }}
+            style={{ color: "#6b7a66" }}
           >
             プレミアムなら広告なし
           </a>

@@ -229,7 +229,7 @@ function SettingsContent() {
       <div className="mx-auto max-w-xl min-h-screen">
         {/* Header */}
         <div className="sticky top-0 z-50 flex items-center gap-4 px-4 py-3.5 shadow-[0_2px_12px_rgba(0,0,0,0.15)]" style={{ background: "#131a14", borderBottom: "1px solid #1f2a1e" }}>
-          <button onClick={() => router.back()} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: "#7a7260" }}>
+          <button onClick={() => router.back()} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: "#9a8e7a" }}>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
           </button>
           <h1 className="font-[family-name:var(--font-playfair)] text-xl" style={{ color: "#ddd6c8" }}>設定</h1>
@@ -248,7 +248,7 @@ function SettingsContent() {
             </div>
           )}
           {!subStatus ? (
-            <p className="text-sm" style={{ color: "#4a5245" }}>読み込み中...</p>
+            <p className="text-sm" style={{ color: "#6b7a66" }}>読み込み中...</p>
           ) : subStatus.status === "free" ? (
             <div>
               <div className="relative mb-4 overflow-hidden rounded-xl p-5" style={{ background: "#192118", border: "1px solid #2a3828" }}>
@@ -259,12 +259,12 @@ function SettingsContent() {
                   <span className="text-4xl">♣</span>
                 </div>
                 <h3 className="relative mb-2 font-[family-name:var(--font-playfair)] font-semibold" style={{ color: "#ddd6c8" }}>プレミアムプラン</h3>
-                <ul className="relative mb-3 space-y-1.5 text-sm" style={{ color: "#7a7260" }}>
+                <ul className="relative mb-3 space-y-1.5 text-sm" style={{ color: "#9a8e7a" }}>
                   <li className="flex items-center gap-2"><span style={{ color: "#c9a84c" }}>✓</span> 広告非表示</li>
                   <li className="flex items-center gap-2"><span style={{ color: "#c9a84c" }}>✓</span> プレミアムバッジ表示</li>
                   <li className="flex items-center gap-2"><span style={{ color: "#c9a84c" }}>✓</span> 投稿文字数 1,000文字に拡張</li>
                 </ul>
-                <p className="relative mb-3 text-lg font-bold" style={{ color: "#ddd6c8" }}>¥980 <span className="text-sm font-normal" style={{ color: "#7a7260" }}>/月</span></p>
+                <p className="relative mb-3 text-lg font-bold" style={{ color: "#ddd6c8" }}>¥980 <span className="text-sm font-normal" style={{ color: "#9a8e7a" }}>/月</span></p>
               </div>
               <button
                 onClick={handleCheckout}
@@ -282,7 +282,7 @@ function SettingsContent() {
                 <span className="text-sm" style={{ color: "#81c784" }}>プレミアムプラン</span>
               </div>
               {subStatus.periodEnd && (
-                <p className="mb-4 text-xs" style={{ color: "#4a5245" }}>
+                <p className="mb-4 text-xs" style={{ color: "#6b7a66" }}>
                   次の更新日: {new Date(subStatus.periodEnd).toLocaleDateString("ja-JP")}
                 </p>
               )}
@@ -308,7 +308,7 @@ function SettingsContent() {
               {showCancelConfirm && (
                 <div className="mt-4 rounded-lg p-4 animate-fade-in" style={{ background: "#192118", border: "1px solid #2a3828" }}>
                   <p className="mb-1 text-sm font-semibold" style={{ color: "#c9a84c" }}>解約の確認</p>
-                  <p className="mb-4 text-sm" style={{ color: "#7a7260" }}>
+                  <p className="mb-4 text-sm" style={{ color: "#9a8e7a" }}>
                     解約しても、現在の請求期間（{subStatus.periodEnd ? new Date(subStatus.periodEnd).toLocaleDateString("ja-JP") : ""}）までプレミアム機能をご利用いただけます。即時解約ではありません。
                   </p>
                   <div className="flex gap-2">
@@ -323,7 +323,7 @@ function SettingsContent() {
                     <button
                       onClick={() => setShowCancelConfirm(false)}
                       className="rounded px-4 py-2 text-sm transition-colors"
-                      style={{ border: "1px solid #2a3828", color: "#7a7260" }}
+                      style={{ border: "1px solid #2a3828", color: "#9a8e7a" }}
                     >
                       キャンセル
                     </button>
@@ -338,7 +338,7 @@ function SettingsContent() {
                 <span className="text-sm" style={{ color: "#c9a84c" }}>プレミアムプラン</span>
               </div>
               {subStatus.periodEnd && (
-                <p className="mb-4 text-xs" style={{ color: "#4a5245" }}>
+                <p className="mb-4 text-xs" style={{ color: "#6b7a66" }}>
                   {new Date(subStatus.periodEnd).toLocaleDateString("ja-JP")} まで利用可能
                 </p>
               )}
@@ -384,7 +384,7 @@ function SettingsContent() {
           </div>
 
           {/* Password Change */}
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#4a5245" }}>パスワード変更</h3>
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66" }}>パスワード変更</h3>
           {passwordMsg && (
             <div className="mb-4 rounded-lg px-3 py-2 text-sm" style={{
               background: passwordMsg.type === "success" ? "rgba(76,175,80,0.1)" : "rgba(201,168,76,0.1)",
@@ -396,7 +396,7 @@ function SettingsContent() {
           )}
           <form onSubmit={handleChangePassword} className="space-y-3">
             <div className="space-y-1">
-              <label className="block text-xs font-medium" style={{ color: "#7a7260" }}>現在のパスワード</label>
+              <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>現在のパスワード</label>
               <div className="relative">
                 <input
                   type={showCurrentPassword ? "text" : "password"}
@@ -411,7 +411,7 @@ function SettingsContent() {
                   type="button"
                   onClick={() => setShowCurrentPassword((p) => !p)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: "#4a5245" }}
+                  style={{ color: "#6b7a66" }}
                   aria-label={showCurrentPassword ? "パスワードを隠す" : "パスワードを表示"}
                 >
                   {showCurrentPassword ? (
@@ -423,7 +423,7 @@ function SettingsContent() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-medium" style={{ color: "#7a7260" }}>新しいパスワード</label>
+              <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>新しいパスワード</label>
               <div className="relative">
                 <input
                   type={showNewPassword ? "text" : "password"}
@@ -439,7 +439,7 @@ function SettingsContent() {
                   type="button"
                   onClick={() => setShowNewPassword((p) => !p)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: "#4a5245" }}
+                  style={{ color: "#6b7a66" }}
                   aria-label={showNewPassword ? "パスワードを隠す" : "パスワードを表示"}
                 >
                   {showNewPassword ? (
@@ -451,7 +451,7 @@ function SettingsContent() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-medium" style={{ color: "#7a7260" }}>パスワード確認</label>
+              <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>パスワード確認</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -467,7 +467,7 @@ function SettingsContent() {
                   type="button"
                   onClick={() => setShowConfirmPassword((p) => !p)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: "#4a5245" }}
+                  style={{ color: "#6b7a66" }}
                   aria-label={showConfirmPassword ? "パスワードを隠す" : "パスワードを表示"}
                 >
                   {showConfirmPassword ? (
@@ -490,7 +490,7 @@ function SettingsContent() {
 
           {/* Privacy & Legal Links */}
           <div className="mt-6 pt-5" style={{ borderTop: "1px solid #1f2a1e" }}>
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#4a5245" }}>プライバシーと法的情報</h3>
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66" }}>プライバシーと法的情報</h3>
             <div className="space-y-1">
               <a
                 href="/privacy"
@@ -498,7 +498,7 @@ function SettingsContent() {
                 style={{ color: "#ddd6c8" }}
               >
                 <span className="flex items-center gap-2.5">
-                  <svg className="h-4 w-4" style={{ color: "#4a5245" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                  <svg className="h-4 w-4" style={{ color: "#6b7a66" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
                   プライバシーポリシー
                 </span>
                 <svg className="h-4 w-4" style={{ color: "#2a3828" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -509,7 +509,7 @@ function SettingsContent() {
                 style={{ color: "#ddd6c8" }}
               >
                 <span className="flex items-center gap-2.5">
-                  <svg className="h-4 w-4" style={{ color: "#4a5245" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                  <svg className="h-4 w-4" style={{ color: "#6b7a66" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
                   利用規約
                 </span>
                 <svg className="h-4 w-4" style={{ color: "#2a3828" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -520,7 +520,7 @@ function SettingsContent() {
           {/* Account Deletion */}
           <div className="mt-6 pt-5" style={{ borderTop: "1px solid #1f2a1e" }}>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: "#e05050" }}>アカウント削除</h3>
-            <p className="mb-4 text-xs" style={{ color: "#4a5245" }}>
+            <p className="mb-4 text-xs" style={{ color: "#6b7a66" }}>
               アカウントを削除すると、全ての投稿・フォロー関係・通知が永久に削除されます。この操作は取り消せません。
             </p>
             {!showDeleteConfirm ? (
@@ -560,7 +560,7 @@ function SettingsContent() {
                   <button
                     onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); }}
                     className="rounded px-5 py-2 text-sm transition-colors"
-                    style={{ border: "1px solid #2a3828", color: "#7a7260" }}
+                    style={{ border: "1px solid #2a3828", color: "#9a8e7a" }}
                   >
                     キャンセル
                   </button>

@@ -211,7 +211,7 @@ export default function HashtagClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#eef3ea] text-neutral-900">
+    <div className="min-h-screen bg-[#0d1009] text-[#ddd6c8]">
       <div className="mx-auto max-w-xl min-h-screen">
         <div className="sticky top-0 z-50 flex items-center gap-4 rounded-b-xl border-b border-amber-500/10 bg-[#1a2f1c] px-4 py-3.5 shadow-[0_2px_12px_rgba(0,0,0,0.15)]">
           <button onClick={() => router.back()} className="rounded-lg p-1.5 text-[#8ba388] transition-colors hover:bg-white/5 hover:text-amber-400">
@@ -240,11 +240,11 @@ export default function HashtagClient() {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <p className="text-sm text-neutral-500">読み込み中...</p>
+            <p className="text-sm text-[#6b7a66]">読み込み中...</p>
           </div>
         ) : posts.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <p className="mt-3 text-sm text-neutral-500">#{tag} の投稿はまだありません</p>
+            <p className="mt-3 text-sm text-[#6b7a66]">#{tag} の投稿はまだありません</p>
           </div>
         ) : (
           <ul className="space-y-2.5 px-3 py-3">
@@ -283,7 +283,7 @@ export default function HashtagClient() {
             })()}
             {hasMore && (
               <li ref={(el) => { sentinelRef.current = el; }} className="flex justify-center py-4">
-                {loadingMore && <span className="text-sm text-neutral-400">読み込み中...</span>}
+                {loadingMore && <span className="text-sm text-[#6b7a66]">読み込み中...</span>}
               </li>
             )}
           </ul>

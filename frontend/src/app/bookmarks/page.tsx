@@ -216,24 +216,24 @@ export default function BookmarksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#eef3ea] text-neutral-900">
+    <div className="min-h-screen" style={{ background: "#0d1009", color: "#ddd6c8" }}>
       <div className="mx-auto max-w-xl min-h-screen">
-        <div className="sticky top-0 z-50 flex items-center gap-4 rounded-b-xl border-b border-amber-500/10 bg-[#1a2f1c] px-4 py-3.5 shadow-[0_2px_12px_rgba(0,0,0,0.15)]">
-          <button onClick={() => router.back()} className="rounded-lg p-1.5 text-[#8ba388] transition-colors hover:bg-white/5 hover:text-amber-400">
+        <div className="sticky top-0 z-50 flex items-center gap-4 border-b px-4 py-3.5" style={{ background: "#131a14", borderColor: "#2a3828" }}>
+          <button onClick={() => router.back()} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: "#9a8e7a" }}>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
           </button>
-          <h1 className="font-[family-name:var(--font-playfair)] text-xl text-[#e8f0e6]">ブックマーク</h1>
+          <h1 className="font-[family-name:var(--font-playfair)] text-xl" style={{ color: "#ddd6c8" }}>ブックマーク</h1>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <p className="text-sm text-neutral-500">読み込み中...</p>
+            <p className="text-sm" style={{ color: "#6b7a66" }}>読み込み中...</p>
           </div>
         ) : posts.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <svg className="mx-auto h-12 w-12 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
-            <p className="mt-3 text-sm text-neutral-500">ブックマークした投稿がありません</p>
-            <p className="mt-1 text-xs text-neutral-400">投稿のブックマークアイコンをタップして保存しましょう</p>
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
+            <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>ブックマークした投稿がありません</p>
+            <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>投稿のブックマークアイコンをタップして保存しましょう</p>
           </div>
         ) : (
           <ul className="space-y-2.5 px-3 py-3">
@@ -272,7 +272,7 @@ export default function BookmarksPage() {
             })()}
             {hasMore && (
               <li ref={(el) => { sentinelRef.current = el; }} className="flex justify-center py-4">
-                {loadingMore && <span className="text-sm text-neutral-400">読み込み中...</span>}
+                {loadingMore && <span className="text-sm" style={{ color: "#6b7a66" }}>読み込み中...</span>}
               </li>
             )}
           </ul>

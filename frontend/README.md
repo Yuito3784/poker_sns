@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### ローカル開発（バックエンド連携）
+
+バックエンド（Docker の `backend`）の CORS は `http://localhost:3000` のみ許可しています。**フロントは必ずポート 3000 で起動**してください。別のプロセスが 3000 を使っている場合は、先に終了してから `npm run dev` を実行すると 3000 で立ち上がります。
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

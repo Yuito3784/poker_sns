@@ -2,6 +2,9 @@
 
 Railway の「Suggested Variables」で表示される変数のうち、**バックエンドサービスに設定するもの**を整理しました。
 
+**環境ごとの URL・CORS の運用ルール**は [docs/ENV_CONFIG_SUMMARY.md](./ENV_CONFIG_SUMMARY.md) にまとめています。  
+開発は **dev の Preview URL のみ**使用し、**CORS_ORIGINS は dev 用には dev 用フロント URL のみ**、本番用には本番ドメインのみを許可する運用に固定してください。
+
 ---
 
 ## Prisma / OpenSSL でクラッシュする場合: Dockerfile でビルドする
@@ -52,15 +55,29 @@ Railway のランタイムでは Prisma の OpenSSL 互換性の都合で `prism
    ```
 3. 成功したら Railway のバックエンドは再デプロイ不要で、アプリから DB にアクセスできます。
 
-**マイグレーションが「type already exists」などで失敗した場合:**  
-重複する init マイグレーションを「適用済み」として記録する:
+### 既存 DB 向けマイグレーション（type already exists など）
+
+既存の DB に古い `init` が入っている場合、**追加専用**のマイグレーションだけを適用する手順です。  
+今後のメンテでも「既存 DB を壊さずにスキーマを足す」ときはこの流れを踏襲してください。
+
+1. **失敗したマイグレーションをロールバック扱いにする**  
+   → `migrate resolve --rolled-back <マイグレーション名>`
+2. **重複する init を「適用済み」として記録する**  
+   → `migrate resolve --applied <マイグレーション名>`
+3. **追加のみのマイグレーションを適用する**  
+   → `migrate deploy`
 
 ```bash
 cd backend
+# 1. 失敗を解消
+DATABASE_URL="postgresql://..." npx prisma migrate resolve --rolled-back 20260218000000_init
+# 2. 重複する init は実行せず「適用済み」にする（次の deploy で 20260304... だけが走る）
 DATABASE_URL="postgresql://..." npx prisma migrate resolve --applied 20260218000000_init
+# 3. 追加のみのマイグレーションを適用
+DATABASE_URL="postgresql://..." npx prisma migrate deploy
 ```
 
-その後、必要なら再度 `npx prisma migrate deploy` を実行。
+※ 追加専用マイグレーションの例: `20260304000000_add_missing_after_old_init`（`migrations/` 内）。
 
 ---
 
@@ -78,6 +95,29 @@ DATABASE_URL="postgresql://..." npx prisma migrate resolve --applied 20260218000
 
 ---
 
+## dev ブランチで CORS エラーになる場合（Vercel プレビュー ↔ Railway dev）
+
+**症状:** Vercel の dev プレビュー（例: `https://poker-sns-git-dev-yuito3784s-projects.vercel.app`）から新規登録などすると、  
+`Access to fetch at 'https://pokersns-dev.up.railway.app/...' has been blocked by CORS policy` となる。
+
+**原因:** dev 用の Railway バックエンドの `CORS_ORIGINS` に、**Vercel の dev プレビュー URL が含まれていない**。
+
+**対処:** Railway の **dev 用バックエンド** の **Variables** で、`CORS_ORIGINS` にプレビュー URL を追加する（複数ならカンマ区切り）。
+
+| 環境 | CORS_ORIGINS に含める URL 例 |
+|------|------------------------------|
+| 本番 | `https://あなたの本番ドメイン.vercel.app` |
+| dev プレビュー | `https://poker-sns-git-dev-yuito3784s-projects.vercel.app` |
+
+例（dev 用バックエンドで両方許可する場合）:
+```
+CORS_ORIGINS=https://poker-sns-git-dev-yuito3784s-projects.vercel.app,https://本番のURL
+```
+
+※ Vercel のプレビュー URL は「Vercel ダッシュボード → プロジェクト → Deployments → 該当デプロイの URL」で確認できます。ブランチごとに `poker-sns-git-<branch>-<team>.vercel.app` のような形式です。
+
+---
+
 ## Suggested のうち「今はスキップしてよい」もの
 
 メール・OAuth・決済などは、動かしたい機能に合わせて後から追加します。
@@ -85,7 +125,8 @@ DATABASE_URL="postgresql://..." npx prisma migrate resolve --applied 20260218000
 | Name | いつ設定するか |
 |------|----------------|
 | `DB_PASSWORD` | 自前で PostgreSQL を立てる場合のみ。Railway の PostgreSQL を使う場合は不要（DATABASE_URL に含まれる） |
-| `SMTP_*` | パスワードリセットメール等を使うとき |
+| `RESEND_API_KEY` + `SMTP_FROM` | メール認証・パスワードリセット（推奨）。Railway では SMTP がブロックされやすいため Resend API を使用。 |
+| `SMTP_*` | Resend を使わない場合の SMTP。詳細は [docs/smtp-setup.md](./smtp-setup.md) を参照。 |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google ログインを有効にするとき |
 | `LINE_CLIENT_ID` / `LINE_CLIENT_SECRET` | LINE ログインを有効にするとき |
 | `X_CLIENT_ID` / `X_CLIENT_SECRET` | X ログインを有効にするとき |

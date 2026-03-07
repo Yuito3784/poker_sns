@@ -147,84 +147,90 @@ function SearchContent() {
   const showPosts = filterTab === "all" || filterTab === "posts";
 
   return (
-    <div className="min-h-screen bg-[#eef3ea] text-[#1c2e1a]">
+    <div className="min-h-screen" style={{ background: "#0d1009", color: "#ddd6c8" }}>
       <div className="mx-auto max-w-xl min-h-screen">
-        <div className="sticky top-0 z-50 rounded-b-xl border-b border-amber-500/10 bg-[#1a2f1c] shadow-[0_2px_12px_rgba(0,0,0,0.15)]">
+        <div className="sticky top-0 z-50 border-b" style={{ background: "#131a14", borderColor: "#2a3828" }}>
           <div className="flex items-center gap-4 px-4 py-3">
-            <button onClick={() => router.back()} className="rounded-lg p-1.5 text-[#8ba388] transition-colors hover:bg-white/5 hover:text-amber-400">
+            <button onClick={() => router.back()} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: "#9a8e7a" }}>
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
             </button>
             <div className="flex-1">
               <input
                 type="text"
-                className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#e8f0e6] placeholder:text-[#8ba388] outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30"
+                className="w-full rounded-lg px-4 py-2 text-sm outline-none transition-colors"
+                style={{
+                  background: "#0d1009",
+                  border: "1px solid #2a3828",
+                  color: "#ddd6c8",
+                }}
                 placeholder="ユーザー名やキーワードで検索"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "#2a3828"; }}
                 autoFocus
               />
             </div>
             {searchQuery && (
-              <button onClick={() => { setSearchQuery(""); setUsers([]); setPosts([]); }} className="rounded-lg p-2 text-[#8ba388] transition-colors hover:bg-white/5 hover:text-amber-400">✕</button>
+              <button onClick={() => { setSearchQuery(""); setUsers([]); setPosts([]); }} className="rounded-lg p-2 transition-colors hover:bg-white/5" style={{ color: "#9a8e7a" }}>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             )}
           </div>
-          <div className="flex border-t border-white/5">
-            <button
-              onClick={() => setFilterTab("all")}
-              className={`flex-1 py-3 text-center text-sm font-medium transition-colors ${filterTab === "all" ? "border-b-2 border-amber-400 text-amber-400" : "text-[#8ba388] hover:bg-white/5 hover:text-[#e8f0e6]"}`}
-            >
-              すべて
-            </button>
-            <button
-              onClick={() => setFilterTab("users")}
-              className={`flex-1 py-3 text-center text-sm font-medium transition-colors ${filterTab === "users" ? "border-b-2 border-amber-400 text-amber-400" : "text-[#8ba388] hover:bg-white/5 hover:text-[#e8f0e6]"}`}
-            >
-              ユーザー
-            </button>
-            <button
-              onClick={() => setFilterTab("posts")}
-              className={`flex-1 py-3 text-center text-sm font-medium transition-colors ${filterTab === "posts" ? "border-b-2 border-amber-400 text-amber-400" : "text-[#8ba388] hover:bg-white/5 hover:text-[#e8f0e6]"}`}
-            >
-              投稿
-            </button>
+          <div className="flex" style={{ borderTop: "1px solid #1f2a1e" }}>
+            {(["all", "users", "posts"] as FilterTab[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setFilterTab(tab)}
+                className="flex-1 py-3 text-center text-sm font-medium transition-colors"
+                style={
+                  filterTab === tab
+                    ? { color: "#c9a84c", borderBottom: "2px solid #c9a84c" }
+                    : { color: "#6b7a66" }
+                }
+              >
+                {tab === "all" ? "すべて" : tab === "users" ? "ユーザー" : "投稿"}
+              </button>
+            ))}
           </div>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <p className="text-sm text-neutral-500">検索中...</p>
+            <p className="text-sm" style={{ color: "#6b7a66" }}>検索中...</p>
           </div>
         ) : searchQuery.trim().length < 2 ? (
           <div className="px-4 py-12 text-center">
-            <svg className="mx-auto h-12 w-12 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <p className="mt-3 text-sm text-neutral-500">2文字以上で検索してください</p>
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+            <p className="mt-3 text-sm" style={{ color: "#6b7a66" }}>2文字以上で検索してください</p>
           </div>
         ) : !hasResults ? (
           <div className="px-4 py-12 text-center">
-            <p className="text-sm text-neutral-500">結果が見つかりませんでした</p>
+            <p className="text-sm" style={{ color: "#6b7a66" }}>結果が見つかりませんでした</p>
           </div>
         ) : (
           <>
             {showUsers && users.length > 0 && (
-              <div className="border-b border-[#d1e0cc]">
-                <h3 className="border-b border-[#d1e0cc] px-4 py-2 text-xs font-semibold text-neutral-600">ユーザー</h3>
-                <div className="divide-y divide-[#d1e0cc]">
+              <div style={{ borderBottom: "1px solid #2a3828" }}>
+                <h3 className="px-4 py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66", borderBottom: "1px solid #1f2a1e" }}>ユーザー</h3>
+                <div>
                   {users.map((user) => (
                     <button
                       key={user.id}
                       onClick={() => router.push(`/profile/${user.username}`)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f0fdf4]/60"
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.03]"
+                      style={{ borderBottom: "1px solid #1f2a1e" }}
                     >
                       {user.avatarUrl ? (
-                        <img src={`${API_BASE}${user.avatarUrl}`} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
+                        <img src={`${API_BASE}${user.avatarUrl}`} alt={user.name} className="h-10 w-10 rounded-full object-cover" style={{ border: "1.5px solid rgba(201,168,76,0.2)" }} />
                       ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700">{user.name.charAt(0)}</div>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold" style={{ background: "linear-gradient(135deg, #c9a84c22, #9a7c3515)", border: "1.5px solid rgba(201,168,76,0.25)", color: "#c9a84c" }}>{user.name.charAt(0)}</div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-[#1c2e1a]">{user.name}</div>
-                        <div className="text-sm text-neutral-500">@{user.username}</div>
-                        {user.bio && <p className="mt-1 truncate text-xs text-neutral-600">{user.bio}</p>}
+                        <div className="font-semibold" style={{ color: "#ddd6c8" }}>{user.name}</div>
+                        <div className="text-sm" style={{ color: "#6b7a66" }}>@{user.username}</div>
+                        {user.bio && <p className="mt-1 truncate text-xs" style={{ color: "#9a8e7a" }}>{user.bio}</p>}
                       </div>
                     </button>
                   ))}
@@ -233,7 +239,7 @@ function SearchContent() {
             )}
             {showPosts && posts.length > 0 && (
               <div>
-                {filterTab === "all" && users.length > 0 && <h3 className="border-b border-[#d1e0cc] px-4 py-2 text-xs font-semibold text-neutral-600">投稿</h3>}
+                {filterTab === "all" && users.length > 0 && <h3 className="px-4 py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66", borderBottom: "1px solid #1f2a1e" }}>投稿</h3>}
                 <ul className="space-y-2.5 px-3 py-3">
                   {posts.map((post) => (
                     <PostItem
@@ -265,7 +271,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center" style={{ background: "#0d1009" }}><span style={{ color: "#7a7260" }}>読み込み中...</span></div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center" style={{ background: "#0d1009" }}><span style={{ color: "#6b7a66" }}>読み込み中...</span></div>}>
       <SearchContent />
     </Suspense>
   );

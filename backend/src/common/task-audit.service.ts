@@ -3,6 +3,12 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { WebhookNotifierService } from './webhook-notifier.service';
 
+function isTableMissingError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message || '';
+  return msg.includes('does not exist in the current database');
+}
+
 interface AuditResult {
   check: string;
   status: 'ok' | 'warning' | 'error';
@@ -128,6 +134,13 @@ export class TaskAuditService {
       }
     } catch (error) {
       const err = error as Error;
+      if (isTableMissingError(error)) {
+        this.logger.warn(
+          'Task audit skipped: database schema is not up to date (e.g. RefreshToken table missing). ' +
+            'Run: npx prisma migrate deploy',
+        );
+        return;
+      }
       this.logger.error(`Task audit failed: ${err.message}`, err.stack);
       await this.webhookNotifier
         .notifyError('TaskAuditFailure', err.message, 'TaskAuditService', err.stack)

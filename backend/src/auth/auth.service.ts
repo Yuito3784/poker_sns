@@ -1,14 +1,17 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomBytes, createHash } from 'crypto';
+import * as dns from 'dns';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma.service';
 import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -18,6 +21,8 @@ type OAuthSessionData =
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -132,13 +137,11 @@ export class AuthService {
       data: { token, userId, expiresAt },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
     const verifyUrl = `${frontendUrl}/verify-email?token=${token}`;
 
     try {
-      const transporter = this.createMailTransporter();
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@pokersns.com',
+      await this.sendEmail({
         to: email,
         subject: 'メールアドレスの確認 - Poker SNS',
         html: `
@@ -148,11 +151,17 @@ export class AuthService {
           <p>このメールに心当たりがない場合は無視してください。</p>
         `,
       });
-    } catch {
-      console.warn('Failed to send verification email');
+      return { message: '確認メールを送信しました。' };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Verification email send failed: ${msg}`);
+      this.logger.log(`[DEV] 認証リンク（SMTP未設定時はこのURLをブラウザで開く）: ${verifyUrl}`);
+      const isDev = process.env.NODE_ENV !== 'production';
+      if (isDev) {
+        return { message: 'メール送信に失敗しました（SMTP未設定）。下記リンクで認証できます。', verificationLink: verifyUrl };
+      }
+      return { message: 'メール送信に失敗しました。しばらく経ってから再送信してください。' };
     }
-
-    return { message: '確認メールを送信しました。' };
   }
 
   async verifyEmail(token: string) {
@@ -237,13 +246,11 @@ export class AuthService {
     });
 
     // Send email
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
     const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
     try {
-      const transporter = this.createMailTransporter();
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@pokersns.com',
+      await this.sendEmail({
         to: email,
         subject: 'パスワードリセット - Poker SNS',
         html: `
@@ -253,9 +260,8 @@ export class AuthService {
           <p>このメールに心当たりがない場合は無視してください。</p>
         `,
       });
-    } catch {
-      // Log but don't fail - in dev, SMTP might not be configured
-      console.warn('Failed to send password reset email');
+    } catch (err) {
+      this.logger.warn(`Password reset email send failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     return { message: 'パスワードリセットのメールを送信しました。' };
@@ -287,18 +293,80 @@ export class AuthService {
     return { message: 'パスワードがリセットされました。' };
   }
 
-  private createMailTransporter() {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'localhost',
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: process.env.SMTP_SECURE === 'true',
+  /**
+   * メール送信。RESEND_API_KEY があれば Resend API（HTTPS）を優先（Railway 等で SMTP がブロックされても届く）。
+   */
+  private async sendEmail(options: {
+    to: string;
+    subject: string;
+    html: string;
+  }): Promise<void> {
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      // Resend 未認証ドメインだと送れないため、未設定時はテスト用送信元を使う
+      const from = process.env.SMTP_FROM || 'onboarding@resend.dev';
+      const resend = new Resend(resendKey);
+      const result = await resend.emails.send({
+        from,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      });
+      const err = result.error;
+      if (err && typeof err === 'object' && 'message' in err) {
+        throw new Error(String((err as { message: unknown }).message));
+      }
+      return;
+    }
+    const from = process.env.SMTP_FROM || 'noreply@pokersns.com';
+    const transporter = await this.createMailTransporterAsync();
+    await transporter.sendMail({
+      from,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
+  }
+
+  /**
+   * Railway 等で IPv6 が選ばれると ENETUNREACH になるため、リモート SMTP ホストは IPv4 に解決してから接続する。
+   */
+  private async createMailTransporterAsync(): Promise<nodemailer.Transporter> {
+    const host = process.env.SMTP_HOST || 'localhost';
+    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const secure = process.env.SMTP_SECURE === 'true';
+    const isLocal = host === 'localhost' || host === 'mailhog' || host.startsWith('127.') || /^\[?[\d.]+\]?$/.test(host);
+
+    let connectHost = host;
+    let tlsServername: string | undefined;
+
+    if (!isLocal && /[a-zA-Z]/.test(host)) {
+      try {
+        const resolved = await dns.promises.lookup(host, { family: 4 });
+        connectHost = resolved.address;
+        tlsServername = host;
+      } catch {
+        // 解決に失敗したらそのまま host を使用
+      }
+    }
+
+    const options: Record<string, unknown> = {
+      host: connectHost,
+      port,
+      secure,
+      connectionTimeout: 10000,
+      greetingTimeout: 8000,
       auth: process.env.SMTP_USER
         ? {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           }
         : undefined,
-    });
+    };
+    if (tlsServername) {
+      options.tls = { servername: tlsServername };
+    }
+    return nodemailer.createTransport(options as nodemailer.TransportOptions);
   }
 
   private async generateRefreshToken(userId: string): Promise<string> {
@@ -489,13 +557,10 @@ export class AuthService {
       data: { token, userId: user.id, expiresAt },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const magicUrl = `${process.env.API_URL || 'http://localhost:4000'}/auth/magic-link/verify?token=${token}`;
+    const magicUrl = `${(process.env.API_URL || 'http://localhost:4000').replace(/\/$/, '')}/auth/magic-link/verify?token=${token}`;
 
     try {
-      const transporter = this.createMailTransporter();
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@pokersns.com',
+      await this.sendEmail({
         to: email,
         subject: 'ログインリンク - Poker SNS',
         html: `
@@ -507,8 +572,8 @@ export class AuthService {
           <p>このメールに心当たりがない場合は無視してください。</p>
         `,
       });
-    } catch {
-      console.warn('Failed to send magic link email');
+    } catch (err) {
+      this.logger.warn(`Magic link email send failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     return { message: 'ログインリンクをメールに送信しました。メールをご確認ください。' };

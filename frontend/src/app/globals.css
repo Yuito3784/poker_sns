@@ -4,17 +4,17 @@
 :root {
   --background: #0d1009;
   --foreground: #ddd6c8;
-  --muted: #7a7260;
+  --muted: #9a8e7a;
   --accent: #c9a84c;
   --accent-dark: #9a7c35;
   --gold: #c9a84c;
   --gold-light: #e0c068;
-  --card: #131a14;
-  --card-hover: #192118;
-  --border: #1f2a1e;
+  --card: #151c15;
+  --card-hover: #1c241c;
+  --border: #2a3828;
   --sidebar-bg: #080a08;
   --sidebar-text: #ddd6c8;
-  --sidebar-muted: #4a5245;
+  --sidebar-muted: #6b7a66;
 }
 
 @theme inline {

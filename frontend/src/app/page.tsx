@@ -60,6 +60,7 @@ function HomeContent() {
   const [xEmailError, setXEmailError] = useState<string | null>(null);
   const [xEmailSubmitting, setXEmailSubmitting] = useState(false);
   const [showComposeModal, setShowComposeModal] = useState(false);
+  const [resendVerificationLoading, setResendVerificationLoading] = useState(false);
   const [showPokerForm, setShowPokerForm] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -1246,7 +1247,7 @@ function HomeContent() {
                       <div className="space-y-2">
                         {street.actions.map((action, actionIndex) => {
                           const A_CLR: Record<string, { bg: string; fg: string; bd: string }> = {
-                            FOLD:   { bg: "rgba(74,82,69,.13)",    fg: "#4a5245",  bd: "rgba(74,82,69,.25)" },
+                            FOLD:   { bg: "rgba(74,82,69,.13)",    fg: "#6b7a66",  bd: "rgba(74,82,69,.25)" },
                             CHECK:  { bg: "rgba(100,110,90,.14)",  fg: "#5e6e56",  bd: "rgba(100,110,90,.28)" },
                             CALL:   { bg: "rgba(120,110,75,.14)",  fg: "#7a7050",  bd: "rgba(120,110,75,.28)" },
                             BET:    { bg: "rgba(201,168,76,.14)",  fg: "#a89040",  bd: "rgba(201,168,76,.3)" },
@@ -1260,7 +1261,7 @@ function HomeContent() {
                           return (
                             <div key={actionIndex} className="flex items-center gap-2">
                               {/* Position badge */}
-                              <div className="flex-none rounded-md px-2 py-1.5 text-center text-[11px] font-bold whitespace-nowrap" style={{ minWidth: 50, background: isHeroAction ? "rgba(201,168,76,.1)" : "rgba(42,56,40,.4)", color: isHeroAction ? "#c9a84c" : "#4a5245", border: `1px solid ${isHeroAction ? "rgba(201,168,76,.22)" : "#1f2a1e"}` }}>
+                              <div className="flex-none rounded-md px-2 py-1.5 text-center text-[11px] font-bold whitespace-nowrap" style={{ minWidth: 50, background: isHeroAction ? "rgba(201,168,76,.1)" : "rgba(42,56,40,.4)", color: isHeroAction ? "#c9a84c" : "#6b7a66", border: `1px solid ${isHeroAction ? "rgba(201,168,76,.22)" : "#1f2a1e"}` }}>
                                 {posLabel}
                               </div>
                               {/* Action type select */}
@@ -1324,7 +1325,7 @@ function HomeContent() {
                                         const newStreets = pokerStreets.map((st, i) => i === index ? { ...st, actions: newActions } : st);
                                         setPokerStreets(updateCallAmounts(index, newStreets));
                                       }} />
-                                      <span className="flex-none text-xs font-semibold" style={{ color: "#4a5245" }}>bb</span>
+                                      <span className="flex-none text-xs font-semibold" style={{ color: "#6b7a66" }}>bb</span>
                                     </div>
                                   )}
                                 </div>
@@ -1372,7 +1373,7 @@ function HomeContent() {
           <div className="flex items-center gap-1">
             <label
               className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-all ${showPokerForm ? "cursor-not-allowed opacity-40 pointer-events-none" : "cursor-pointer"}`}
-              style={imageFile ? { background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)" } : { color: "#4a5245", border: "1px solid #1f2a1e" }}
+              style={imageFile ? { background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)" } : { color: "#6b7a66", border: "1px solid #1f2a1e" }}
               title={showPokerForm ? "ハンドを削除してから画像を添付できます" : "画像を添付"}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" /></svg>
@@ -1401,7 +1402,7 @@ function HomeContent() {
               }}
               disabled={!!imageFile}
               className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-all"
-              style={showPokerForm ? { background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)" } : { color: "#4a5245", border: "1px solid #1f2a1e", opacity: imageFile ? 0.4 : 1 }}
+              style={showPokerForm ? { background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)" } : { color: "#6b7a66", border: "1px solid #1f2a1e", opacity: imageFile ? 0.4 : 1 }}
               title={imageFile ? "画像を削除してからハンドを添付できます" : "ポーカーハンドを添付"}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776" /></svg>
@@ -1417,7 +1418,7 @@ function HomeContent() {
                     <circle cx="10" cy="10" r="8" fill="none" stroke={content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#c9a84c"} strokeWidth="2" strokeDasharray={`${(content.length / charLimit) * 50.3} 50.3`} strokeLinecap="round" />
                   </svg>
                 </div>
-                <span className={`text-xs tabular-nums ${content.length >= charLimit ? "font-semibold" : ""}`} style={{ color: content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#4a5245" }}>{charLimit - content.length}</span>
+                <span className={`text-xs tabular-nums ${content.length >= charLimit ? "font-semibold" : ""}`} style={{ color: content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#6b7a66" }}>{charLimit - content.length}</span>
               </div>
             )}
             <button
@@ -1475,7 +1476,7 @@ function HomeContent() {
             >
               Poker SNS
             </h1>
-            <p className="mt-4 text-lg leading-relaxed sm:text-xl" style={{ color: "#4a5245" }}>
+            <p className="mt-4 text-lg leading-relaxed sm:text-xl" style={{ color: "#6b7a66" }}>
               ポーカーハンドを共有して、もっと上手くなる
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -1529,7 +1530,7 @@ function HomeContent() {
                 <h2 className="text-[15px] font-semibold" style={{ color: "#ddd6c8" }}>
                   メールアドレスを登録
                 </h2>
-                <p className="mt-1 text-xs" style={{ color: "#7a7260" }}>
+                <p className="mt-1 text-xs" style={{ color: "#9a8e7a" }}>
                   <span className="font-medium">{xPending.xProfile.name}</span> (@{xPending.xProfile.username}) でXログイン中。<br />
                   アカウントに紐付けるメールアドレスを入力してください。
                 </p>
@@ -1548,7 +1549,7 @@ function HomeContent() {
               )}
               <form onSubmit={handleXComplete} className="space-y-3">
                 <div className="space-y-1">
-                  <label className="block text-xs font-medium" style={{ color: "#7a7260" }}>
+                  <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>
                     メールアドレス
                   </label>
                   <input
@@ -1580,7 +1581,7 @@ function HomeContent() {
                   type="button"
                   onClick={() => { setXPending(null); setXEmail(""); setXEmailError(null); }}
                   className="text-xs hover:underline"
-                  style={{ color: "#4a5245" }}
+                  style={{ color: "#6b7a66" }}
                 >
                   キャンセル
                 </button>
@@ -1593,8 +1594,8 @@ function HomeContent() {
         {/* フッター */}
         <div className="border-t px-4 py-6 text-center" style={{ borderColor: "#1f2a1e" }}>
           <div className="flex flex-wrap justify-center gap-4 text-xs" style={{ color: "#2a3828" }}>
-            <a href="/terms" className="transition-colors hover:underline" style={{ color: "#4a5245" }}>利用規約</a>
-            <a href="/privacy" className="transition-colors hover:underline" style={{ color: "#4a5245" }}>プライバシーポリシー</a>
+            <a href="/terms" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>利用規約</a>
+            <a href="/privacy" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>プライバシーポリシー</a>
           </div>
           <p className="mt-2 text-[11px]" style={{ color: "#2a3828" }}>© 2026 Poker SNS</p>
         </div>
@@ -1609,7 +1610,7 @@ function HomeContent() {
         {/* Left Sidebar */}
         <aside
           className="sticky top-0 hidden h-screen w-20 flex-col justify-between p-2 md:flex lg:w-64 lg:px-3 lg:py-3"
-          style={{ background: "#080a08", borderRight: "1px solid #161b14" }}
+          style={{ background: "#080a08", borderRight: "1px solid #1f2a1e" }}
         >
           <div>
             <div className="mb-6 flex items-center gap-2.5 px-2 py-2">
@@ -1638,12 +1639,12 @@ function HomeContent() {
                 <span className="hidden lg:inline">ホーム</span>
               </button>
               {/* 検索 */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/search"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#4a5245" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7a7260"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}>
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/search"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                 <span className="hidden lg:inline">検索</span>
               </button>
               {/* 通知 */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/notifications"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#4a5245" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7a7260"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}>
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/notifications"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
                 <div className="relative">
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
                   {unreadCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold" style={{ background: "#c9a84c", color: "#0d1009" }}>{unreadCount}</span>}
@@ -1651,28 +1652,43 @@ function HomeContent() {
                 <span className="hidden lg:inline">通知</span>
               </button>
               {/* トレンド */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/explore"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#4a5245" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7a7260"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}>
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/explore"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.468 5.99 5.99 0 00-1.925 3.547 5.975 5.975 0 01-2.133-1.001A3.75 3.75 0 0012 18z" /></svg>
                 <span className="hidden lg:inline">トレンド</span>
               </button>
               {/* ブックマーク */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/bookmarks"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#4a5245" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7a7260"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}>
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/bookmarks"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
                 <span className="hidden lg:inline">ブックマーク</span>
               </button>
+              {/* サロン */}
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/salons"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
+                <span className="hidden lg:inline">サロン</span>
+              </button>
+              {/* トーナメント */}
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/tournaments"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-5.54 0" /></svg>
+                <span className="hidden lg:inline">トーナメント</span>
+              </button>
+              {/* コーチング */}
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/coaching"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.636 50.636 0 00-2.658-.813A59.906 59.906 0 0112 3.493a59.903 59.903 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" /></svg>
+                <span className="hidden lg:inline">コーチング</span>
+              </button>
               {/* おすすめ */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/partners"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#4a5245" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7a7260"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}>
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/partners"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
                 <span className="hidden lg:inline">おすすめ</span>
               </button>
               {/* 設定 */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/settings"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#4a5245" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7a7260"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}>
+              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/settings"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 <span className="hidden lg:inline">設定</span>
               </button>
             </nav>
             <button
-              onClick={() => setShowComposeModal(true)}
+              onClick={() => { if (currentUser && !currentUser.emailVerified) { showToast("メールアドレスの認証が必要です", "error"); return; } setShowComposeModal(true); }}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all"
               style={{ background: "#c9a84c", color: "#0d1009" }}
             >
@@ -1682,7 +1698,7 @@ function HomeContent() {
               <span className="hidden lg:inline">投稿する</span>
             </button>
           </div>
-          <div className="border-t pt-2" style={{ borderColor: "#161b14" }}>
+          <div className="border-t pt-2" style={{ borderColor: "#1f2a1e" }}>
             <button
               onClick={() => { if (typeof window !== "undefined") window.location.href = `/profile/${currentUser.username}`; }}
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.03]"
@@ -1708,20 +1724,20 @@ function HomeContent() {
               )}
               <div className="hidden flex-1 text-left lg:block">
                 <div className="text-sm font-semibold" style={{ color: "#ddd6c8" }}>{currentUser.name}</div>
-                <div className="text-xs" style={{ color: "#4a5245" }}>@{currentUser.username}</div>
+                <div className="text-xs" style={{ color: "#6b7a66" }}>@{currentUser.username}</div>
               </div>
             </button>
             <button
               onClick={handleLogout}
               className="mt-0.5 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-red-900/20"
-              style={{ color: "#4a5245" }}
+              style={{ color: "#6b7a66" }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#e05050"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
               <span className="hidden lg:inline">ログアウト</span>
             </button>
-            <div className="mt-2 hidden border-t pt-2 lg:block" style={{ borderColor: "#161b14" }}>
+            <div className="mt-2 hidden border-t pt-2 lg:block" style={{ borderColor: "#1f2a1e" }}>
               <div className="flex flex-wrap gap-x-2 gap-y-0.5 px-2">
                 <a href="/terms" className="text-[10px] transition-colors hover:underline" style={{ color: "#2a3828" }}>利用規約</a>
                 <span className="text-[10px]" style={{ color: "#2a3828" }}>·</span>
@@ -1734,13 +1750,40 @@ function HomeContent() {
 
         {/* Main Column */}
         <main className="min-h-screen flex-1 pb-20 md:max-w-xl md:pb-0" style={{ background: "#0d1009" }}>
-          <div className="sticky top-0 z-50 border-b px-4 py-3.5" style={{ background: "#080a08", borderColor: "#161b14" }}>
+          <div className="sticky top-0 z-50 border-b px-4 py-3.5" style={{ background: "#080a08", borderColor: "#1f2a1e" }}>
             <h1 className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight" style={{ color: "#ddd6c8" }}>ホーム</h1>
           </div>
           {currentUser && !currentUser.emailVerified && (
-            <div className="flex items-center justify-between border-b px-4 py-2.5" style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}>
+            <div className="relative z-[45] flex items-center justify-between border-b px-4 py-2.5" style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}>
               <p className="text-xs" style={{ color: "#c9a84c" }}>メールアドレスが未認証です。投稿するには認証が必要です。</p>
-              <button onClick={async () => { try { await fetchWithAuth(`${API_BASE}/auth/resend-verification`, { method: "POST" }); alert("確認メールを再送信しました"); } catch { /* ignore */ } }} className="ml-2 flex-shrink-0 rounded px-3 py-1 text-xs font-semibold" style={{ background: "#c9a84c", color: "#0d1009" }}>再送信</button>
+              <button
+                type="button"
+                disabled={resendVerificationLoading}
+                onClick={async () => {
+                  setResendVerificationLoading(true);
+                  try {
+                    const res = await fetchWithAuth(`${API_BASE}/auth/resend-verification`, { method: "POST" });
+                    const data = await res.json().catch(() => ({}));
+                    if (data.verificationLink) {
+                      if (typeof window !== "undefined") window.location.href = data.verificationLink;
+                      return;
+                    }
+                    if (!res.ok) {
+                      showToast(data.message ?? "再送信に失敗しました", "error");
+                      return;
+                    }
+                    showToast("確認メールを再送信しました");
+                  } catch {
+                    showToast("再送信に失敗しました。通信またはログイン状態を確認してください。", "error");
+                  } finally {
+                    setResendVerificationLoading(false);
+                  }
+                }}
+                className="ml-2 flex-shrink-0 cursor-pointer rounded px-3 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-70"
+                style={{ background: "#c9a84c", color: "#0d1009" }}
+              >
+                {resendVerificationLoading ? "送信中…" : "再送信"}
+              </button>
             </div>
           )}
           {/* past_due payment warning banner */}
@@ -1756,7 +1799,7 @@ function HomeContent() {
           <div
             className="mx-3 mt-3 cursor-pointer rounded-lg px-4 py-3.5 transition-all"
             style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
-            onClick={() => setShowComposeModal(true)}
+            onClick={() => { if (currentUser && !currentUser.emailVerified) { showToast("メールアドレスの認証が必要です", "error"); return; } setShowComposeModal(true); }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(201,168,76,0.3)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#1f2a1e"; }}
           >
@@ -1805,12 +1848,12 @@ function HomeContent() {
                 className="mb-4 flex h-12 w-12 items-center justify-center rounded-full"
                 style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="#4a5245" strokeWidth={1.5}>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="#6b7a66" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
               </div>
               <p className="font-semibold" style={{ color: "#ddd6c8" }}>まだ投稿がありません</p>
-              <p className="mt-1 text-sm" style={{ color: "#4a5245" }}>最初のハンドを共有してみましょう</p>
+              <p className="mt-1 text-sm" style={{ color: "#6b7a66" }}>最初のハンドを共有してみましょう</p>
               <button
                 onClick={() => setShowComposeModal(true)}
                 className="mt-5 rounded px-6 py-2.5 text-sm font-semibold transition-colors"
@@ -1842,7 +1885,7 @@ function HomeContent() {
               })()}
               {timelineHasMore && (
                 <li ref={(el) => { loadMoreRef.current = el; }} className="flex justify-center py-3">
-                  {loadingMore && <span className="text-sm" style={{ color: "#4a5245" }}>読み込み中...</span>}
+                  {loadingMore && <span className="text-sm" style={{ color: "#6b7a66" }}>読み込み中...</span>}
                 </li>
               )}
             </ul>
@@ -1865,7 +1908,7 @@ function HomeContent() {
               }}
               className="flex items-center gap-2"
             >
-              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#4a5245" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#6b7a66" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
               <input
                 type="text"
                 className="flex-1 bg-transparent text-sm outline-none"
@@ -1878,7 +1921,7 @@ function HomeContent() {
           </div>
           {featuredPartners.length > 0 && (
             <div className="mt-3 rounded-lg p-4" style={{ background: "#131a14", border: "1px solid #1f2a1e" }}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#4a5245" }}>
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66" }}>
                 おすすめサービス
               </h3>
               <div className="space-y-2">
@@ -1912,9 +1955,9 @@ function HomeContent() {
             <button
               onClick={() => { setShowComposeModal(false); setError(null); }}
               className="absolute right-3 top-3 rounded p-1.5 transition-colors"
-              style={{ color: "#4a5245" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7a7260"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#4a5245"; }}
+              style={{ color: "#6b7a66" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -1928,28 +1971,28 @@ function HomeContent() {
         className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around py-2 md:hidden"
         style={{
           background: "#080a08",
-          borderTop: "1px solid #161b14",
+          borderTop: "1px solid #1f2a1e",
           boxShadow: "0 -2px 20px rgba(0,0,0,0.5)",
         }}
       >
         <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }} className="flex flex-col items-center gap-0.5 p-2" style={{ color: "#c9a84c" }}>
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
         </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/search"; }} className="flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#4a5245" }}>
+        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/search"; }} className="flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
         </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/notifications"; }} className="relative flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#4a5245" }}>
+        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/notifications"; }} className="relative flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
           {unreadCount > 0 && <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold" style={{ background: "#c9a84c", color: "#0d1009" }}>{unreadCount}</span>}
         </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = `/profile/${currentUser.username}`; }} className="flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#4a5245" }}>
+        <button onClick={() => { if (typeof window !== "undefined") window.location.href = `/profile/${currentUser.username}`; }} className="flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
         </button>
       </nav>
 
       {/* Mobile FAB */}
       <button
-        onClick={() => setShowComposeModal(true)}
+        onClick={() => { if (currentUser && !currentUser.emailVerified) { showToast("メールアドレスの認証が必要です", "error"); return; } setShowComposeModal(true); }}
         className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full transition-all md:hidden"
         style={{ background: "#c9a84c", color: "#0d1009", boxShadow: "0 4px 20px rgba(201,168,76,0.35)" }}
       >

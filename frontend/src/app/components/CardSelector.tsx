@@ -78,7 +78,7 @@ export default function CardSelector({
   return (
     <div className="relative">
       {label && (
-        <label style={{ color: "#4a5245", fontSize: 12, fontWeight: 500, display: "block", marginBottom: 6, letterSpacing: .2 }}>
+        <label style={{ color: "#6b7a66", fontSize: 12, fontWeight: 500, display: "block", marginBottom: 6, letterSpacing: .2 }}>
           {label}
         </label>
       )}
@@ -101,12 +101,12 @@ export default function CardSelector({
             {selected.map((card) => <MiniCard key={card} card={card} />)}
           </div>
         ) : (
-          <span style={{ color: "#4a5245", fontSize: 13 }}>カードを選択...</span>
+          <span style={{ color: "#6b7a66", fontSize: 13 }}>カードを選択...</span>
         )}
         <svg
           style={{
             marginLeft: "auto", width: 16, height: 16, flexShrink: 0,
-            color: "#4a5245", transition: "transform .15s",
+            color: "#6b7a66", transition: "transform .15s",
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
           }}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
@@ -131,7 +131,7 @@ export default function CardSelector({
           >
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid #1f2a1e" }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#4a5245", letterSpacing: .5, textTransform: "uppercase" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7a66", letterSpacing: .5, textTransform: "uppercase" }}>
                 カードを選択
               </span>
               {selected.length > 0 && (
@@ -150,7 +150,7 @@ export default function CardSelector({
                     type="button"
                     onClick={() => onChange("")}
                     style={{
-                      padding: "2px 8px", fontSize: 11, color: "#4a5245",
+                      padding: "2px 8px", fontSize: 11, color: "#6b7a66",
                       background: "transparent", border: "1px solid #2a3828",
                       borderRadius: 4, cursor: "pointer",
                     }}
@@ -217,7 +217,7 @@ export default function CardSelector({
             {/* Footer */}
             {multiple && maxCards > 1 && (
               <div style={{ borderTop: "1px solid #1f2a1e", padding: "8px 14px", textAlign: "center" }}>
-                <span style={{ fontSize: 11, color: "#4a5245" }}>
+                <span style={{ fontSize: 11, color: "#6b7a66" }}>
                   {selected.length} / {maxCards} 枚選択中
                 </span>
               </div>
