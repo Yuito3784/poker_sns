@@ -69,8 +69,12 @@ jobs:
             echo "No Prisma schema changes detected"
           fi
       - name: Generate Prisma client (for validate)
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
         run: npx prisma generate --schema=./prisma/schema.prisma
       - name: Validate Prisma schema syntax
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
         run: npx prisma validate --schema=./prisma/schema.prisma
 
   # ── Stripe / Payment Security Checks ──────────────────────
