@@ -64,6 +64,7 @@ export class AuthService {
           passwordHash,
           name: dto.name,
           username: dto.username,
+          avatarUrl: null,
         },
       });
 
@@ -386,7 +387,7 @@ export class AuthService {
 
   // ── OAuth helpers ──────────────────────────────────────────────
 
-  /** 英数字のランダム文字列（LINE等で表示名からユーザー名が作れない場合用） */
+  /** 英数字のランダム文字列 */
   private generateRandomAlphanumeric(length: number): string {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -397,9 +398,9 @@ export class AuthService {
     return result;
   }
 
-  /** ベースが空やアンダースコアのみになる場合に使うランダムユーザー名ベース（例: line7k2m9x1） */
-  private generateLineUsernameBase(): string {
-    return `line${this.generateRandomAlphanumeric(8)}`;
+  /** OAuth（LINE/Google/X）新規ユーザー用: どのプロバイダでログインしたか分からないよう英数字12文字ランダム */
+  private generateOAuthRandomUsernameBase(): string {
+    return this.generateRandomAlphanumeric(12);
   }
 
   private async generateUniqueUsername(base: string): Promise<string> {
@@ -452,10 +453,9 @@ export class AuthService {
       return this.buildAuthResponse(user);
     }
 
-    // New user
-    const username = await this.generateUniqueUsername(
-      profile.email.split('@')[0],
-    );
+    // New user（LINE/Google/X 共通: 英数字12文字ランダム、画像未設定時は null でフロントが DefaultAvatar 表示）
+    const baseName = this.generateOAuthRandomUsernameBase();
+    const username = await this.generateUniqueUsername(baseName);
     user = await this.prisma.user.create({
       data: {
         email: profile.email,
@@ -463,7 +463,7 @@ export class AuthService {
         username,
         passwordHash: null,
         googleId: profile.googleId,
-        avatarUrl: profile.avatar,
+        avatarUrl: null,
         emailVerified: true,
       },
     });
@@ -572,20 +572,9 @@ export class AuthService {
       return this.buildAuthResponse(user);
     }
 
-    let baseName = email ? email.split('@')[0] : profile.displayName.replace(/\s/g, '_');
-    const cleanedForCheck = baseName
-      .toLowerCase()
-      .replace(/[^a-z0-9_]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '')
-      .slice(0, 16);
-    if (!cleanedForCheck || /^_+$/.test(cleanedForCheck) || cleanedForCheck.length < 2) {
-      baseName = this.generateLineUsernameBase();
-    }
-    let username = await this.generateUniqueUsername(baseName);
-    if (/^_+$/.test(username) || username.length < 3) {
-      username = await this.generateUniqueUsername(this.generateLineUsernameBase());
-    }
+    // New user（LINE/Google/X 共通: 英数字12文字ランダム）
+    const baseName = this.generateOAuthRandomUsernameBase();
+    const username = await this.generateUniqueUsername(baseName);
     user = await this.prisma.user.create({
       data: {
         email: emailToUse,
@@ -593,7 +582,7 @@ export class AuthService {
         username,
         passwordHash: null,
         lineId: profile.userId,
-        avatarUrl: profile.pictureUrl ?? null,
+        avatarUrl: null,
         emailVerified,
       },
     });
@@ -806,8 +795,9 @@ export class AuthService {
       return this.buildAuthResponse(user);
     }
 
-    // Create new user
-    const username = await this.generateUniqueUsername(xPayload.xUsername || email.split('@')[0]);
+    // Create new user（LINE/Google/X 共通: 英数字12文字ランダム）
+    const baseName = this.generateOAuthRandomUsernameBase();
+    const username = await this.generateUniqueUsername(baseName);
     try {
       user = await this.prisma.user.create({
         data: {
@@ -816,7 +806,7 @@ export class AuthService {
           username,
           passwordHash: null,
           xId: xPayload.xId,
-          avatarUrl: xPayload.xAvatar,
+          avatarUrl: null,
           emailVerified: false,
         },
       });
