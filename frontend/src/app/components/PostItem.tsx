@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Avatar from "./Avatar";
 import PokerHandDisplay from "./PokerHandDisplay";
 import PremiumBadge from "./PremiumBadge";
 import YouTubeEmbed from "./YouTubeEmbed";
@@ -92,25 +93,7 @@ export default function PostItem({
               }}
               className="flex items-center gap-2.5 text-left"
             >
-              {post.author.avatarUrl ? (
-                <img
-                  src={`${API_BASE}${post.author.avatarUrl}`}
-                  alt={post.author.name}
-                  className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
-                  style={{ border: "1.5px solid rgba(201,168,76,0.2)" }}
-                />
-              ) : (
-                <div
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                  style={{
-                    background: "linear-gradient(135deg, #c9a84c22, #9a7c3515)",
-                    border: "1.5px solid rgba(201,168,76,0.25)",
-                    color: "#c9a84c",
-                  }}
-                >
-                  {post.author.name.charAt(0)}
-                </div>
-              )}
+              <Avatar avatarUrl={post.author.avatarUrl} name={post.author.name} size="md" />
               <div className="flex items-center gap-1.5">
                 <span
                   className="font-semibold tracking-tight hover:underline"

@@ -8,6 +8,7 @@ import AuthForm from "./components/AuthForm";
 import PostItem from "./components/PostItem";
 import PostSkeleton from "./components/PostSkeleton";
 import AdCard from "./components/AdCard";
+import Avatar from "./components/Avatar";
 import AffiliateCard from "./components/AffiliateCard";
 import { API_BASE, fetchWithAuth, getValidTokenAsync } from "../lib/api";
 import { formatRelativeTime } from "../lib/utils";
@@ -1703,25 +1704,7 @@ function HomeContent() {
               onClick={() => { if (typeof window !== "undefined") window.location.href = `/profile/${currentUser.username}`; }}
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.03]"
             >
-              {currentUser.avatarUrl ? (
-                <img
-                  src={`${API_BASE}${currentUser.avatarUrl}`}
-                  alt={currentUser.name}
-                  className="h-8 w-8 rounded-full object-cover"
-                  style={{ border: "1px solid rgba(201,168,76,0.2)" }}
-                />
-              ) : (
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
-                  style={{
-                    background: "rgba(201,168,76,0.1)",
-                    border: "1px solid rgba(201,168,76,0.2)",
-                    color: "#c9a84c",
-                  }}
-                >
-                  {currentUser.name.charAt(0)}
-                </div>
-              )}
+              <Avatar avatarUrl={currentUser.avatarUrl} name={currentUser.name} size="sm" />
               <div className="hidden flex-1 text-left lg:block">
                 <div className="text-sm font-semibold" style={{ color: "#ddd6c8" }}>{currentUser.name}</div>
                 <div className="text-xs" style={{ color: "#6b7a66" }}>@{currentUser.username}</div>
@@ -1804,25 +1787,7 @@ function HomeContent() {
             onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#1f2a1e"; }}
           >
             <div className="flex items-center gap-3">
-              {currentUser.avatarUrl ? (
-                <img
-                  src={`${API_BASE}${currentUser.avatarUrl}`}
-                  alt={currentUser.name}
-                  className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
-                  style={{ border: "1px solid rgba(201,168,76,0.2)" }}
-                />
-              ) : (
-                <div
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                  style={{
-                    background: "rgba(201,168,76,0.1)",
-                    border: "1px solid rgba(201,168,76,0.2)",
-                    color: "#c9a84c",
-                  }}
-                >
-                  {currentUser.name.charAt(0)}
-                </div>
-              )}
+              <Avatar avatarUrl={currentUser.avatarUrl} name={currentUser.name} size="md" />
               <span className="text-[15px]" style={{ color: "#3a4238" }}>今日のハンドを共有する...</span>
             </div>
           </div>

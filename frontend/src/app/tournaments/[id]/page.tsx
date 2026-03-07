@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Avatar from "../../components/Avatar";
 import { fetchWithAuth, API_BASE } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import type { Tournament } from "../../../lib/types";
@@ -116,13 +117,7 @@ export default function TournamentDetailPage() {
             <div className="space-y-2">
               {tournament.participants.map((p) => (
                 <div key={p.id} className="flex items-center gap-3 rounded-lg px-3 py-2" style={{ background: "#131a14", border: "1px solid #1f2a1e" }}>
-                  {p.user?.avatarUrl ? (
-                    <img src={p.user.avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
-                  ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold" style={{ background: "#192118", color: "#7a7260" }}>
-                      {p.user?.name?.[0] || "?"}
-                    </div>
-                  )}
+                  <Avatar avatarUrl={p.user?.avatarUrl ?? null} name={p.user?.name ?? ""} size="sm" />
                   <div>
                     <div className="text-sm font-medium" style={{ color: "#ddd6c8" }}>{p.user?.name}</div>
                     <div className="text-xs" style={{ color: "#4a5245" }}>@{p.user?.username}</div>

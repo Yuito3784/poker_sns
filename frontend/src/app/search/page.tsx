@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Avatar from "../components/Avatar";
 import PostItem from "../components/PostItem";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -222,11 +223,7 @@ function SearchContent() {
                       className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.03]"
                       style={{ borderBottom: "1px solid #1f2a1e" }}
                     >
-                      {user.avatarUrl ? (
-                        <img src={`${API_BASE}${user.avatarUrl}`} alt={user.name} className="h-10 w-10 rounded-full object-cover" style={{ border: "1.5px solid rgba(201,168,76,0.2)" }} />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold" style={{ background: "linear-gradient(135deg, #c9a84c22, #9a7c3515)", border: "1.5px solid rgba(201,168,76,0.25)", color: "#c9a84c" }}>{user.name.charAt(0)}</div>
-                      )}
+                      <Avatar avatarUrl={user.avatarUrl} name={user.name} size="lg" />
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold" style={{ color: "#ddd6c8" }}>{user.name}</div>
                         <div className="text-sm" style={{ color: "#6b7a66" }}>@{user.username}</div>

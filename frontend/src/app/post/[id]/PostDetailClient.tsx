@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, FormEvent } from "react";
+import Avatar from "../../components/Avatar";
 import PokerHandDisplay from "../../components/PokerHandDisplay";
 import { API_BASE, fetchWithAuth } from "../../../lib/api";
 import { formatRelativeTime } from "../../../lib/utils";
@@ -209,13 +210,7 @@ export default function PostDetailClient() {
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button onClick={() => window.location.href = `/profile/${post.author.username}`}>
-                {post.author.avatarUrl ? (
-                  <img src={`${API_BASE}${post.author.avatarUrl}`} alt={post.author.name} className="h-10 w-10 rounded-full object-cover" />
-                ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-amber-200 text-sm font-bold text-amber-800">
-                    {post.author.name.charAt(0)}
-                  </div>
-                )}
+                <Avatar avatarUrl={post.author.avatarUrl} name={post.author.name} size="lg" />
               </button>
               <div>
                 <button onClick={() => window.location.href = `/profile/${post.author.username}`} className="text-sm font-semibold hover:underline">
@@ -486,13 +481,7 @@ export default function PostDetailClient() {
           )}
           {currentUser ? (
             <form onSubmit={handleReply} className="flex gap-3">
-              {currentUser.avatarUrl ? (
-                <img src={`${API_BASE}${currentUser.avatarUrl}`} alt={currentUser.name} className="mt-1 h-8 w-8 flex-shrink-0 rounded-full object-cover" />
-              ) : (
-                <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-amber-200 text-xs font-bold text-amber-800">
-                  {currentUser.name.charAt(0)}
-                </div>
-              )}
+              <Avatar avatarUrl={currentUser.avatarUrl} name={currentUser.name} size="sm" className="mt-1" />
               <div className="flex-1">
                 <textarea
                   className="w-full resize-none rounded-lg border-0 bg-transparent px-1 py-1 text-sm outline-none placeholder:text-[#7a7260]"

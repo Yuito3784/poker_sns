@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Avatar from "../../components/Avatar";
 import PokerHandDisplay from "../../components/PokerHandDisplay";
 import PremiumBadge from "../../components/PremiumBadge";
 import { API_BASE, fetchWithAuth } from "../../../lib/api";
@@ -10,28 +11,13 @@ import { useAuth } from "../../../contexts/AuthContext";
 import type { Post, UserProfile, ProfileUser } from "../../../lib/types";
 
 function AvatarDisplay({ profile, size = "lg" }: { profile: { name: string; avatarUrl?: string | null }; size?: "sm" | "lg" }) {
-  const sizeClass = size === "lg" ? "h-20 w-20 text-2xl" : "h-10 w-10 text-sm";
-  if (profile.avatarUrl) {
-    return (
-      <img
-        src={`${API_BASE}${profile.avatarUrl}`}
-        alt={profile.name}
-        className={`${sizeClass} rounded-full object-cover`}
-        style={{ border: "2px solid rgba(201,168,76,0.25)" }}
-      />
-    );
-  }
   return (
-    <div
-      className={`flex ${sizeClass} items-center justify-center rounded-full font-bold`}
-      style={{
-        background: "linear-gradient(135deg, #c9a84c22, #9a7c3515)",
-        border: "2px solid rgba(201,168,76,0.25)",
-        color: "#c9a84c",
-      }}
-    >
-      {profile.name.charAt(0)}
-    </div>
+    <Avatar
+      avatarUrl={profile.avatarUrl ?? null}
+      name={profile.name}
+      size={size === "lg" ? "xl" : "lg"}
+      style={{ border: "2px solid rgba(201,168,76,0.25)" }}
+    />
   );
 }
 
