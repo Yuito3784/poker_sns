@@ -37,6 +37,7 @@
 | Railway（バックエンド） | [docs/railway-env-vars.md](./railway-env-vars.md) |
 | Vercel（フロント） | [docs/vercel-env-vars.md](./vercel-env-vars.md) |
 | ローカル（Docker） | リポジトリ直下の `.env.example` / `docker-compose.yml` |
+| **本番：メール認証まわり確認** | [docs/PRODUCTION_EMAIL_VERIFICATION_CHECKLIST.md](./PRODUCTION_EMAIL_VERIFICATION_CHECKLIST.md) |
 
 ---
 
