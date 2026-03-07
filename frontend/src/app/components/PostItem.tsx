@@ -3,10 +3,12 @@
 import { useState, type ReactNode } from "react";
 import PokerHandDisplay from "./PokerHandDisplay";
 import PremiumBadge from "./PremiumBadge";
+import YouTubeEmbed from "./YouTubeEmbed";
 import { formatRelativeTime } from "../../lib/utils";
 import { API_BASE } from "../../lib/api";
 import { analytics } from "../../lib/analytics";
 import { useToast } from "../../contexts/ToastContext";
+import { extractYouTubeId } from "../../lib/youtube";
 import type { Post, User } from "../../lib/types";
 
 function renderContentWithHashtags(content: string): ReactNode[] {
@@ -225,6 +227,10 @@ export default function PostItem({
               {renderContentWithHashtags(post.content)}
             </p>
           )}
+          {post.content && (() => {
+            const ytId = extractYouTubeId(post.content);
+            return ytId ? <YouTubeEmbed videoId={ytId} /> : null;
+          })()}
           {post.imageUrl && (
             <div className="mt-2.5">
               <img
