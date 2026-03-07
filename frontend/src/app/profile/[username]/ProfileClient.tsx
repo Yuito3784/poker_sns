@@ -37,6 +37,7 @@ export default function ProfileClient() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
   const [editBio, setEditBio] = useState("");
   const [activeTab, setActiveTab] = useState<"posts" | "likes" | "bookmarks">("posts");
   const [showListModal, setShowListModal] = useState<"followers" | "following" | null>(null);
@@ -59,6 +60,7 @@ export default function ProfileClient() {
   useEffect(() => {
     if (profile) {
       setEditName(profile.name);
+      setEditUsername(profile.username);
       setEditBio(profile.bio || "");
     }
   }, [profile]);
@@ -244,22 +246,39 @@ export default function ProfileClient() {
 
   const handleUpdateProfile = async () => {
     if (!token) return;
+    setError(null);
+    const u = editUsername.trim();
+    if (u && (u.length < 3 || u.length > 20)) {
+      setError("ユーザー名は3〜20文字で入力してください。");
+      return;
+    }
+    if (u && !/^[a-zA-Z0-9_]+$/.test(u)) {
+      setError("ユーザー名は英数字とアンダースコアのみ使用できます。");
+      return;
+    }
     try {
       const res = await fetchWithAuth(`${API_BASE}/users/me`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: editName,
+          username: (u && u !== profile?.username ? u : undefined),
           bio: editBio,
         }),
       });
       if (!res.ok) {
-        throw new Error("プロフィールの更新に失敗しました");
+        const data = await res.json().catch(() => ({}));
+        const msg = Array.isArray(data?.message) ? data.message.join(", ") : data?.message ?? "プロフィールの更新に失敗しました";
+        throw new Error(msg);
       }
       setIsEditing(false);
-      await fetchProfile();
       const updatedUser = await res.json();
       if (token) setAuth(token, updatedUser);
+      if (updatedUser.username && updatedUser.username !== profile?.username) {
+        router.replace(`/profile/${updatedUser.username}`);
+        return;
+      }
+      await fetchProfile();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "エラーが発生しました";
       setError(message);
@@ -353,6 +372,20 @@ export default function ProfileClient() {
                   />
                 </div>
                 <div>
+                  <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>ユーザー名（@）</label>
+                  <input
+                    type="text"
+                    className="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
+                    style={{ background: "#0d1009", border: "1px solid #2a3828", color: "#ddd6c8" }}
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 20))}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#2a3828"; }}
+                    placeholder="3〜20文字・英数字と_"
+                  />
+                  <p className="mt-0.5 text-[11px]" style={{ color: "#6b7a66" }}>プロフィールURLに使われます。変更すると @{editUsername || "..."} になります。</p>
+                </div>
+                <div>
                   <label className="block text-xs font-medium" style={{ color: "#9a8e7a" }}>自己紹介</label>
                   <textarea
                     className="mt-1 w-full resize-none rounded-lg px-3 py-2 text-sm outline-none"
@@ -377,6 +410,7 @@ export default function ProfileClient() {
                       setIsEditing(false);
                       if (profile) {
                         setEditName(profile.name);
+                        setEditUsername(profile.username);
                         setEditBio(profile.bio || "");
                       }
                     }}

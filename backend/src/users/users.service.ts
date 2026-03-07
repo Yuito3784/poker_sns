@@ -155,11 +155,20 @@ export class UsersService {
     return follows.map((f) => f.following);
   }
 
-  async updateProfile(userId: string, data: { name?: string; bio?: string }) {
+  async updateProfile(userId: string, data: { name?: string; username?: string; bio?: string }) {
+    if (data.username !== undefined) {
+      const existing = await this.prisma.user.findUnique({
+        where: { username: data.username },
+      });
+      if (existing && existing.id !== userId) {
+        throw new BadRequestException('このユーザー名は既に使用されています。');
+      }
+    }
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         ...(data.name && { name: data.name }),
+        ...(data.username !== undefined && { username: data.username }),
         ...(data.bio !== undefined && { bio: data.bio }),
       },
       select: {

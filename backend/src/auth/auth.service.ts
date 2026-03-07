@@ -386,10 +386,28 @@ export class AuthService {
 
   // ── OAuth helpers ──────────────────────────────────────────────
 
+  /** 英数字のランダム文字列（LINE等で表示名からユーザー名が作れない場合用） */
+  private generateRandomAlphanumeric(length: number): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const bytes = randomBytes(length);
+    for (let i = 0; i < length; i++) {
+      result += chars[bytes[i]! % chars.length];
+    }
+    return result;
+  }
+
+  /** ベースが空やアンダースコアのみになる場合に使うランダムユーザー名ベース（例: line7k2m9x1） */
+  private generateLineUsernameBase(): string {
+    return `line${this.generateRandomAlphanumeric(8)}`;
+  }
+
   private async generateUniqueUsername(base: string): Promise<string> {
     const cleaned = base
       .toLowerCase()
       .replace(/[^a-z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
       .slice(0, 16);
     const username = cleaned || 'user';
     const existing = await this.prisma.user.findUnique({ where: { username } });
@@ -554,8 +572,20 @@ export class AuthService {
       return this.buildAuthResponse(user);
     }
 
-    const baseName = email ? email.split('@')[0] : profile.displayName.replace(/\s/g, '_');
-    const username = await this.generateUniqueUsername(baseName);
+    let baseName = email ? email.split('@')[0] : profile.displayName.replace(/\s/g, '_');
+    const cleanedForCheck = baseName
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 16);
+    if (!cleanedForCheck || /^_+$/.test(cleanedForCheck) || cleanedForCheck.length < 2) {
+      baseName = this.generateLineUsernameBase();
+    }
+    let username = await this.generateUniqueUsername(baseName);
+    if (/^_+$/.test(username) || username.length < 3) {
+      username = await this.generateUniqueUsername(this.generateLineUsernameBase());
+    }
     user = await this.prisma.user.create({
       data: {
         email: emailToUse,
