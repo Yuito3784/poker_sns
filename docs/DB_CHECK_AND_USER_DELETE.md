@@ -1,5 +1,7 @@
 # DB の確認とユーザー削除の方法
 
+> **Docker のリビルド・Prisma Studio の起動など開発でよく使うコマンド**は [docs/DEV_DOCKER_AND_PRISMA.md](./DEV_DOCKER_AND_PRISMA.md) にまとめています。
+
 ## 1. DB の内容を確認する
 
 ### 方法A: ターミナルで psql（Docker）
