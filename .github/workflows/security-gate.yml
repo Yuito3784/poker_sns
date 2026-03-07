@@ -55,19 +55,23 @@ jobs:
       - run: npm ci
       - name: Check Prisma schema changes
         run: |
-          BASE_BRANCH="${{ github.base_ref }}"
-          if git diff "origin/${BASE_BRANCH}" -- prisma/schema.prisma | grep -q '^[+-]'; then
+          BASE_BRANCH="${{ github.base_ref || 'main' }}"
+          if [ -z "$BASE_BRANCH" ]; then BASE_BRANCH=main; fi
+          git fetch origin "${BASE_BRANCH}" || true
+          if git diff "origin/${BASE_BRANCH}" -- prisma/schema.prisma 2>/dev/null | grep -q '^[+-]'; then
             echo "::warning::Prisma schema has changes — review migration impact"
             echo "## Prisma Schema Diff" > schema-diff.md
             echo '```diff' >> schema-diff.md
-            git diff "origin/${BASE_BRANCH}" -- prisma/schema.prisma >> schema-diff.md
+            git diff "origin/${BASE_BRANCH}" -- prisma/schema.prisma >> schema-diff.md || true
             echo '```' >> schema-diff.md
             cat schema-diff.md
           else
             echo "No Prisma schema changes detected"
           fi
+      - name: Generate Prisma client (for validate)
+        run: npx prisma generate --schema=./prisma/schema.prisma
       - name: Validate Prisma schema syntax
-        run: npx prisma validate
+        run: npx prisma validate --schema=./prisma/schema.prisma
 
   # ── Stripe / Payment Security Checks ──────────────────────
   payment-security-check:
