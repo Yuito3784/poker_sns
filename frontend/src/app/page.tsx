@@ -1478,14 +1478,16 @@ function HomeContent() {
             >
               Poker SNS
             </h1>
-            <p className="mt-4 text-lg leading-relaxed sm:text-xl" style={{ color: "#6b7a66" }}>
-              ポーカーハンドを共有して、もっと上手くなる
+            <p className="mt-4 text-base leading-relaxed sm:text-xl" style={{ color: "#6b7a66" }}>
+              ポーカーハンドを共有して、
+              <br className="sm:hidden" />
+              もっと上手くなる
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <div className="mt-6 grid grid-cols-2 justify-items-center gap-2 sm:flex sm:flex-wrap sm:justify-center">
               {["ハンドを記録", "仲間と議論", "戦略を磨く", "成長を実感"].map((text) => (
                 <span
                   key={text}
-                  className="rounded px-3 py-1.5 text-sm"
+                  className="inline-block rounded px-3 py-1.5 text-xs sm:text-sm"
                   style={{
                     background: "rgba(201,168,76,0.06)",
                     border: "1px solid rgba(201,168,76,0.18)",
