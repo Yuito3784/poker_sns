@@ -160,8 +160,8 @@ export class AuthController {
     }
   }
 
-  // ── Magic Link ──────────────────────────────────────────────────
-
+  // ── Magic Link（一時無効）────────────────────────────────────────
+  /*
   @Post('magic-link')
   @Throttle({ default: { ttl: 60000, limit: 3 } })
   sendMagicLink(@Body() dto: MagicLinkDto) {
@@ -188,13 +188,18 @@ export class AuthController {
       return res.redirect(`${frontendUrl}/?authError=magiclink`);
     }
   }
+  */
 
-  // ── X (Twitter) OAuth ───────────────────────────────────────────
-
+  // ── X (Twitter) OAuth（一時無効）──────────────────────────────────
+  /*
   @Get('x')
   xAuth(@Res() res: Response) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    if (!process.env.X_CLIENT_ID) {
+    const clientId = process.env.X_CLIENT_ID?.trim();
+    if (!clientId || clientId === 'xxx') {
+      this.logger.warn(
+        'X login skipped: X_CLIENT_ID is not set or still placeholder. Set real Client ID in .env and add callback URL in Twitter Developer Portal.',
+      );
       return res.redirect(`${frontendUrl}/?authError=true`);
     }
     try {
@@ -224,7 +229,6 @@ export class AuthController {
         });
         return res.redirect(`${frontendUrl}/?oauthSession=${sessionId}`);
       } else {
-        // Need email completion
         const sessionId = this.authService.storeOAuthSession({
           kind: 'x_pending',
           xProfile: result.xProfile as Record<string, unknown>,
@@ -242,6 +246,7 @@ export class AuthController {
   completeXRegistration(@Body() dto: CompleteXRegistrationDto) {
     return this.authService.completeXRegistration(dto.xToken, dto.email);
   }
+  */
 
   // ── OAuth セッション取得 (one-time, 5分TTL) ─────────────────────
   @Get('oauth-session')

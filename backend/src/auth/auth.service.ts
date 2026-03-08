@@ -666,8 +666,8 @@ export class AuthService {
   private readonly xStateStore = new Map<string, { codeVerifier: string; expiresAt: number }>();
 
   getXAuthUrl(): { url: string; state: string } {
-    const clientId = process.env.X_CLIENT_ID || '';
-    if (!clientId) throw new BadRequestException('X OAuth is not configured');
+    const clientId = (process.env.X_CLIENT_ID || '').trim();
+    if (!clientId || clientId === 'xxx') throw new BadRequestException('X OAuth is not configured');
 
     const state = randomBytes(16).toString('hex');
     const codeVerifier = randomBytes(32).toString('base64url');
@@ -686,7 +686,7 @@ export class AuthService {
       if (val.expiresAt < Date.now()) this.xStateStore.delete(key);
     }
 
-    const apiUrl = process.env.API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.API_URL || 'http://localhost:3001';
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: clientId,
@@ -712,9 +712,12 @@ export class AuthService {
     const { codeVerifier } = stored;
     this.xStateStore.delete(state);
 
-    const clientId = process.env.X_CLIENT_ID || '';
-    const clientSecret = process.env.X_CLIENT_SECRET || '';
-    const apiUrl = process.env.API_URL || 'http://localhost:4000';
+    const clientId = (process.env.X_CLIENT_ID || '').trim();
+    const clientSecret = (process.env.X_CLIENT_SECRET || '').trim();
+    if (!clientId || clientId === 'xxx' || !clientSecret || clientSecret === 'xxx') {
+      throw new BadRequestException('X OAuth is not configured');
+    }
+    const apiUrl = process.env.API_URL || 'http://localhost:3001';
 
     // Exchange code for tokens
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');

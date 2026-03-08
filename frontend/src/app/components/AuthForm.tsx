@@ -227,24 +227,17 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           <GoogleIcon />
           Googleでログイン
         </a>
-        <div className="grid grid-cols-2 gap-2">
-          <a
-            href={`${API_BASE}/auth/line`}
-            className="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-white transition-all active:scale-[0.98]"
-            style={{ background: "#00b900", border: "1px solid #009900" }}
-          >
-            <LineIcon />
-            LINE
-          </a>
-          <a
-            href={`${API_BASE}/auth/x`}
-            className="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-white transition-all active:scale-[0.98]"
-            style={{ background: "#111", border: "1px solid #333" }}
-          >
-            <XIcon />
-            X
-          </a>
-        </div>
+        <a
+          href={`${API_BASE}/auth/line`}
+          className="flex w-full items-center justify-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-all active:scale-[0.98]"
+          style={{ background: "#00b900", border: "1px solid #009900" }}
+        >
+          <LineIcon />
+          LINEでログイン
+        </a>
+        {/* Xログインは一時無効（復活時は grid grid-cols-2 で LINE と X を並べる）
+        <a href={`${API_BASE}/auth/x`} ...>X</a>
+        */}
       </div>
 
       {/* Divider */}
@@ -282,7 +275,8 @@ export default function AuthForm({ onAuthSuccess }: Props) {
         </div>
       )}
 
-      {/* Magic Link panel (login mode only) */}
+      {/* メールリンクログインは一時無効
+      Magic Link panel (login mode only)
       {mode === "login" && showMagicLink && (
         <div
           className="mb-4 rounded-lg p-4"
@@ -340,6 +334,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           )}
         </div>
       )}
+      */}
 
       <form onSubmit={handleSubmit} className="space-y-3">
         {mode === "register" && (
@@ -468,6 +463,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           >
             パスワードをお忘れですか？
           </a>
+          {/* メールリンクログインは一時無効
           <span style={{ color: "#2a3828" }}>|</span>
           <button
             type="button"
@@ -477,6 +473,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           >
             {showMagicLink ? "パスワードでログイン" : "メールリンクでログイン"}
           </button>
+          */}
         </div>
       )}
       {mode === "register" && (
