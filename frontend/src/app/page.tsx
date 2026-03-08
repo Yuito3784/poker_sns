@@ -10,6 +10,7 @@ import PostSkeleton from "./components/PostSkeleton";
 import AdCard from "./components/AdCard";
 import Avatar from "./components/Avatar";
 import AffiliateCard from "./components/AffiliateCard";
+import SidebarAds from "./components/SidebarAds";
 import { API_BASE, fetchWithAuth, getValidTokenAsync } from "../lib/api";
 import { formatRelativeTime } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
@@ -1857,10 +1858,10 @@ function HomeContent() {
           )}
         </main>
 
-        {/* Right Sidebar */}
-        <aside className="sticky top-0 hidden h-screen flex-shrink-0 overflow-y-auto px-4 xl:block xl:w-80 xl:pt-3">
+        {/* Right Sidebar: 検索欄固定、広告・おすすめのみスクロール */}
+        <aside className="sticky top-0 hidden h-screen flex-shrink-0 flex-col px-4 xl:flex xl:w-80 xl:pt-3">
           <div
-            className="rounded-lg px-4 py-2.5 transition-all"
+            className="flex-shrink-0 rounded-lg px-4 py-2.5 transition-all"
             style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
           >
             <form
@@ -1884,25 +1885,28 @@ function HomeContent() {
               />
             </form>
           </div>
-          {featuredPartners.length > 0 && (
-            <div className="mt-3 rounded-lg p-4" style={{ background: "#131a14", border: "1px solid #1f2a1e" }}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66" }}>
-                おすすめサービス
-              </h3>
-              <div className="space-y-2">
-                {featuredPartners.map((partner) => (
-                  <AffiliateCard key={partner.id} partner={partner} referrer="sidebar" compact />
-                ))}
+          <div className="min-h-0 flex-1 overflow-y-auto pt-3">
+            <SidebarAds />
+            {featuredPartners.length > 0 && (
+              <div className="mt-3 rounded-lg p-4" style={{ background: "#131a14", border: "1px solid #1f2a1e" }}>
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66" }}>
+                  おすすめサービス
+                </h3>
+                <div className="space-y-2">
+                  {featuredPartners.map((partner) => (
+                    <AffiliateCard key={partner.id} partner={partner} referrer="sidebar" compact />
+                  ))}
+                </div>
+                <button
+                  onClick={() => { if (typeof window !== "undefined") window.location.href = "/partners"; }}
+                  className="mt-3 w-full text-center text-xs font-medium transition-colors hover:underline"
+                  style={{ color: "#c9a84c" }}
+                >
+                  すべて見る
+                </button>
               </div>
-              <button
-                onClick={() => { if (typeof window !== "undefined") window.location.href = "/partners"; }}
-                className="mt-3 w-full text-center text-xs font-medium transition-colors hover:underline"
-                style={{ color: "#c9a84c" }}
-              >
-                すべて見る
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </aside>
       </div>
 
