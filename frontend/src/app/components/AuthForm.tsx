@@ -180,7 +180,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
 
   return (
     <div
-      className="w-full max-w-sm rounded-xl p-8"
+      className="w-full max-w-sm rounded-xl p-6 sm:p-8"
       style={{
         background: "#0f1410",
         border: "1px solid #1f2a1e",
@@ -188,7 +188,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
       }}
     >
       {/* Logo */}
-      <div className="mb-6 text-center">
+      <div className="mb-5 text-center sm:mb-6">
         <div className="mb-3 flex justify-center">
           <div
             className="flex h-12 w-12 items-center justify-center rounded-full"
