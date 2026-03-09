@@ -7,6 +7,7 @@ import PostItem from "../components/PostItem";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Post, ProfileUser, User } from "../../lib/types";
+import MobileBottomNav from "../components/MobileBottomNav";
 
 type FilterTab = "all" | "users" | "posts";
 
@@ -148,8 +149,8 @@ function SearchContent() {
   const showPosts = filterTab === "all" || filterTab === "posts";
 
   return (
-    <div className="min-h-screen" style={{ background: "#0d1009", color: "#ddd6c8" }}>
-      <div className="mx-auto max-w-xl min-h-screen">
+    <div className="min-h-screen pb-14" style={{ background: "#0d1009", color: "#ddd6c8" }}>
+      <div className="mx-auto max-w-xl min-h-screen pb-4">
         <div className="sticky top-0 z-50 border-b" style={{ background: "#131a14", borderColor: "#2a3828" }}>
           <div className="flex items-center gap-4 px-4 py-3">
             <button onClick={() => router.back()} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: "#9a8e7a" }}>
@@ -262,6 +263,7 @@ function SearchContent() {
           </>
         )}
       </div>
+      <MobileBottomNav />
     </div>
   );
 }

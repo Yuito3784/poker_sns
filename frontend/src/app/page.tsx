@@ -11,6 +11,7 @@ import AdCard from "./components/AdCard";
 import Avatar from "./components/Avatar";
 import AffiliateCard from "./components/AffiliateCard";
 import SidebarAds from "./components/SidebarAds";
+import MobileBottomNav from "./components/MobileBottomNav";
 import { API_BASE, fetchWithAuth, getValidTokenAsync } from "../lib/api";
 import { formatRelativeTime } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
@@ -1456,7 +1457,10 @@ function HomeContent() {
     return (
       <div className="min-h-screen" style={{ background: "#0d1009" }}>
         {/* Hero */}
-        <div className="relative overflow-hidden px-4 pb-10 pt-16 text-center">
+        <div className="relative overflow-hidden px-4 pb-12 pt-12 text-center sm:pb-16 sm:pt-20">
+          {/* subtle background glow (mobile でも軽めに） */}
+          <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-[#c9a84c1a] blur-3xl sm:h-64 sm:w-64" />
+          <div className="pointer-events-none absolute -left-24 bottom-0 h-40 w-40 rounded-full bg-[#3b52401a] blur-3xl sm:h-56 sm:w-56" />
           <div className="relative mx-auto max-w-2xl">
             <div className="mb-8 flex justify-center">
               <div
@@ -1938,28 +1942,7 @@ function HomeContent() {
       )}
 
       {/* Mobile Bottom Nav */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around py-2 md:hidden"
-        style={{
-          background: "#080a08",
-          borderTop: "1px solid #1f2a1e",
-          boxShadow: "0 -2px 20px rgba(0,0,0,0.5)",
-        }}
-      >
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }} className="flex flex-col items-center gap-0.5 p-2" style={{ color: "#c9a84c" }}>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
-        </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/search"; }} className="flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-        </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/notifications"; }} className="relative flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
-          {unreadCount > 0 && <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold" style={{ background: "#c9a84c", color: "#0d1009" }}>{unreadCount}</span>}
-        </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = `/profile/${currentUser.username}`; }} className="flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-        </button>
-      </nav>
+      <MobileBottomNav unreadCount={unreadCount} />
 
       {/* Mobile FAB */}
       <button

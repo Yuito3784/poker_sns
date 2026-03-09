@@ -9,6 +9,7 @@ import { API_BASE, fetchWithAuth } from "../../../lib/api";
 import { formatRelativeTime } from "../../../lib/utils";
 import { useAuth } from "../../../contexts/AuthContext";
 import type { Post, UserProfile, ProfileUser } from "../../../lib/types";
+import MobileBottomNav from "../../components/MobileBottomNav";
 
 function AvatarDisplay({ profile, size = "lg" }: { profile: { name: string; avatarUrl?: string | null }; size?: "sm" | "lg" }) {
   return (
@@ -25,7 +26,7 @@ export default function ProfileClient() {
   const params = useParams();
   const router = useRouter();
   const username = params.username as string;
-  const { auth, isInitialized, setAuth } = useAuth();
+  const { auth, isInitialized, setAuth, clearAuth } = useAuth();
   const token = auth?.token ?? null;
   const currentUser = auth?.user ?? null;
   const currentUserId = currentUser?.id ?? null;
@@ -201,6 +202,16 @@ export default function ProfileClient() {
         setIsMuted(data.isMuted);
       }
     } catch { /* ignore */ }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetchWithAuth(`${API_BASE}/auth/logout`, { method: "POST" });
+    } catch {
+      // ignore
+    }
+    clearAuth();
+    router.push("/");
   };
 
   const handleToggleBlock = async () => {
@@ -475,14 +486,37 @@ export default function ProfileClient() {
                       </button>
                       {showMoreMenu && (
                         <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-xl py-1" style={{ background: "#151c15", border: "1px solid #2a3828", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
-                          <button onClick={handleToggleMute} className="flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-white/5" style={{ color: "#9a8e7a" }}>
-                            <svg className="h-4 w-4" style={{ color: "#6b7a66" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.531V19.94a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.506-1.938-1.354A9.009 9.009 0 012.25 12c0-.83.112-1.633.322-2.395C2.806 8.757 3.63 8.25 4.51 8.25H6.75z" /></svg>
-                            {isMuted ? "ミュート解除" : "ミュート"}
-                          </button>
-                          <button onClick={handleToggleBlock} className="flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-white/5" style={{ color: "#e05050" }}>
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                            {isBlocked ? "ブロック解除" : "ブロック"}
-                          </button>
+                          {currentUserId === profile.id ? (
+                            <>
+                              <button
+                                onClick={() => { setShowMoreMenu(false); router.push("/settings"); }}
+                                className="flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-white/5"
+                                style={{ color: "#9a8e7a" }}
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M3.75 6H7.5m-3.75 12H7.5m0-6h12.75M3.75 12H7.5" /></svg>
+                                設定
+                              </button>
+                              <button
+                                onClick={() => { setShowMoreMenu(false); handleLogout(); }}
+                                className="flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-white/5"
+                                style={{ color: "#e05050" }}
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
+                                ログアウト
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={handleToggleMute} className="flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-white/5" style={{ color: "#9a8e7a" }}>
+                                <svg className="h-4 w-4" style={{ color: "#6b7a66" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.531V19.94a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.506-1.938-1.354A9.009 9.009 0 012.25 12c0-.83.112-1.633.322-2.395C2.806 8.757 3.63 8.25 4.51 8.25H6.75z" /></svg>
+                                {isMuted ? "ミュート解除" : "ミュート"}
+                              </button>
+                              <button onClick={handleToggleBlock} className="flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-white/5" style={{ color: "#e05050" }}>
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                {isBlocked ? "ブロック解除" : "ブロック"}
+                              </button>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
@@ -515,10 +549,10 @@ export default function ProfileClient() {
         </div>
 
         <div className="mt-6">
-          <div className="flex" style={{ borderBottom: "1px solid #2a3828" }}>
+          <div className="flex justify-around border-b" style={{ borderColor: "#2a3828" }}>
             <button
               onClick={() => setActiveTab("posts")}
-              className="px-4 py-2.5 text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-center transition-colors"
               style={activeTab === "posts" ? { color: "#c9a84c", borderBottom: "2px solid #c9a84c" } : { color: "#6b7a66" }}
             >
               投稿
@@ -526,7 +560,7 @@ export default function ProfileClient() {
             {currentUser && (
               <button
                 onClick={() => setActiveTab("likes")}
-                className="px-4 py-2.5 text-sm font-medium transition-colors"
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-center transition-colors"
                 style={activeTab === "likes" ? { color: "#c9a84c", borderBottom: "2px solid #c9a84c" } : { color: "#6b7a66" }}
               >
                 いいね
@@ -535,7 +569,7 @@ export default function ProfileClient() {
             {currentUserId === profile.id && (
               <button
                 onClick={() => setActiveTab("bookmarks")}
-                className="px-4 py-2.5 text-sm font-medium transition-colors"
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-center transition-colors"
                 style={activeTab === "bookmarks" ? { color: "#c9a84c", borderBottom: "2px solid #c9a84c" } : { color: "#6b7a66" }}
               >
                 保存済み
@@ -636,6 +670,7 @@ export default function ProfileClient() {
           </div>
         )}
       </main>
+      <MobileBottomNav />
 
       {showListModal && (
         <>
