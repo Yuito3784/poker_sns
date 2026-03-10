@@ -20,8 +20,8 @@ services:
     image: mailhog/mailhog:latest
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # Web UI（届いたメールを確認: http://localhost:8025）
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI（届いたメールを確認: http://localhost:8025）
 
   backend:
     build: ./backend
