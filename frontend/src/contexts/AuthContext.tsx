@@ -65,10 +65,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     registerAuthRefreshHandler((newToken: string) => {
-      // 現在の user 情報を保持したまま token だけ更新
-      const currentUser = authRef.current?.user;
-      if (currentUser) {
-        const state = { token: newToken, user: currentUser };
+      // リフレッシュ時は、localStorage に保存された最新の user 情報も反映する
+      let user = authRef.current?.user ?? null;
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          try {
+            user = JSON.parse(stored);
+          } catch {
+            // ignore parse error and fall back to current user
+          }
+        }
+      }
+      if (user) {
+        const state = { token: newToken, user };
         setAuthState(state);
         authRef.current = state;
       }

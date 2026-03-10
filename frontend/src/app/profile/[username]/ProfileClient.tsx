@@ -453,34 +453,37 @@ export default function ProfileClient() {
                     <p className="mt-2 text-sm" style={{ color: "#9a8e7a" }}>{profile.bio}</p>
                   )}
                 </div>
-                {currentUserId && currentUserId === profile.id ? (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/5"
-                    style={{ border: "1px solid #2a3828", color: "#ddd6c8" }}
-                  >
-                    編集
-                  </button>
-                ) : currentUser ? (
+                {currentUser && (
                   <div className="flex items-center gap-2">
-                    {!isBlocked && (
+                    {currentUserId === profile.id ? (
                       <button
-                        onClick={handleToggleFollow}
-                        className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-                        style={
-                          isFollowing
-                            ? { border: "1px solid #2a3828", color: "#9a8e7a", background: "transparent" }
-                            : { background: "#c9a84c", color: "#0d1009", border: "1px solid transparent" }
-                        }
+                        onClick={() => setIsEditing(true)}
+                        className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/5"
+                        style={{ border: "1px solid #2a3828", color: "#ddd6c8" }}
                       >
-                        {isFollowing ? "フォロー中" : "フォロー"}
+                        編集
                       </button>
+                    ) : (
+                      !isBlocked && (
+                        <button
+                          onClick={handleToggleFollow}
+                          className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                          style={
+                            isFollowing
+                              ? { border: "1px solid #2a3828", color: "#9a8e7a", background: "transparent" }
+                              : { background: "#c9a84c", color: "#0d1009", border: "1px solid transparent" }
+                          }
+                        >
+                          {isFollowing ? "フォロー中" : "フォロー"}
+                        </button>
+                      )
                     )}
                     <div className="relative">
                       <button
                         onClick={() => setShowMoreMenu(!showMoreMenu)}
                         className="rounded-lg p-2 transition-colors hover:bg-white/5"
                         style={{ border: "1px solid #2a3828", color: "#6b7a66" }}
+                        aria-label="その他メニュー"
                       >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
                       </button>
@@ -521,7 +524,7 @@ export default function ProfileClient() {
                       )}
                     </div>
                   </div>
-                ) : null}
+                )}
               </>
             )}
           </div>

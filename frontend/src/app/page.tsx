@@ -1487,11 +1487,11 @@ function HomeContent() {
               <br className="sm:hidden" />
               もっと上手くなる
             </p>
-            <div className="mt-6 grid grid-cols-2 justify-items-center gap-2 sm:flex sm:flex-wrap sm:justify-center">
+            <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-3">
               {["ハンドを記録", "仲間と議論", "戦略を磨く", "成長を実感"].map((text) => (
                 <span
                   key={text}
-                  className="inline-block rounded px-3 py-1.5 text-xs sm:text-sm"
+                  className="w-full rounded px-3 py-1.5 text-center text-xs sm:w-auto sm:text-sm"
                   style={{
                     background: "rgba(201,168,76,0.06)",
                     border: "1px solid rgba(201,168,76,0.18)",
@@ -1744,8 +1744,13 @@ function HomeContent() {
             <h1 className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight" style={{ color: "#ddd6c8" }}>ホーム</h1>
           </div>
           {currentUser && !currentUser.emailVerified && (
-            <div className="relative z-[45] flex items-center justify-between border-b px-4 py-2.5" style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}>
-              <p className="text-xs" style={{ color: "#c9a84c" }}>メールアドレスが未認証です。投稿するには認証が必要です。</p>
+            <div
+              className="relative z-[45] flex flex-col gap-2 border-b px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+              style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}
+            >
+              <p className="text-xs leading-relaxed" style={{ color: "#c9a84c" }}>
+                メールアドレスが未認証です。投稿するには認証が必要です。
+              </p>
               <button
                 type="button"
                 disabled={resendVerificationLoading}
@@ -1769,7 +1774,7 @@ function HomeContent() {
                     setResendVerificationLoading(false);
                   }
                 }}
-                className="ml-2 flex-shrink-0 cursor-pointer rounded px-3 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-70"
+                className="w-full cursor-pointer rounded px-3 py-1.5 text-center text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:py-1"
                 style={{ background: "#c9a84c", color: "#0d1009" }}
               >
                 {resendVerificationLoading ? "送信中…" : "再送信"}
