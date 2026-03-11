@@ -225,6 +225,48 @@ export type TournamentParticipant = {
   };
 };
 
+// --- Creator Earnings ---
+export type CreatorEarning = {
+  id: string;
+  creatorId: string;
+  type: "SALON_SUBSCRIPTION" | "PAID_CONTENT";
+  grossAmount: number;
+  platformFee: number;
+  netAmount: number;
+  description?: string | null;
+  stripePaymentId?: string | null;
+  salonId?: string | null;
+  paidContentId?: string | null;
+  payoutId?: string | null;
+  createdAt: string;
+  salon?: { id: string; name: string; slug: string } | null;
+  paidContent?: { id: string; postId: string } | null;
+};
+
+export type EarningsSummary = {
+  grossTotal: number;
+  feeTotal: number;
+  netTotal: number;
+  transactionCount: number;
+  pendingPayout: number;
+  monthly: {
+    month: string;
+    gross: number;
+    fee: number;
+    net: number;
+  }[];
+};
+
+export type CreatorPayout = {
+  id: string;
+  creatorId: string;
+  amount: number;
+  status: "PENDING" | "COMPLETED";
+  note?: string | null;
+  paidAt?: string | null;
+  createdAt: string;
+};
+
 // --- Coaching ---
 export type CoachProfile = {
   id: string;

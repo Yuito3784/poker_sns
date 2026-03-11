@@ -14,6 +14,7 @@ import {
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SalonsService } from './salons.service';
+import { AdminGuard } from '../auth/admin.guard';
 
 @Controller('salons')
 export class SalonsController {
@@ -38,6 +39,12 @@ export class SalonsController {
       take ? parseInt(take) : 20,
       skip ? parseInt(skip) : 0,
     );
+  }
+
+  @Get('earnings')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async getSalonEarnings(@Req() req: { user: { userId: string } }) {
+    return this.salonsService.getSalonEarnings(req.user.userId);
   }
 
   @Get('owned')

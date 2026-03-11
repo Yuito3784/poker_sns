@@ -18,6 +18,7 @@ import { PaidContentModule } from './paid-content/paid-content.module';
 import { SalonsModule } from './salons/salons.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { CoachingModule } from './coaching/coaching.module';
+import { EarningsModule } from './earnings/earnings.module';
 import { PrismaService } from './prisma.service';
 import { HealthController } from './health.controller';
 import { WebhookNotifierService } from './common/webhook-notifier.service';
@@ -46,6 +47,7 @@ import { TaskAuditService } from './common/task-audit.service';
     SalonsModule,
     TournamentsModule,
     CoachingModule,
+    EarningsModule,
   ],
   controllers: [HealthController],
   providers: [
