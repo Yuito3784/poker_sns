@@ -157,25 +157,44 @@ export class PaidContentService {
     });
     if (!paidContent) return;
 
-    // Create purchase record (idempotent via unique constraint)
+    // Create purchase record + earning (idempotent via unique constraint)
     try {
-      await this.prisma.contentPurchase.create({
-        data: {
-          buyerId,
-          paidContentId,
-          stripePaymentId: pi.id,
-          amount: paidContent.price,
-        },
-      });
+      const grossAmount = paidContent.price;
+      const platformFee = Math.round(grossAmount * 0.15);
+      const netAmount = grossAmount - platformFee;
 
-      // Notify the author
-      await this.prisma.notification.create({
-        data: {
-          userId: paidContent.post.authorId,
-          fromUserId: buyerId,
-          type: 'CONTENT_PURCHASE',
-          postId: paidContent.postId,
-        },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.contentPurchase.create({
+          data: {
+            buyerId,
+            paidContentId,
+            stripePaymentId: pi.id,
+            amount: paidContent.price,
+          },
+        });
+
+        await tx.creatorEarning.create({
+          data: {
+            creatorId: paidContent.post.authorId,
+            type: 'PAID_CONTENT',
+            grossAmount,
+            platformFee,
+            netAmount,
+            description: `有料コンテンツ購入`,
+            stripePaymentId: pi.id,
+            paidContentId,
+          },
+        });
+
+        // Notify the author
+        await tx.notification.create({
+          data: {
+            userId: paidContent.post.authorId,
+            fromUserId: buyerId,
+            type: 'CONTENT_PURCHASE',
+            postId: paidContent.postId,
+          },
+        });
       });
     } catch {
       // Unique constraint violation = already purchased, ignore
@@ -222,9 +241,23 @@ export class PaidContentService {
       _count: true,
     });
 
+    const earningsAgg = await this.prisma.creatorEarning.aggregate({
+      where: { creatorId: userId, type: 'PAID_CONTENT' },
+      _sum: { grossAmount: true, platformFee: true, netAmount: true },
+    });
+
+    const pendingPayout = await this.prisma.creatorEarning.aggregate({
+      where: { creatorId: userId, type: 'PAID_CONTENT', payoutId: null },
+      _sum: { netAmount: true },
+    });
+
     return {
       totalSales: result._sum.amount || 0,
       purchaseCount: result._count,
+      grossTotal: earningsAgg._sum.grossAmount || 0,
+      feeTotal: earningsAgg._sum.platformFee || 0,
+      netTotal: earningsAgg._sum.netAmount || 0,
+      pendingPayout: pendingPayout._sum.netAmount || 0,
     };
   }
 
