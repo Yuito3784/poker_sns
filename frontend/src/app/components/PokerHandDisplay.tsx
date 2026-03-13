@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 
 export type PokerAction = {
   id?: string;
@@ -47,6 +46,16 @@ const ACTION: Record<string, { label: string; bg: string; fg: string; bd: string
   ALL_IN: { label: "All-In", bg: "rgba(201,168,76,.32)",  fg: "#d4b85a",  bd: "rgba(201,168,76,.55)" },
 };
 
+/** 結果ラベルの表示用。Lost - Eliminated は他と同様に「Lost」のみ表示 */
+function formatResultLabel(result: string | null | undefined): { text: string; title?: string } {
+  if (!result) return { text: "" };
+  const r = result.trim();
+  if (/^lost\s*[-–—]\s*eliminated$/i.test(r)) {
+    return { text: "Lost" };
+  }
+  return { text: r };
+}
+
 // ── Playing card ─────────────────────────────────────────────────
 function Card({ card, size = "md" }: { card: string; size?: "xs" | "sm" | "md" | "lg" }) {
   const suit = card.slice(-1);
@@ -66,15 +75,9 @@ function Card({ card, size = "md" }: { card: string; size?: "xs" | "sm" | "md" |
       position: "relative", display: "flex", alignItems: "center",
       justifyContent: "center", color: cfg.color, userSelect: "none", flexShrink: 0,
     }}>
-      <div style={{ position:"absolute", top:1.5, left:2.5, display:"flex", flexDirection:"column", alignItems:"center", lineHeight:1.05, fontWeight:800 }}>
-        <span style={{ fontSize: d.pip }}>{rank}</span>
-        <span style={{ fontSize: d.pip }}>{cfg.sym}</span>
-      </div>
+      <div style={{ position:"absolute", top:1.5, left:2.5, fontSize: d.pip, lineHeight:1.05, fontWeight:800 }}>{rank}</div>
       <span style={{ fontSize: d.ctr, lineHeight: 1, fontWeight: 700 }}>{cfg.sym}</span>
-      <div style={{ position:"absolute", bottom:1.5, right:2.5, display:"flex", flexDirection:"column", alignItems:"center", lineHeight:1.05, fontWeight:800, transform:"rotate(180deg)" }}>
-        <span style={{ fontSize: d.pip }}>{rank}</span>
-        <span style={{ fontSize: d.pip }}>{cfg.sym}</span>
-      </div>
+      <div style={{ position:"absolute", bottom:1.5, right:2.5, fontSize: d.pip, lineHeight:1.05, fontWeight:800, transform:"rotate(180deg)" }}>{rank}</div>
     </div>
   );
 }
@@ -121,16 +124,24 @@ function PosBadge({ label, isHero }: { label: string; isHero: boolean }) {
   );
 }
 
+// 0bb や空の amount は表示しない（オールインで残り0・コールで差額0のときの表記ゆれ対策）
+function formatActionAmount(amount: string | null | undefined): string {
+  if (!amount || amount.trim() === "") return "";
+  const normalized = amount.replace(/\s/g, "");
+  if (normalized === "0bb" || /^0(\.0+)?bb$/i.test(normalized)) return "";
+  return ` ${amount}`;
+}
+
 // ── Action badge ─────────────────────────────────────────────────
 function ActionBadge({ action }: { action: PokerAction }) {
   const cfg = ACTION[action.actionType] ?? ACTION.CALL;
-  const label = cfg.label + (action.amount ? ` ${action.amount}` : "");
+  const label = cfg.label + formatActionAmount(action.amount ?? null);
   return (
     <span style={{
       background: cfg.bg, color: cfg.fg, border: `1px solid ${cfg.bd}`,
       fontSize: 8, fontWeight: 700, padding: "1.5px 5px",
       borderRadius: 3, letterSpacing: 0.1,
-      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0,
+      whiteSpace: "normal", wordBreak: "break-word", minWidth: 0,
     }}>
       {label}
     </span>
@@ -143,8 +154,6 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
   const STREET_NAME: Record<string, string> = { PREFLOP:"Preflop", FLOP:"Flop", TURN:"Turn", RIVER:"River" };
 
   const availableStreets = STREET_ORDER.filter((s) => hand.streets?.find((st) => st.street === s));
-  const [idx, setIdx] = useState(0);
-  const curStreet = availableStreets[idx] ?? "PREFLOP";
 
   // ── Player data ──────────────────────────────────────────────
   const players = Array.from(new Set(
@@ -152,71 +161,80 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
       (s.actions ?? []).map((a) => a.position === hand.heroPosition ? "Hero" : a.position)
     )
   ));
+  const total = players.length;
+  const heroWon = /won|win/i.test(hand.result ?? "");
+  const heroLost = /lost/i.test(hand.result ?? "");
   const info = Object.fromEntries(players.map((p) => {
     const pos = p === "Hero" ? hand.heroPosition : p;
+    const isWinner = total === 2
+      ? (p === "Hero" ? heroWon : heroLost)
+      : (p === "Hero" && heroWon);
     return [p, {
       pos,
       cards: p === "Hero" && hand.heroHand ? hand.heroHand.split(" ").filter(Boolean) : [],
       isDealer: pos === "BTN",
-      isWinner: /won|win/i.test(hand.result ?? ""),
+      isWinner,
     }];
   }));
 
-  // ── Seat positions (ellipse) ─────────────────────────────────
-  const posOrder: Record<string, number> = { UTG:0,UTG1:1,UTG2:2,MP:3,MP1:4,MP2:5,CO:6,BTN:7,SB:8,BB:9 };
+  // ── Seat positions (ellipse): テーブル上の物理的な席順（BTN→SB→BB→UTG→…）で並べる
+  const tablePositionOrder: Record<string, number> = { BTN:0, SB:1, BB:2, UTG:3, UTG1:4, UTG2:5, MP:6, MP1:7, MP2:8, CO:9 };
   const hero = "Hero";
-  const others = players.filter(p=>p!==hero).sort((a,b)=>(posOrder[info[a]?.pos??a]??99)-(posOrder[info[b]?.pos??b]??99));
-  const total = players.length;
-  const CX=50, CY=50, RX=43, RY=39;
+  const others = players.filter(p=>p!==hero).sort((a,b)=>(tablePositionOrder[info[a]?.pos??a]??99)-(tablePositionOrder[info[b]?.pos??b]??99));
+  const CX=50, CY=50;
+  const R = 38;
   const seats: Record<string, {x:number;y:number}> = {};
   const H_ANGLE = 90;
   if (players.includes(hero)) {
     const r = (H_ANGLE*Math.PI)/180;
-    seats[hero] = { x: CX+RX*Math.cos(r), y: CY+RY*Math.sin(r) };
+    seats[hero] = { x: CX+R*Math.cos(r), y: CY+R*Math.sin(r) };
   }
   others.forEach((p,i) => {
     const angle = H_ANGLE + ((i+1)*360)/total;
     const r = (angle*Math.PI)/180;
-    seats[p] = { x: CX+RX*Math.cos(r), y: CY+RY*Math.sin(r) };
+    seats[p] = { x: CX+R*Math.cos(r), y: CY+R*Math.sin(r) };
   });
 
-  // ── Board cards ──────────────────────────────────────────────
-  const getBoardForStreet = (sk: string) => {
+  // ── Board cards: 最初から全枚表示（切り替えなし）────────────────
+  const getFullBoard = () => {
     const cards: string[] = [];
     const get = (s: string) => hand.streets?.find(x=>x.street===s)?.boardCards;
     const flop = get("FLOP"); const turn = get("TURN"); const river = get("RIVER");
-    if (sk==="PREFLOP") return cards;
     if (flop) cards.push(...flop.split(" ").filter(Boolean));
-    if (sk==="FLOP") return cards;
     if (turn) cards.push(...turn.split(" ").filter(Boolean));
-    if (sk==="TURN") return cards;
     if (river) cards.push(...river.split(" ").filter(Boolean));
     return cards;
   };
+  const boardCards = getFullBoard();
+  const lastStreetWithPot = [...STREET_ORDER].reverse().find((s) => hand.streets?.find((st) => st.street === s)?.potSize);
+  const curPot = lastStreetWithPot ? hand.streets?.find(s=>s.street===lastStreetWithPot)?.potSize ?? null : null;
+  // result の "Won Xbb" はヒーローの純利益。pot より小さいのは正常（オールイン差額・サイドポット等）
 
-  const boardCards = getBoardForStreet(curStreet);
-  const curPot = hand.streets?.find(s=>s.street===curStreet)?.potSize ?? null;
-  const isLast = idx === availableStreets.length-1;
-
-  // ── Action columns ───────────────────────────────────────────
-  const allCols: { key:string; name:string; data:PokerStreet|null }[] = [{ key:"BLINDS", name:"Blinds", data:null }];
+  // ── Action columns（BLINDS は上部表示のため省略）────────────────
+  const allCols: { key:string; name:string; data:PokerStreet|null }[] = [];
   for (const s of STREET_ORDER) {
     const data = hand.streets?.find(st=>st.street===s) ?? null;
     if (data) allCols.push({ key:s, name:STREET_NAME[s], data });
   }
 
   const blindsMatch = hand.blinds.match(/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)/);
-  const blindEntries: { player:string; pos:string; amount:string }[] = [];
-  if (blindsMatch) {
-    players.forEach(p => {
-      const pos = info[p]?.pos;
-      if (pos==="SB") blindEntries.push({ player:p, pos, amount:blindsMatch[1] });
-      if (pos==="BB") blindEntries.push({ player:p, pos, amount:blindsMatch[2] });
-    });
-  }
 
   const won  = /won|win/i.test(hand.result ?? "");
   const lost = /lost/i.test(hand.result ?? "");
+  // 自分が負けたヘッズアップは「Lost」ではなく「BB Won」等の勝者表記にする
+  const lastStreetWithActions = [...(hand.streets ?? [])].reverse().find((s) => (s.actions?.length ?? 0) > 0);
+  const activeInLastStreet = new Set(
+    (lastStreetWithActions?.actions ?? []).filter((a) => a.actionType !== "FOLD").map((a) => a.position)
+  );
+  const resultDisplay = (() => {
+    if (!hand.result) return { text: "", showAsWon: false, showAsLost: false };
+    if (lost && activeInLastStreet.size === 2 && activeInLastStreet.has(hand.heroPosition)) {
+      const winnerPos = [...activeInLastStreet].find((p) => p !== hand.heroPosition);
+      if (winnerPos) return { text: `${winnerPos} Won`, showAsWon: true, showAsLost: false };
+    }
+    const { text } = formatResultLabel(hand.result);
+    return { text, showAsWon: won, showAsLost: lost };
+  })();
 
   if (availableStreets.length === 0) return null;
 
@@ -241,48 +259,20 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
           {"  ·  Stack "}
           <span style={{ color:"rgba(221,214,200,.55)", fontWeight:600 }}>{hand.heroStack}</span>
         </span>
-        {hand.result && (
+        {hand.result && resultDisplay.text && (
           <span style={{ marginLeft:"auto" }}>
             <span style={{
               fontSize:10, fontWeight:700, padding:"2px 9px", borderRadius:3, letterSpacing:.4,
-              ...(won
+              ...(resultDisplay.showAsWon
                 ? { background:"rgba(201,168,76,.14)", color:"#c9a84c", border:"1px solid rgba(201,168,76,.28)" }
-                : lost
+                : resultDisplay.showAsLost
                   ? { background:"rgba(176,48,48,.1)", color:"#905050", border:"1px solid rgba(176,48,48,.2)" }
                   : { background:"rgba(255,255,255,.05)", color:"rgba(255,255,255,.32)", border:"1px solid rgba(255,255,255,.08)" }),
             }}>
-              {hand.result}
+              {resultDisplay.text}
             </span>
           </span>
         )}
-      </div>
-
-      {/* ── Street tabs ── */}
-      <div style={{ display:"flex", justifyContent:"center", padding:"8px 10px", borderBottom:"1px solid rgba(255,255,255,.04)" }}>
-        <div style={{ display:"flex", gap:2, background:"rgba(255,255,255,.03)", borderRadius:8, padding:3 }}>
-          {availableStreets.map((s,i) => {
-            const active = i===idx;
-            const streetData = hand.streets?.find(st=>st.street===s);
-            const tabCards = streetData?.boardCards ? streetData.boardCards.split(" ").filter(Boolean) : [];
-            return (
-              <button key={s} onClick={(e)=>{ e.stopPropagation(); setIdx(i); }} style={{
-                display:"flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:5,
-                border: active ? "1px solid rgba(201,168,76,.25)" : "1px solid transparent",
-                cursor:"pointer", transition:"all .15s",
-                background: active ? "rgba(201,168,76,.1)" : "transparent",
-                color: active ? "#c9a84c" : "rgba(255,255,255,.25)",
-                fontSize:11, fontWeight:700, letterSpacing:.3,
-              }}>
-                {STREET_NAME[s]}
-                {tabCards.length > 0 && (
-                  <span style={{ display:"flex", gap:2 }}>
-                    {tabCards.map((c,ci) => <Pip key={ci} card={c} bright={active} />)}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* ── Table ── */}
@@ -318,9 +308,18 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
           </div>
         )}
 
-        {/* Pot */}
+        {/* Pot（ボード中央寄りに固定してカードと被らないように） */}
         {curPot && (
-          <div style={{ position:"absolute", inset:0, zIndex:10, display:"flex", alignItems:"center", justifyContent:"center", paddingTop: boardCards.length > 0 ? "18%" : "0", pointerEvents:"none" }}>
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: boardCards.length > 0 ? "56%" : "50%",
+              transform: "translateX(-50%)",
+              zIndex: 10,
+              pointerEvents: "none",
+            }}
+          >
             <Chip label={`POT  ${curPot}`} />
           </div>
         )}
@@ -331,19 +330,20 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
           const seat = seats[player]; if (!seat) return null;
           const isHero = player === "Hero";
           return (
-            <div key={player} style={{ position:"absolute", zIndex:20, left:`${seat.x}%`, top:`${seat.y}%`, transform:"translate(-50%,-50%)", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
-              {pi.isWinner && isLast && (
+            <div key={player} style={{ position:"absolute", zIndex:20, left:`${seat.x}%`, top:`${seat.y}%`, transform:"translate(-50%,-50%)", display:"flex", flexDirection:"column", alignItems:"center", gap:1 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}>
+                {pi.isWinner && (
+                  <div style={{
+                    background:"rgba(201,168,76,.12)", color:"#c9a84c",
+                    border:"1px solid rgba(201,168,76,.28)",
+                    fontSize:7, fontWeight:800, padding:"1px 6px", borderRadius:3, letterSpacing:.6,
+                    flexShrink:0,
+                  }}>
+                    WIN
+                  </div>
+                )}
+                {/* Avatar — clean dark circle with position text */}
                 <div style={{
-                  background:"rgba(201,168,76,.12)", color:"#c9a84c",
-                  border:"1px solid rgba(201,168,76,.28)",
-                  fontSize:7, fontWeight:800, padding:"1px 6px", borderRadius:3, letterSpacing:.6,
-                }}>
-                  WIN
-                </div>
-              )}
-
-              {/* Avatar — clean dark circle with position text */}
-              <div style={{
                 width:34, height:34, borderRadius:"50%",
                 background: isHero
                   ? "radial-gradient(circle at 40% 35%, rgba(201,168,76,.14), rgba(201,168,76,.06))"
@@ -378,10 +378,11 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
                   </div>
                 )}
               </div>
+              </div>
 
               {pi.cards.length > 0 && (
                 <div style={{ display:"flex", gap:2 }}>
-                  {pi.cards.map((c,i) => <Card key={i} card={c} size="xs" />)}
+                  {pi.cards.map((c,i) => <Card key={i} card={c} size="sm" />)}
                 </div>
               )}
               <span style={{
@@ -421,7 +422,6 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
         {/* Action cells */}
         <div style={{ display:"grid", gridTemplateColumns:`repeat(${allCols.length},1fr)` }}>
           {allCols.map((col, ci) => {
-            const isBlinds = col.key === "BLINDS";
             let actions = col.data?.actions ?? [];
 
             if (col.key === "PREFLOP" && blindsMatch) {
@@ -438,20 +438,12 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
               <div key={col.key} style={{ padding:"8px 7px", borderRight: ci < allCols.length-1 ? "1px solid rgba(255,255,255,.04)" : "none", minWidth:0 }}>
                 <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
 
-                  {/* Blind posts */}
-                  {isBlinds && blindEntries.map((e,i) => (
-                    <div key={i} style={{ display:"flex", alignItems:"center", gap:4 }}>
-                      <PosBadge label={e.pos} isHero={e.player === "Hero"} />
-                      <span style={{ fontSize:9, color:"#7a6030", fontWeight:600, fontVariantNumeric:"tabular-nums" }}>{e.amount}</span>
-                    </div>
-                  ))}
-
                   {/* Actions */}
-                  {!isBlinds && actions.map((a, i) => {
+                  {actions.map((a, i) => {
                     const isHero = a.position === hand.heroPosition;
                     return (
                       <div key={i} style={{
-                        display:"flex", alignItems:"center", gap:3, flexWrap:"nowrap", minWidth:0,
+                        display:"flex", alignItems:"center", gap:3, flexWrap:"wrap", minWidth:0,
                         padding: isHero ? "2px 3px" : "0 1px",
                         borderRadius:4,
                         background: isHero ? "rgba(201,168,76,.05)" : "transparent",
@@ -464,21 +456,23 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
                   })}
 
                   {/* Result */}
-                  {!isBlinds && col.key===availableStreets[availableStreets.length-1] && hand.result && (
-                    <div style={{
-                      marginTop:2, padding:"3px 6px", borderRadius:3,
-                      textAlign:"center", fontSize:9, fontWeight:700, letterSpacing:.4,
-                      ...(won
-                        ? { background:"rgba(201,168,76,.12)", color:"#c9a84c", border:"1px solid rgba(201,168,76,.25)" }
-                        : lost
-                          ? { background:"rgba(176,48,48,.1)", color:"#905050", border:"1px solid rgba(176,48,48,.2)" }
-                          : { background:"rgba(255,255,255,.05)", color:"rgba(255,255,255,.32)" }),
-                    }}>
-                      {hand.result}
+                  {col.key===availableStreets[availableStreets.length-1] && hand.result && resultDisplay.text && (
+                    <div
+                      style={{
+                        marginTop:2, padding:"3px 6px", borderRadius:3,
+                        textAlign:"center", fontSize:9, fontWeight:700, letterSpacing:.4,
+                        ...(resultDisplay.showAsWon
+                          ? { background:"rgba(201,168,76,.12)", color:"#c9a84c", border:"1px solid rgba(201,168,76,.25)" }
+                          : resultDisplay.showAsLost
+                            ? { background:"rgba(176,48,48,.1)", color:"#905050", border:"1px solid rgba(176,48,48,.2)" }
+                            : { background:"rgba(255,255,255,.05)", color:"rgba(255,255,255,.32)" }),
+                      }}
+                    >
+                      {resultDisplay.text}
                     </div>
                   )}
 
-                  {!isBlinds && actions.length===0 && (
+                  {actions.length===0 && (
                     <div style={{ textAlign:"center", color:"rgba(255,255,255,.1)", fontSize:14, padding:"4px 0" }}>—</div>
                   )}
                 </div>

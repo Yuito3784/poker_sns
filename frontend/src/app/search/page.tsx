@@ -7,9 +7,56 @@ import PostItem from "../components/PostItem";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Post, ProfileUser, User } from "../../lib/types";
-import MobileBottomNav from "../components/MobileBottomNav";
 
 type FilterTab = "all" | "users" | "posts";
+
+/** 検索で取得したユーザー一覧にフォロー状態を付与。検索APIと同じ認証で /search/following-status を呼ぶ */
+async function mergeFollowingStatus(
+  users: ProfileUser[],
+): Promise<Array<ProfileUser & { isFollowing: boolean }> | null> {
+  if (users.length === 0) return null;
+  try {
+    const idsParam = users.map((u) => u.id).join(",");
+    const res = await fetchWithAuth(
+      `${API_BASE}/search/following-status?ids=${encodeURIComponent(idsParam)}`,
+      { method: "GET", cache: "no-store" },
+    );
+    if (res.ok) {
+      const status = (await res.json()) as Record<string, boolean | string>;
+      return users.map((usr) => ({
+        ...usr,
+        isFollowing: status[usr.id] === true || status[usr.id] === "true",
+      }));
+    }
+    return mergeFollowingStatusFallback(users);
+  } catch {
+    return mergeFollowingStatusFallback(users);
+  }
+}
+
+/** batch API が使えない場合のフォールバック: 各ユーザーの following を個別取得（最大10件） */
+async function mergeFollowingStatusFallback(
+  users: ProfileUser[],
+): Promise<Array<ProfileUser & { isFollowing: boolean }> | null> {
+  const limit = 10;
+  try {
+    const results = await Promise.all(
+      users.slice(0, limit).map(async (usr) => {
+        const res = await fetchWithAuth(
+          `${API_BASE}/users/${encodeURIComponent(usr.username)}/following`,
+          { cache: "no-store" },
+        );
+        if (!res.ok) return { ...usr, isFollowing: false };
+        const data = (await res.json()) as { isFollowing?: boolean };
+        return { ...usr, isFollowing: data.isFollowing === true };
+      }),
+    );
+    const rest = users.slice(limit).map((usr) => ({ ...usr, isFollowing: usr.isFollowing === true }));
+    return [...results, ...rest];
+  } catch {
+    return null;
+  }
+}
 
 function SearchContent() {
   const router = useRouter();
@@ -44,11 +91,18 @@ function SearchContent() {
     try {
       const fetchUsers = filterTab !== "posts";
       const fetchPosts = filterTab !== "users";
+      const cacheBust = `_t=${Date.now()}`;
       const [usersRes, postsRes] = await Promise.all([
-        fetchUsers ? fetchWithAuth(`${API_BASE}/search/users?q=${encodeURIComponent(searchQuery)}`) : null,
-        fetchPosts ? fetchWithAuth(`${API_BASE}/search/posts?q=${encodeURIComponent(searchQuery)}`) : null,
+        fetchUsers ? fetchWithAuth(`${API_BASE}/search/users?q=${encodeURIComponent(searchQuery)}&${cacheBust}`) : null,
+        fetchPosts ? fetchWithAuth(`${API_BASE}/search/posts?q=${encodeURIComponent(searchQuery)}&${cacheBust}`) : null,
       ]);
-      const u = fetchUsers && usersRes?.ok ? await usersRes.json() : [];
+      let rawUsers: ProfileUser[] = fetchUsers && usersRes?.ok ? await usersRes.json() : [];
+      if (!Array.isArray(rawUsers)) rawUsers = [];
+      let u = rawUsers.map((usr: ProfileUser) => ({ ...usr, isFollowing: usr.isFollowing === true }));
+      if (u.length > 0 && token) {
+        const merged = await mergeFollowingStatus(u);
+        if (merged) u = merged;
+      }
       const p = fetchPosts && postsRes?.ok ? await postsRes.json() : [];
       setUsers(u);
       setPosts(p);
@@ -111,11 +165,18 @@ function SearchContent() {
   };
 
   const handleToggleFollow = async (username: string) => {
+    setActionLoading(`follow-${username}`);
     try {
-      await fetchWithAuth(`${API_BASE}/users/${username}/follow`, { method: "POST" });
-      handleSearch();
+      const res = await fetchWithAuth(`${API_BASE}/users/${username}/follow`, { method: "POST" });
+      if (!res.ok) return;
+      const data = (await res.json()) as { following: boolean };
+      setUsers((prev) =>
+        prev.map((u) => (u.username === username ? { ...u, isFollowing: data.following === true } : u))
+      );
     } catch {
       /* ignore */
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -218,19 +279,38 @@ function SearchContent() {
                 <h3 className="px-4 py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66", borderBottom: "1px solid #1f2a1e" }}>ユーザー</h3>
                 <div>
                   {users.map((user) => (
-                    <button
+                    <div
                       key={user.id}
-                      onClick={() => router.push(`/profile/${user.username}`)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.03]"
+                      className="flex w-full items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.03]"
                       style={{ borderBottom: "1px solid #1f2a1e" }}
                     >
-                      <Avatar avatarUrl={user.avatarUrl} name={user.name} size="lg" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold" style={{ color: "#ddd6c8" }}>{user.name}</div>
-                        <div className="text-sm" style={{ color: "#6b7a66" }}>@{user.username}</div>
-                        {user.bio && <p className="mt-1 truncate text-xs" style={{ color: "#9a8e7a" }}>{user.bio}</p>}
-                      </div>
-                    </button>
+                      <button
+                        onClick={() => router.push(`/profile/${user.username}`)}
+                        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                      >
+                        <Avatar avatarUrl={user.avatarUrl} name={user.name} size="lg" />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold" style={{ color: "#ddd6c8" }}>{user.name}</div>
+                          <div className="text-sm" style={{ color: "#6b7a66" }}>@{user.username}</div>
+                          {user.bio && <p className="mt-1 truncate text-xs" style={{ color: "#9a8e7a" }}>{user.bio}</p>}
+                        </div>
+                      </button>
+                      {currentUser && currentUser.id !== user.id && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleFollow(user.username); }}
+                          disabled={actionLoading === `follow-${user.username}`}
+                          className="shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60"
+                          style={
+                            user.isFollowing === true
+                              ? { border: "1px solid #2a3828", color: "#9a8e7a", background: "transparent" }
+                              : { background: "#c9a84c", color: "#0d1009", border: "1px solid transparent" }
+                          }
+                        >
+                          {actionLoading === `follow-${user.username}` ? "..." : user.isFollowing === true ? "フォロー中" : "フォロー"}
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -263,7 +343,6 @@ function SearchContent() {
           </>
         )}
       </div>
-      <MobileBottomNav />
     </div>
   );
 }

@@ -9,7 +9,6 @@ import { API_BASE, fetchWithAuth } from "../../../lib/api";
 import { formatRelativeTime } from "../../../lib/utils";
 import { useAuth } from "../../../contexts/AuthContext";
 import type { Post, UserProfile, ProfileUser } from "../../../lib/types";
-import MobileBottomNav from "../../components/MobileBottomNav";
 
 function AvatarDisplay({ profile, size = "lg" }: { profile: { name: string; avatarUrl?: string | null }; size?: "sm" | "lg" }) {
   return (
@@ -627,15 +626,17 @@ export default function ProfileClient() {
                       <p className="mt-1 line-clamp-2" style={{ color: "#6b7a66" }}>{post.parentPost.content}</p>
                     </div>
                   )}
-                  {post.isPokerHand && post.pokerHand ? (
-                    <PokerHandDisplay hand={post.pokerHand} />
+                  {post.isPokerHand ? (
+                    <>
+                      {post.content && (
+                        <p className="mb-2.5 whitespace-pre-wrap text-sm" style={{ color: "#ddd6c8" }}>
+                          {post.content}
+                        </p>
+                      )}
+                      {post.pokerHand && <PokerHandDisplay hand={post.pokerHand} />}
+                    </>
                   ) : (
                     <p className="whitespace-pre-wrap text-sm" style={{ color: "#ddd6c8" }}>
-                      {post.content}
-                    </p>
-                  )}
-                  {post.isPokerHand && post.content && (
-                    <p className="mt-2 whitespace-pre-wrap text-sm pt-2" style={{ color: "#9a8e7a", borderTop: "1px solid #1f2a1e" }}>
                       {post.content}
                     </p>
                   )}
@@ -673,16 +674,19 @@ export default function ProfileClient() {
           </div>
         )}
       </main>
-      <MobileBottomNav />
 
       {showListModal && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-40 flex items-center justify-center p-4"
             style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
             onClick={() => setShowListModal(null)}
-          />
-          <div className="fixed left-1/2 top-1/2 z-50 max-h-80 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl" style={{ background: "#151c15", border: "1px solid #2a3828", boxShadow: "0 25px 60px rgba(0,0,0,0.7)" }}>
+          >
+          <div
+            className="z-50 max-h-[80vh] w-full max-w-md overflow-hidden rounded-xl"
+            style={{ background: "#151c15", border: "1px solid #2a3828", boxShadow: "0 25px 60px rgba(0,0,0,0.7)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-3" style={{ borderBottom: "1px solid #2a3828" }}>
               <h2 className="text-sm font-semibold" style={{ color: "#ddd6c8" }}>
                 {showListModal === "followers" ? "フォロワー" : "フォロー中"}
@@ -724,6 +728,7 @@ export default function ProfileClient() {
                 </div>
               )}
             </div>
+          </div>
           </div>
         </>
       )}

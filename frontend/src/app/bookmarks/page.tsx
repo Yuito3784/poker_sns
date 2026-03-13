@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PostItem from "../components/PostItem";
 import AdCard from "../components/AdCard";
-import MobileBottomNav from "../components/MobileBottomNav";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
@@ -279,7 +278,6 @@ export default function BookmarksPage() {
           </ul>
         )}
       </div>
-      <MobileBottomNav />
     </div>
   );
 }
