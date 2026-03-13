@@ -1,6 +1,4 @@
--- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('LIKE', 'FOLLOW', 'REPLY', 'MENTION', 'REPOST');
-
+-- NotificationType は既に別マイグレーションで作成済みのためここでは再定義しない
 -- CreateEnum
 CREATE TYPE "TableType" AS ENUM ('CASH', 'MTT', 'SNG', 'ZOOM');
 

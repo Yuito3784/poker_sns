@@ -71,6 +71,7 @@ services:
       - uploads:/app/uploads
     ports:
       - "3001:3001"
+      - "5555:5555"
 
   frontend:
     build:

@@ -13,7 +13,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const DUMMY_HANDS = [
+export const DUMMY_HANDS = [
   {
     content: 'BTNでAKs、3bet potでフロップトップツー。このベットサイズどう思う？ #ポーカー #ハンドレビュー',
     tableType: 'CASH' as const,
@@ -65,7 +65,7 @@ const DUMMY_HANDS = [
     heroStack: '25bb',
     heroPosition: 'SB' as const,
     heroHand: 'Jh Jd',
-    result: 'Lost - Eliminated',
+    result: 'Lost - Eliminated', // トーナメント敗北でそのテーブルから抜けた状態
     streets: [
       {
         street: 'PREFLOP' as const,
@@ -485,11 +485,13 @@ async function main() {
   console.log(`完了: ポーカー投稿を ${DUMMY_HANDS.length} 件作成しました。`);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

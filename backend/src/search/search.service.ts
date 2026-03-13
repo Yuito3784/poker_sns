@@ -5,8 +5,8 @@ import { PrismaService } from '../prisma.service';
 export class SearchService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async searchUsers(query: string) {
-    return this.prisma.user.findMany({
+  async searchUsers(query: string, userId: string) {
+    const users = await this.prisma.user.findMany({
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
@@ -29,6 +29,39 @@ export class SearchService {
       },
       take: 20,
     });
+
+    if (users.length === 0) {
+      return users.map((u) => ({ ...u, isFollowing: false }));
+    }
+
+    const ids = users.map((u) => u.id);
+    const follows = await this.prisma.follow.findMany({
+      where: {
+        followerId: userId,
+        followingId: { in: ids },
+      },
+      select: { followingId: true },
+    });
+    const followingIds = new Set(follows.map((f) => f.followingId));
+    return users.map((u) => ({
+      ...u,
+      isFollowing: followingIds.has(u.id),
+    }));
+  }
+
+  /** 指定ユーザーID一覧に対するフォロー状態を一括取得（検索結果のボタン表示用） */
+  async getFollowingStatusBatch(userId: string, targetIds: string[]): Promise<Record<string, boolean>> {
+    if (targetIds.length === 0) return {};
+    const uniqueIds = [...new Set(targetIds)].slice(0, 50);
+    const follows = await this.prisma.follow.findMany({
+      where: {
+        followerId: userId,
+        followingId: { in: uniqueIds },
+      },
+      select: { followingId: true },
+    });
+    const set = new Set(follows.map((f) => f.followingId));
+    return Object.fromEntries(uniqueIds.map((id) => [id, set.has(id)]));
   }
 
   async searchPosts(query: string, userId: string) {
