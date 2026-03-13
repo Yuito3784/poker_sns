@@ -13,6 +13,17 @@ import { avatarUploadConfig, validateFileSignature } from '../common/file-upload
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  /** 検索結果用: 指定ユーザーID一覧に対するフォロー状態を一括取得。:username より前に定義すること */
+  @Get('batch-following-status')
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
+  getFollowingStatus(
+    @GetUser() user: { userId: string },
+    @Query('ids') ids: string,
+  ) {
+    const idList = typeof ids === 'string' ? ids.split(',').filter(Boolean).slice(0, 50) : [];
+    return this.usersService.getFollowingStatusBatch(user.userId, idList);
+  }
+
   @Get(':username/meta')
   @Public()
   @Throttle({ default: { ttl: 60000, limit: 30 } })

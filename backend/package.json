@@ -18,7 +18,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed:poker-posts": "ts-node scripts/seed-poker-posts.ts"
+    "seed:poker-posts": "ts-node scripts/seed-poker-posts.ts",
+    "seed:users-posts": "ts-node scripts/seed-users-and-posts.ts",
+    "seed:poker-for-seed-users": "ts-node scripts/seed-poker-posts-for-seed-users.ts",
+    "seed:seed-users-hands": "node scripts/seed-seed-users-hands.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
