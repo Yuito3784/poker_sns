@@ -6,7 +6,6 @@ import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { formatRelativeTime } from "../../lib/utils";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Notification } from "../../lib/types";
-import MobileBottomNav from "../components/MobileBottomNav";
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -154,7 +153,6 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
-      <MobileBottomNav unreadCount={unreadCount} />
     </div>
   );
 }

@@ -89,6 +89,8 @@ export type ProfileUser = {
   bio: string | null;
   avatarUrl: string | null;
   _count?: { followers: number; following: number; posts: number };
+  /** 検索結果などで、現在ユーザーがこのユーザーをフォローしているか */
+  isFollowing?: boolean;
 };
 
 export type SearchResults = {
