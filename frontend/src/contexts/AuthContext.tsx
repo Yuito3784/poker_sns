@@ -94,6 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const syncSubscription = async () => {
       if (!authRef.current) return;
+      // チェックアウト成功直後はconfirm-sessionに任せる（レースコンディション防止）
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("subscription") === "success") return;
+      }
       try {
         const res = await fetchWithAuth(`${API_BASE}/subscriptions/status`);
         if (!res.ok) return;

@@ -47,6 +47,19 @@ export class SubscriptionsController {
     return this.subscriptionsService.reactivateSubscription(user.userId);
   }
 
+  @Post('confirm-session')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  confirmSession(
+    @GetUser() user: { userId: string },
+    @Body('session_id') sessionId?: string,
+  ) {
+    return this.subscriptionsService.confirmCheckoutSession(
+      user.userId,
+      sessionId && typeof sessionId === 'string' ? sessionId.trim() : undefined,
+    );
+  }
+
   @Get('status')
   @UseGuards(JwtAuthGuard)
   getStatus(@GetUser() user: { userId: string }) {
