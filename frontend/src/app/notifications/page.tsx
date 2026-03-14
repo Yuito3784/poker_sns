@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { formatRelativeTime } from "../../lib/utils";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 import type { Notification } from "../../lib/types";
 
 export default function NotificationsPage() {
   const router = useRouter();
   const { auth, isInitialized } = useAuth();
+  const { showToast } = useToast();
   const token = auth?.token ?? null;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,8 +67,9 @@ export default function NotificationsPage() {
     try {
       await fetchWithAuth(`${API_BASE}/notifications/read-all`, { method: "PATCH" });
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      showToast("すべて既読にしました");
     } catch {
-      /* ignore */
+      showToast("既読処理に失敗しました", "error");
     }
   };
 
@@ -99,7 +102,9 @@ export default function NotificationsPage() {
         ) : notifications.length === 0 ? (
           <div className="px-4 py-16 text-center">
             <svg className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
-            <p className="mt-3 text-sm" style={{ color: "#6b7a66" }}>通知はありません</p>
+            <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>通知はまだありません</p>
+            <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>いいね、返信、フォローされると通知が届きます</p>
+            <button onClick={() => router.push("/")} className="mt-4 rounded-full px-5 py-2 text-xs font-semibold transition-colors" style={{ background: "#c9a84c", color: "#0d1009" }}>タイムラインに戻る</button>
           </div>
         ) : (
           <div className="divide-y" style={{ borderColor: "#1f2a1e" }}>
@@ -108,15 +113,18 @@ export default function NotificationsPage() {
                 key={notif.id}
                 className="flex w-full gap-3 p-4 text-left transition-colors"
                 style={{
-                  background: !notif.isRead ? "rgba(201,168,76,0.03)" : "transparent",
-                  borderLeft: !notif.isRead ? "2px solid rgba(201,168,76,0.3)" : "2px solid transparent",
+                  background: !notif.isRead ? "rgba(201,168,76,0.06)" : "transparent",
+                  borderLeft: !notif.isRead ? "3px solid #c9a84c" : "3px solid transparent",
                 }}
                 onClick={() => handleClick(notif)}
               >
                 <span
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
-                  style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
+                  className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+                  style={{ background: !notif.isRead ? "rgba(201,168,76,0.1)" : "#131a14", border: !notif.isRead ? "1px solid rgba(201,168,76,0.3)" : "1px solid #1f2a1e" }}
                 >
+                  {!notif.isRead && (
+                    <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full" style={{ background: "#c9a84c", boxShadow: "0 0 6px rgba(201,168,76,0.5)" }} />
+                  )}
                   {notif.type === "LIKE" && (
                     <svg className="h-4 w-4" fill="#f06060" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" /></svg>
                   )}

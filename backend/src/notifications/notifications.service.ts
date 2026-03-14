@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { Subject } from 'rxjs';
 import { PrismaService } from '../prisma.service';
 import { NotificationType } from '@prisma/client';
@@ -8,13 +9,41 @@ export interface NotificationEvent {
   notification: Record<string, unknown>;
 }
 
+interface SseTicket {
+  userId: string;
+  expiresAt: number;
+}
+
 @Injectable()
 export class NotificationsService {
   private readonly notificationSubject = new Subject<NotificationEvent>();
+  private readonly sseTickets = new Map<string, SseTicket>();
 
   readonly notifications$ = this.notificationSubject.asObservable();
 
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Issue a short-lived, single-use ticket for SSE connection (30s TTL) */
+  issueSseTicket(userId: string): string {
+    // Cleanup expired tickets
+    const now = Date.now();
+    for (const [key, ticket] of this.sseTickets) {
+      if (ticket.expiresAt < now) this.sseTickets.delete(key);
+    }
+
+    const ticketId = randomBytes(32).toString('hex');
+    this.sseTickets.set(ticketId, { userId, expiresAt: now + 30_000 });
+    return ticketId;
+  }
+
+  /** Consume a SSE ticket (single-use). Returns userId or null. */
+  consumeSseTicket(ticketId: string): string | null {
+    const ticket = this.sseTickets.get(ticketId);
+    if (!ticket) return null;
+    this.sseTickets.delete(ticketId); // single-use
+    if (ticket.expiresAt < Date.now()) return null;
+    return ticket.userId;
+  }
 
   async createNotification(
     userId: string,

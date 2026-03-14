@@ -13,7 +13,8 @@ const mockPrisma = {
     aggregate: jest.fn(),
   },
   notification: { create: jest.fn() },
-  $transaction: jest.fn(),
+  creatorEarning: { create: jest.fn() },
+  $transaction: jest.fn((cb: (tx: typeof mockPrisma) => Promise<unknown>) => cb(mockPrisma)),
 };
 
 const mockConstructEvent = jest.fn();

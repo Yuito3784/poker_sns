@@ -17,6 +17,7 @@ export function registerAuthRefreshHandler(handler: (token: string) => void) {
 }
 
 function clearAllAuth() {
+  if (typeof window === "undefined") return;
   localStorage.removeItem("token");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
@@ -24,6 +25,7 @@ function clearAllAuth() {
 }
 
 async function doRefresh(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
   const refreshToken = localStorage.getItem("refreshToken");
   if (!refreshToken) return null;
 
@@ -70,6 +72,7 @@ export async function fetchWithAuth(
   url: string,
   options: RequestInit = {},
 ): Promise<Response> {
+  if (typeof window === "undefined") return fetch(url, options);
   let token = localStorage.getItem("token");
   const headers = new Headers(options.headers);
 
@@ -112,6 +115,7 @@ export async function fetchWithAuth(
 
 /** 有効なトークンを非同期で取得（必要ならリフレッシュ） */
 export async function getValidTokenAsync(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
   const token = localStorage.getItem("token");
   if (!token) return null;
 
