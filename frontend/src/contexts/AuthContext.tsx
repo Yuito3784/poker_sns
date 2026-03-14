@@ -90,6 +90,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // クロスタブ同期: 別タブでのログイン/ログアウトを検知
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "token") {
+        if (!e.newValue) {
+          // 別タブでログアウト
+          setAuthState(null);
+          authRef.current = null;
+        } else {
+          // 別タブでログインまたはトークン更新
+          const stored = localStorage.getItem("user");
+          if (stored) {
+            try {
+              const user = JSON.parse(stored);
+              const state = { token: e.newValue, user };
+              setAuthState(state);
+              authRef.current = state;
+            } catch { /* ignore */ }
+          }
+        }
+      }
+      if (e.key === "user" && e.newValue && authRef.current) {
+        try {
+          const user = JSON.parse(e.newValue);
+          const state = { token: authRef.current.token, user };
+          setAuthState(state);
+          authRef.current = state;
+        } catch { /* ignore */ }
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   // アプリ起動時にサブスクリプション状態をサーバーと同期
   useEffect(() => {
     const syncSubscription = async () => {

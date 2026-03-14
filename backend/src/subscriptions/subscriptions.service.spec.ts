@@ -564,7 +564,10 @@ describe('SubscriptionsService', () => {
       );
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: FAKE_USER_ID },
-        data: { subscriptionStatus: 'canceled' },
+        data: {
+          subscriptionStatus: 'canceled',
+          subscriptionPeriodEnd: expect.any(Date),
+        },
       });
       expect(result.periodEnd).toBeDefined();
     });

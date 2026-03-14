@@ -72,6 +72,7 @@ describe('AuthService', () => {
           passwordHash: 'hashed-password',
           name: registerDto.name,
           username: registerDto.username,
+          avatarUrl: null,
         },
       });
       expect(result).toEqual({
