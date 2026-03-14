@@ -107,7 +107,8 @@ export class AuthController {
         user: result.user as Record<string, unknown>,
       });
       return res.redirect(`${frontendUrl}/?oauthSession=${sessionId}`);
-    } catch {
+    } catch (err) {
+      this.logger.error('Google OAuth callback failed', err instanceof Error ? err.stack : String(err));
       return res.redirect(`${frontendUrl}/?authError=true`);
     }
   }
