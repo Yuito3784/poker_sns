@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Avatar from "./Avatar";
+import PremiumBadge from "./PremiumBadge";
 import SidebarAds from "./SidebarAds";
 import AffiliateCard from "./AffiliateCard";
 import MobileBottomNav from "./MobileBottomNav";
@@ -162,7 +163,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             >
               <Avatar avatarUrl={currentUser!.avatarUrl} name={currentUser!.name} size="sm" />
               <div className="hidden flex-1 text-left lg:block">
-                <div className="text-sm font-semibold" style={{ color: "#ddd6c8" }}>{currentUser!.name}</div>
+                <div className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: "#ddd6c8" }}>
+                  {currentUser!.name}
+                  {(currentUser!.subscriptionStatus === "active" || currentUser!.subscriptionStatus === "canceled") && <PremiumBadge />}
+                </div>
                 <div className="text-xs" style={{ color: "#6b7a66" }}>@{currentUser!.username}</div>
               </div>
             </button>

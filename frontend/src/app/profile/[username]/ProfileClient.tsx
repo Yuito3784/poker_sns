@@ -48,6 +48,12 @@ export default function ProfileClient() {
   const [isMuted, setIsMuted] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
+  const displaySubStatus = profile
+    ? currentUserId === profile.id
+      ? (currentUser?.subscriptionStatus ?? profile.subscriptionStatus)
+      : profile.subscriptionStatus
+    : undefined;
+
   useEffect(() => {
     if (!isInitialized || !username) return;
     fetchProfile();
@@ -72,6 +78,23 @@ export default function ProfileClient() {
       else if (activeTab === "bookmarks" && currentUserId === profile.id) fetchBookmarks();
     }
   }, [profile, activeTab, currentUserId, token]);
+
+  // 自分のプロフィール表示時は課金状況を取得して Auth を同期し、バッジ/PROボタンの表示を整合させる
+  useEffect(() => {
+    if (!token || !profile || !auth || profile.id !== currentUserId) return;
+    const syncSubscription = async () => {
+      try {
+        const res = await fetchWithAuth(`${API_BASE}/subscriptions/status`);
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (!data?.status) return;
+        setAuth(auth.token, { ...auth.user, subscriptionStatus: data.status });
+      } catch {
+        /* ignore */
+      }
+    };
+    void syncSubscription();
+  }, [token, profile?.id, currentUserId]); // auth は setAuth で更新するため依存に含めない（ループ防止）
 
   const fetchProfile = async () => {
     try {
@@ -436,8 +459,8 @@ export default function ProfileClient() {
                 <div>
                   <h1 className="flex items-center gap-2 text-2xl font-bold" style={{ color: "#ddd6c8" }}>
                     {profile.name}
-                    {(profile.subscriptionStatus === "active" || profile.subscriptionStatus === "canceled") && <PremiumBadge size="md" />}
-                    {currentUserId && currentUserId === profile.id && profile.subscriptionStatus !== "active" && profile.subscriptionStatus !== "canceled" && (
+                    {(displaySubStatus === "active" || displaySubStatus === "canceled") && <PremiumBadge size="md" />}
+                    {currentUserId === profile.id && displaySubStatus !== "active" && displaySubStatus !== "canceled" && (
                       <a
                         href="/settings"
                         className="rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors"

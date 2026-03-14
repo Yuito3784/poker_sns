@@ -149,7 +149,7 @@ describe('SubscriptionsService', () => {
   describe('handleWebhook – checkout.session.completed', () => {
     it('should set user status to active and store stripe IDs', async () => {
       const event = buildEvent('checkout.session.completed', {
-        metadata: { userId: FAKE_USER_ID, plan: 'monthly' },
+        metadata: { userId: FAKE_USER_ID, plan: 'monthly', type: 'subscription' },
         customer: FAKE_CUSTOMER_ID,
         subscription: FAKE_SUBSCRIPTION_ID,
       });
@@ -187,6 +187,20 @@ describe('SubscriptionsService', () => {
         metadata: {},
         customer: FAKE_CUSTOMER_ID,
         subscription: FAKE_SUBSCRIPTION_ID,
+      });
+      mockStripeWebhooks.constructEvent.mockReturnValue(event);
+      mockPrisma.subscriptionEvent.findUnique.mockResolvedValue(null);
+
+      await service.handleWebhook(Buffer.from('{}'), 'valid_sig');
+
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should skip when metadata.type is not subscription (e.g. salon)', async () => {
+      const event = buildEvent('checkout.session.completed', {
+        metadata: { userId: FAKE_USER_ID, type: 'salon', salonId: 'salon-1' },
+        customer: FAKE_CUSTOMER_ID,
+        subscription: 'sub_salon',
       });
       mockStripeWebhooks.constructEvent.mockReturnValue(event);
       mockPrisma.subscriptionEvent.findUnique.mockResolvedValue(null);
@@ -455,6 +469,17 @@ describe('SubscriptionsService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({
         id: FAKE_USER_ID,
         subscriptionStatus: 'active',
+      });
+
+      await expect(
+        service.createCheckoutSession(FAKE_USER_ID),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when user is canceled (period not ended)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: FAKE_USER_ID,
+        subscriptionStatus: 'canceled',
       });
 
       await expect(

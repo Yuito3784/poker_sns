@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
+import { parseApiError } from "../../lib/api-error";
 import { useAuth } from "../../contexts/AuthContext";
 import { isPremium } from "../../lib/subscription";
 
@@ -41,6 +42,7 @@ function SettingsContent() {
   const [subStatus, setSubStatus] = useState<SubStatus | null>(null);
   const [subLoading, setSubLoading] = useState(false);
   const [subMsg, setSubMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [subFetchError, setSubFetchError] = useState<string | null>(null);
 
   // Cancel confirmation
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -58,18 +60,79 @@ function SettingsContent() {
   }, [isInitialized, auth, router]);
 
   useEffect(() => {
-    if (token) fetchSubStatus();
+    if (!token) return;
+    // チェックアウトから戻ってきた場合は confirm-session に任せる（レースコンディション防止）
+    if (searchParams.get("subscription") === "success") return;
+    setSubFetchError(null);
+    fetchSubStatus().then((data) => {
+      if (!data) setSubFetchError("課金状況の取得に失敗しました");
+    });
   }, [token]);
 
   useEffect(() => {
     const sub = searchParams.get("subscription");
-    if (sub === "success") {
-      setSubMsg({ type: "success", text: "プレミアムプランに加入しました！" });
-      fetchSubStatus();
-    }
+    const sessionId = searchParams.get("session_id");
+    if (sub !== "success") return;
+    setSubMsg({ type: "success", text: "プレミアムプランに加入しました！" });
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    const POLL_INTERVAL_MS = 2000;
+    const POLL_MAX_MS = 15000;
+
+    const poll = async () => {
+      const data = await fetchSubStatus();
+      if (cancelled || !data) return;
+      if (data.status !== "free") return;
+      const started = Date.now();
+      pollTimer = setInterval(async () => {
+        if (cancelled || Date.now() - started > POLL_MAX_MS) {
+          if (pollTimer) clearInterval(pollTimer);
+          pollTimer = null;
+          return;
+        }
+        const next = await fetchSubStatus();
+        if (next && next.status !== "free" && pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+      }, POLL_INTERVAL_MS);
+    };
+
+    const run = async () => {
+      // session_id がなくてもバックエンドが Stripe customer から検索するので常に呼ぶ
+      try {
+        const body: Record<string, string> = {};
+        if (sessionId) body.session_id = sessionId;
+        const res = await fetchWithAuth(`${API_BASE}/subscriptions/confirm-session`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSubStatus(data);
+          if (auth?.user) {
+            setAuth(auth.token, { ...auth.user, subscriptionStatus: data.status });
+          }
+          return;
+        }
+        // confirm-session が失敗した場合はポーリングにフォールバック
+        const message = await parseApiError(res);
+        setSubMsg({ type: "error", text: message });
+        poll();
+      } catch {
+        setSubMsg({ type: "error", text: "接続に失敗しました。しばらくしてからお試しください" });
+        poll();
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
+    };
   }, [searchParams]);
 
-  const fetchSubStatus = async () => {
+  const fetchSubStatus = async (): Promise<SubStatus | null> => {
     try {
       const res = await fetchWithAuth(`${API_BASE}/subscriptions/status`);
       if (res.ok) {
@@ -78,8 +141,12 @@ function SettingsContent() {
         if (auth?.user) {
           setAuth(auth.token, { ...auth.user, subscriptionStatus: data.status });
         }
+        return data;
       }
-    } catch { /* ignore */ }
+      return null;
+    } catch {
+      return null;
+    }
   };
 
   const handleCheckout = async () => {
@@ -88,15 +155,16 @@ function SettingsContent() {
     try {
       const res = await fetchWithAuth(`${API_BASE}/subscriptions/checkout`, { method: "POST" });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "エラーが発生しました");
+        const message = await parseApiError(res);
+        setSubMsg({ type: "error", text: message });
+        return;
       }
       const data = await res.json();
       if (data.checkoutUrl && typeof window !== "undefined") {
         window.location.href = data.checkoutUrl;
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
+      const message = err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください";
       setSubMsg({ type: "error", text: message });
     } finally {
       setSubLoading(false);
@@ -109,14 +177,13 @@ function SettingsContent() {
     try {
       const res = await fetchWithAuth(`${API_BASE}/subscriptions/cancel`, { method: "POST" });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "エラーが発生しました");
+        setSubMsg({ type: "error", text: await parseApiError(res) });
+        return;
       }
       setSubMsg({ type: "success", text: "サブスクリプションは現在の期間終了時にキャンセルされます。" });
       fetchSubStatus();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setSubMsg({ type: "error", text: message });
+      setSubMsg({ type: "error", text: err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください" });
     } finally {
       setSubLoading(false);
     }
@@ -128,14 +195,13 @@ function SettingsContent() {
     try {
       const res = await fetchWithAuth(`${API_BASE}/subscriptions/reactivate`, { method: "POST" });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "エラーが発生しました");
+        setSubMsg({ type: "error", text: await parseApiError(res) });
+        return;
       }
       setSubMsg({ type: "success", text: "サブスクリプションが再開されました。" });
       fetchSubStatus();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setSubMsg({ type: "error", text: message });
+      setSubMsg({ type: "error", text: err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください" });
     } finally {
       setSubLoading(false);
     }
@@ -143,19 +209,19 @@ function SettingsContent() {
 
   const handleOpenPortal = async () => {
     setSubLoading(true);
+    setSubMsg(null);
     try {
       const res = await fetchWithAuth(`${API_BASE}/subscriptions/portal`, { method: "POST" });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "エラーが発生しました");
+        setSubMsg({ type: "error", text: await parseApiError(res) });
+        return;
       }
       const data = await res.json();
       if (data.portalUrl && typeof window !== "undefined") {
         window.location.href = data.portalUrl;
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setSubMsg({ type: "error", text: message });
+      setSubMsg({ type: "error", text: err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください" });
     } finally {
       setSubLoading(false);
     }
@@ -182,21 +248,19 @@ function SettingsContent() {
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "パスワードの変更に失敗しました");
+        setPasswordMsg({ type: "error", text: await parseApiError(res) });
+        return;
       }
       setPasswordMsg({ type: "success", text: "パスワードが変更されました。再度ログインしてください。" });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      // Clear auth after password change
       setTimeout(() => {
         clearAuth();
         router.push("/");
       }, 2000);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setPasswordMsg({ type: "error", text: message });
+      setPasswordMsg({ type: "error", text: err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください" });
     } finally {
       setPasswordLoading(false);
     }
@@ -211,14 +275,13 @@ function SettingsContent() {
         method: "DELETE",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "アカウントの削除に失敗しました");
+        setDeleteError(await parseApiError(res));
+        return;
       }
       clearAuth();
       router.push("/");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setDeleteError(message);
+      setDeleteError(err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください");
     } finally {
       setDeleteLoading(false);
     }
@@ -251,9 +314,26 @@ function SettingsContent() {
               {subMsg.text}
             </div>
           )}
-          {!subStatus ? (
+          {!subStatus && !subFetchError ? (
             <p className="text-sm" style={{ color: "#6b7a66" }}>読み込み中...</p>
-          ) : subStatus.status === "free" ? (
+          ) : subFetchError ? (
+            <div className="space-y-2">
+              <p className="text-sm" style={{ color: "#c9a84c" }}>{subFetchError}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubFetchError(null);
+                  fetchSubStatus().then((data) => {
+                    if (!data) setSubFetchError("課金状況の取得に失敗しました");
+                  });
+                }}
+                className="rounded px-4 py-2 text-sm font-medium transition-colors"
+                style={{ border: "1px solid #2a3828", color: "#ddd6c8" }}
+              >
+                再試行
+              </button>
+            </div>
+          ) : subStatus && (subStatus.status === "free" && !isPremium(currentUser?.subscriptionStatus) && searchParams.get("subscription") !== "success") ? (
             <div>
               <div className="relative mb-4 overflow-hidden rounded-xl p-5" style={{ background: "#192118", border: "1px solid #2a3828" }}>
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-6 opacity-10" style={{ color: "#c9a84c" }}>
@@ -279,7 +359,7 @@ function SettingsContent() {
                 {subLoading ? "処理中..." : "プレミアムに加入"}
               </button>
             </div>
-          ) : subStatus.status === "active" && !subStatus.cancelAtPeriodEnd ? (
+          ) : subStatus && ((subStatus.status === "active" && !subStatus.cancelAtPeriodEnd) || (subStatus.status === "free" && (isPremium(currentUser?.subscriptionStatus) || searchParams.get("subscription") === "success"))) ? (
             <div>
               <div className="mb-4 flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: "rgba(76,175,80,0.08)", border: "1px solid rgba(76,175,80,0.25)" }}>
                 <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ background: "rgba(76,175,80,0.2)", color: "#81c784" }}>有効</span>
@@ -335,7 +415,7 @@ function SettingsContent() {
                 </div>
               )}
             </div>
-          ) : subStatus.status === "canceled" || subStatus.cancelAtPeriodEnd ? (
+          ) : subStatus?.status === "canceled" || subStatus?.cancelAtPeriodEnd ? (
             <div>
               <div className="mb-4 flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.25)" }}>
                 <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ background: "rgba(201,168,76,0.15)", color: "#c9a84c" }}>解約予定</span>
@@ -355,7 +435,7 @@ function SettingsContent() {
                 {subLoading ? "処理中..." : "プランを再開"}
               </button>
             </div>
-          ) : subStatus.status === "past_due" ? (
+          ) : subStatus?.status === "past_due" ? (
             <div>
               <div className="mb-3 rounded-lg px-4 py-3" style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.3)" }}>
                 <div className="mb-1 flex items-center gap-2">
