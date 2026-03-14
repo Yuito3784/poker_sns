@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import type { SearchResults as SearchResultsType } from "../../lib/types";
 
 type Props = {
@@ -7,6 +8,8 @@ type Props = {
 };
 
 export default function SearchResults({ searchResults }: Props) {
+  const router = useRouter();
+
   return (
     <div className="mt-2 max-h-[calc(100vh-120px)] overflow-y-auto">
       {searchResults.users.length > 0 && (
@@ -16,11 +19,7 @@ export default function SearchResults({ searchResults }: Props) {
             {searchResults.users.map((user) => (
               <button
                 key={user.id}
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    window.location.href = `/profile/${user.username}`;
-                  }
-                }}
+                onClick={() => router.push(`/profile/${user.username}`)}
                 className="w-full rounded-md border border-[#1f2a1e] p-2 text-left hover:bg-white/[0.03]"
               >
                 <div className="text-sm font-semibold">{user.name}</div>
@@ -37,11 +36,7 @@ export default function SearchResults({ searchResults }: Props) {
             {searchResults.posts.map((post) => (
               <button
                 key={post.id}
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    window.location.href = `/post/${post.id}`;
-                  }
-                }}
+                onClick={() => router.push(`/post/${post.id}`)}
                 className="w-full rounded-md border border-[#1f2a1e] p-2 text-left hover:bg-white/[0.03]"
               >
                 <div className="text-xs text-[#7a7260]">

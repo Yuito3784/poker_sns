@@ -51,8 +51,8 @@ export default function TournamentDetailPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#4a5245" }}>読み込み中...</div>;
-  if (!tournament) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#4a5245" }}>トーナメントが見つかりません</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#6b7a66" }}>読み込み中...</div>;
+  if (!tournament) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#6b7a66" }}>トーナメントが見つかりません</div>;
 
   return (
     <div className="min-h-screen" style={{ background: "#0d1009" }}>
@@ -67,25 +67,25 @@ export default function TournamentDetailPage() {
 
           <div className="mt-4 grid grid-cols-2 gap-4">
             <div className="rounded-lg p-3" style={{ background: "#192118" }}>
-              <div className="text-xs" style={{ color: "#4a5245" }}>参加費</div>
+              <div className="text-xs" style={{ color: "#6b7a66" }}>参加費</div>
               <div className="text-lg font-semibold" style={{ color: "#c9a84c" }}>
                 {tournament.entryFee === 0 ? "無料" : `${tournament.entryFee.toLocaleString()}円`}
               </div>
             </div>
             <div className="rounded-lg p-3" style={{ background: "#192118" }}>
-              <div className="text-xs" style={{ color: "#4a5245" }}>参加者</div>
+              <div className="text-xs" style={{ color: "#6b7a66" }}>参加者</div>
               <div className="text-lg font-semibold" style={{ color: "#ddd6c8" }}>
                 {tournament._count?.participants || 0} / {tournament.maxPlayers}
               </div>
             </div>
             <div className="rounded-lg p-3" style={{ background: "#192118" }}>
-              <div className="text-xs" style={{ color: "#4a5245" }}>開始日時</div>
+              <div className="text-xs" style={{ color: "#6b7a66" }}>開始日時</div>
               <div className="text-sm font-semibold" style={{ color: "#ddd6c8" }}>
                 {new Date(tournament.startAt).toLocaleString("ja-JP")}
               </div>
             </div>
             <div className="rounded-lg p-3" style={{ background: "#192118" }}>
-              <div className="text-xs" style={{ color: "#4a5245" }}>賞金</div>
+              <div className="text-xs" style={{ color: "#6b7a66" }}>賞金</div>
               <div className="text-sm font-semibold" style={{ color: "#c9a84c" }}>
                 {tournament.prizePool || "未設定"}
               </div>
@@ -120,7 +120,7 @@ export default function TournamentDetailPage() {
                   <Avatar avatarUrl={p.user?.avatarUrl ?? null} name={p.user?.name ?? ""} size="sm" />
                   <div>
                     <div className="text-sm font-medium" style={{ color: "#ddd6c8" }}>{p.user?.name}</div>
-                    <div className="text-xs" style={{ color: "#4a5245" }}>@{p.user?.username}</div>
+                    <div className="text-xs" style={{ color: "#6b7a66" }}>@{p.user?.username}</div>
                   </div>
                 </div>
               ))}

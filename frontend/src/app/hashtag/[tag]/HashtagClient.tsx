@@ -214,7 +214,7 @@ export default function HashtagClient() {
   return (
     <div className="min-h-screen bg-[#0d1009] text-[#ddd6c8]">
       <div className="mx-auto max-w-xl min-h-screen">
-        <div className="sticky top-0 z-50 flex items-center gap-4 rounded-b-xl border-b border-amber-500/10 bg-[#1a2f1c] px-4 py-3.5 shadow-[0_2px_12px_rgba(0,0,0,0.15)]">
+        <div className="sticky top-0 z-50 flex items-center gap-4 border-b px-4 py-3.5" style={{ background: "#131a14", borderColor: "#2a3828" }}>
           <button onClick={() => router.back()} className="rounded-lg p-1.5 text-[#8ba388] transition-colors hover:bg-white/5 hover:text-amber-400">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
           </button>
@@ -232,7 +232,7 @@ export default function HashtagClient() {
             <p className="relative font-[family-name:var(--font-playfair)] text-sm font-semibold text-[#e8f0e6]">参加して議論に加わろう</p>
             <p className="relative mt-1 text-xs text-[#8ba388]">いいね・返信・フォローにはアカウントが必要です</p>
             <div className="relative mt-2 flex justify-center">
-              <a href="/" className="rounded-full bg-amber-500 px-6 py-2 text-xs font-bold text-[#1a2f1c] transition-colors hover:bg-amber-400">
+              <a href="/" className="rounded-full px-6 py-2 text-xs font-bold transition-colors" style={{ background: "#c9a84c", color: "#0d1009" }}>
                 ログイン / 新規登録
               </a>
             </div>
@@ -245,7 +245,9 @@ export default function HashtagClient() {
           </div>
         ) : posts.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <p className="mt-3 text-sm text-[#6b7a66]">#{tag} の投稿はまだありません</p>
+            <svg className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5l-3.9 19.5m-2.1-19.5l-3.9 19.5" /></svg>
+            <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>#{tag} の投稿はまだありません</p>
+            <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>このハッシュタグで最初の投稿をしてみましょう</p>
           </div>
         ) : (
           <ul className="space-y-2.5 px-3 py-3">

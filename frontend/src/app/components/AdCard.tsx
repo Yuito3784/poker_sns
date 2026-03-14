@@ -9,7 +9,13 @@ type Props = {
 export default function AdCard({ ad }: Props) {
   const handleClick = () => {
     if (typeof window !== "undefined" && ad.linkUrl) {
-      window.open(ad.linkUrl, "_blank", "noopener,noreferrer");
+      try {
+        const url = new URL(ad.linkUrl);
+        if (url.protocol !== "https:") return;
+        window.open(url.href, "_blank", "noopener,noreferrer");
+      } catch {
+        // invalid URL — ignore
+      }
     }
   };
 
@@ -34,6 +40,7 @@ export default function AdCard({ ad }: Props) {
               src={ad.imageUrl}
               alt={ad.title}
               className="h-32 w-full object-cover"
+              referrerPolicy="no-referrer"
             />
           </div>
         )}

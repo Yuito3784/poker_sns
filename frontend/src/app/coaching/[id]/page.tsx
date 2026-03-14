@@ -55,8 +55,8 @@ export default function CoachDetailPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#4a5245" }}>読み込み中...</div>;
-  if (!coach) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#4a5245" }}>コーチが見つかりません</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#6b7a66" }}>読み込み中...</div>;
+  if (!coach) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#6b7a66" }}>コーチが見つかりません</div>;
 
   const estimatedAmount = Math.round((coach.hourlyRate * bookingForm.durationMinutes) / 60);
 
@@ -89,7 +89,7 @@ export default function CoachDetailPage() {
 
           {coach.experience && (
             <div className="mt-3">
-              <span className="text-xs" style={{ color: "#4a5245" }}>経歴: </span>
+              <span className="text-xs" style={{ color: "#6b7a66" }}>経歴: </span>
               <span className="text-sm" style={{ color: "#7a7260" }}>{coach.experience}</span>
             </div>
           )}

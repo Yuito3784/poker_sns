@@ -6,6 +6,7 @@ import Avatar from "../components/Avatar";
 import PostItem from "../components/PostItem";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 import type { Post, ProfileUser, User } from "../../lib/types";
 
 type FilterTab = "all" | "users" | "posts";
@@ -63,6 +64,7 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   const { auth, isInitialized } = useAuth();
+  const { showToast } = useToast();
   const token = auth?.token ?? null;
   const currentUser = auth?.user ?? null;
 
@@ -127,81 +129,95 @@ function SearchContent() {
 
   const handleToggleLike = async (postId: string) => {
     if (!token) return;
-    setActionLoading(`like-${postId}`);
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+    const wasLiked = post.isLiked;
+    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isLiked: !wasLiked, _count: { ...p._count!, likes: (p._count?.likes ?? 0) + (wasLiked ? -1 : 1), replies: p._count?.replies ?? 0 } } : p));
+    showToast(wasLiked ? "いいねを取り消しました" : "いいねしました");
     try {
-      await fetchWithAuth(`${API_BASE}/posts/${postId}/like`, { method: "POST" });
-      handleSearch();
+      const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/like`, { method: "POST" });
+      if (!res.ok) throw new Error();
     } catch {
-      /* ignore */
-    } finally {
-      setActionLoading(null);
+      setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isLiked: wasLiked, _count: { ...p._count!, likes: (p._count?.likes ?? 0) + (wasLiked ? 1 : -1), replies: p._count?.replies ?? 0 } } : p));
+      showToast("エラーが発生しました", "error");
     }
   };
 
   const handleToggleRepost = async (postId: string) => {
     if (!token) return;
-    setActionLoading(`repost-${postId}`);
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+    const wasReposted = post.isReposted;
+    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isReposted: !wasReposted, _count: { ...p._count!, reposts: (p._count?.reposts ?? 0) + (wasReposted ? -1 : 1), likes: p._count?.likes ?? 0, replies: p._count?.replies ?? 0 } } : p));
+    showToast(wasReposted ? "リポストを取り消しました" : "リポストしました");
     try {
-      await fetchWithAuth(`${API_BASE}/posts/${postId}/repost`, { method: "POST" });
-      handleSearch();
+      const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/repost`, { method: "POST" });
+      if (!res.ok) throw new Error();
     } catch {
-      /* ignore */
-    } finally {
-      setActionLoading(null);
+      setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isReposted: wasReposted, _count: { ...p._count!, reposts: (p._count?.reposts ?? 0) + (wasReposted ? 1 : -1), likes: p._count?.likes ?? 0, replies: p._count?.replies ?? 0 } } : p));
+      showToast("エラーが発生しました", "error");
     }
   };
 
   const handleToggleBookmark = async (postId: string) => {
     if (!token) return;
-    setActionLoading(`bookmark-${postId}`);
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+    const wasBookmarked = post.isBookmarked;
+    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isBookmarked: !wasBookmarked } : p));
+    showToast(wasBookmarked ? "ブックマークを解除しました" : "ブックマークに追加しました");
     try {
-      await fetchWithAuth(`${API_BASE}/posts/${postId}/bookmark`, { method: "POST" });
-      handleSearch();
+      const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/bookmark`, { method: "POST" });
+      if (!res.ok) throw new Error();
     } catch {
-      /* ignore */
-    } finally {
-      setActionLoading(null);
+      setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isBookmarked: wasBookmarked } : p));
+      showToast("エラーが発生しました", "error");
     }
   };
 
   const handleToggleFollow = async (username: string) => {
-    setActionLoading(`follow-${username}`);
+    const wasFollowing = users.find((u) => u.username === username)?.isFollowing;
+    setUsers((prev) => prev.map((u) => (u.username === username ? { ...u, isFollowing: !wasFollowing } : u)));
+    showToast(wasFollowing ? "フォローを解除しました" : "フォローしました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/users/${username}/follow`, { method: "POST" });
-      if (!res.ok) return;
+      if (!res.ok) throw new Error();
       const data = (await res.json()) as { following: boolean };
       setUsers((prev) =>
         prev.map((u) => (u.username === username ? { ...u, isFollowing: data.following === true } : u))
       );
     } catch {
-      /* ignore */
-    } finally {
-      setActionLoading(null);
+      setUsers((prev) => prev.map((u) => (u.username === username ? { ...u, isFollowing: wasFollowing === true } : u)));
+      showToast("エラーが発生しました", "error");
     }
   };
 
   const handleReply = async (postId: string) => {
     if (!replyContent.trim()) return;
     try {
-      await fetchWithAuth(`${API_BASE}/posts/${postId}/replies`, {
+      const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/replies`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: replyContent }),
       });
+      if (!res.ok) throw new Error();
       setReplyContent("");
       setReplyingTo(null);
+      showToast("返信しました");
       handleSearch();
     } catch {
-      /* ignore */
+      showToast("返信に失敗しました", "error");
     }
   };
 
   const handleDelete = async (postId: string) => {
     try {
-      await fetchWithAuth(`${API_BASE}/posts/${postId}`, { method: "DELETE" });
+      const res = await fetchWithAuth(`${API_BASE}/posts/${postId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
       setPosts((prev) => prev.filter((p) => p.id !== postId));
+      showToast("投稿を削除しました");
     } catch {
-      /* ignore */
+      showToast("削除に失敗しました", "error");
     }
   };
 
@@ -266,11 +282,14 @@ function SearchContent() {
         ) : searchQuery.trim().length < 2 ? (
           <div className="px-4 py-12 text-center">
             <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <p className="mt-3 text-sm" style={{ color: "#6b7a66" }}>2文字以上で検索してください</p>
+            <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>2文字以上で検索してください</p>
+            <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>ユーザー名や投稿内容で検索できます</p>
           </div>
         ) : !hasResults ? (
           <div className="px-4 py-12 text-center">
-            <p className="text-sm" style={{ color: "#6b7a66" }}>結果が見つかりませんでした</p>
+            <svg className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+            <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>結果が見つかりませんでした</p>
+            <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>別のキーワードで検索してみてください</p>
           </div>
         ) : (
           <>

@@ -54,7 +54,7 @@ export default function PartnersPage() {
     <div className="min-h-screen bg-[#0d1009] text-[#ddd6c8]">
       <div className="mx-auto max-w-xl min-h-screen">
         {/* Header */}
-        <div className="sticky top-0 z-50 rounded-b-xl border-b border-amber-500/10 bg-[#1a2f1c] shadow-[0_2px_12px_rgba(0,0,0,0.15)]">
+        <div className="sticky top-0 z-50 border-b" style={{ background: "#131a14", borderColor: "#2a3828" }}>
           <div className="flex items-center gap-4 px-4 py-3">
             <button
               onClick={() => router.back()}
@@ -67,16 +67,13 @@ export default function PartnersPage() {
             <h1 className="font-[family-name:var(--font-playfair)] text-xl text-[#e8f0e6]">おすすめサービス</h1>
           </div>
           {/* Category Tabs */}
-          <div className="flex overflow-x-auto border-t border-white/5 scrollbar-hide">
+          <div className="flex overflow-x-auto scrollbar-hide" style={{ borderTop: "1px solid #1f2a1e" }}>
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-shrink-0 px-4 py-2.5 text-center text-sm font-medium transition-colors ${
-                  activeTab === tab.key
-                    ? "border-b-2 border-amber-400 text-amber-400"
-                    : "text-[#8ba388] hover:bg-white/5 hover:text-[#e8f0e6]"
-                }`}
+                className="flex-shrink-0 px-4 py-2.5 text-center text-sm font-medium transition-colors"
+                style={activeTab === tab.key ? { color: "#c9a84c", borderBottom: "2px solid #c9a84c" } : { color: "#6b7a66" }}
               >
                 {tab.label}
               </button>

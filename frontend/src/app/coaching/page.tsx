@@ -89,9 +89,9 @@ export default function CoachingPage() {
         )}
 
         {loading ? (
-          <div className="py-12 text-center" style={{ color: "#4a5245" }}>読み込み中...</div>
+          <div className="py-12 text-center" style={{ color: "#6b7a66" }}>読み込み中...</div>
         ) : coaches.length === 0 ? (
-          <div className="py-12 text-center" style={{ color: "#4a5245" }}>コーチがまだ登録されていません</div>
+          <div className="py-12 text-center" style={{ color: "#6b7a66" }}>コーチがまだ登録されていません</div>
         ) : (
           <div className="space-y-4">
             {coaches.map((coach) => (
@@ -124,7 +124,7 @@ export default function CoachingPage() {
                     <div className="text-sm font-semibold" style={{ color: "#c9a84c" }}>
                       {coach.hourlyRate.toLocaleString()}円/h
                     </div>
-                    <div className="mt-1 text-xs" style={{ color: "#4a5245" }}>
+                    <div className="mt-1 text-xs" style={{ color: "#6b7a66" }}>
                       {coach._count?.bookings || 0}件の予約
                     </div>
                   </div>

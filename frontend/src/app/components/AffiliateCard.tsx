@@ -34,7 +34,7 @@ export default function AffiliateCard({ partner, referrer = "partners_page", com
         style={{ background: "#0d1009", border: "1px solid #1f2a1e" }}
       >
         {partner.logoUrl ? (
-          <img src={partner.logoUrl} alt={partner.name} className="h-9 w-9 rounded-lg object-contain" />
+          <img src={partner.logoUrl} alt={partner.name} className="h-9 w-9 rounded-lg object-contain" referrerPolicy="no-referrer" />
         ) : (
           <div
             className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold"
@@ -68,7 +68,7 @@ export default function AffiliateCard({ partner, referrer = "partners_page", com
       <div className="mb-2 flex items-start justify-between">
         <div className="flex items-center gap-3">
           {partner.logoUrl ? (
-            <img src={partner.logoUrl} alt={partner.name} className="h-12 w-12 rounded-lg object-contain" />
+            <img src={partner.logoUrl} alt={partner.name} className="h-12 w-12 rounded-lg object-contain" referrerPolicy="no-referrer" />
           ) : (
             <div
               className="flex h-12 w-12 items-center justify-center rounded-lg text-lg font-bold"

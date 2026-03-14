@@ -119,9 +119,9 @@ export default function SalonsPage() {
         )}
 
         {loading ? (
-          <div className="py-12 text-center" style={{ color: "#4a5245" }}>読み込み中...</div>
+          <div className="py-12 text-center" style={{ color: "#6b7a66" }}>読み込み中...</div>
         ) : salons.length === 0 ? (
-          <div className="py-12 text-center" style={{ color: "#4a5245" }}>サロンがまだありません</div>
+          <div className="py-12 text-center" style={{ color: "#6b7a66" }}>サロンがまだありません</div>
         ) : (
           <div className="space-y-4">
             {salons.map((salon) => (
@@ -135,7 +135,7 @@ export default function SalonsPage() {
                   <div className="flex-1">
                     <h3 className="font-semibold" style={{ color: "#ddd6c8" }}>{salon.name}</h3>
                     <p className="mt-1 text-sm" style={{ color: "#7a7260" }}>{salon.description}</p>
-                    <div className="mt-2 flex items-center gap-4 text-xs" style={{ color: "#4a5245" }}>
+                    <div className="mt-2 flex items-center gap-4 text-xs" style={{ color: "#6b7a66" }}>
                       <span>{salon.owner?.name}</span>
                       <span>{salon._count?.members || 0} メンバー</span>
                       <span>{salon._count?.posts || 0} 投稿</span>
