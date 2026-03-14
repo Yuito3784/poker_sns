@@ -30,4 +30,5 @@ COPY --from=builder /app/scripts ./scripts
 RUN mkdir -p uploads/avatars uploads/posts
 
 EXPOSE 3001
-CMD ["node", "dist/src/main.js"]
+# 起動前に未適用のマイグレーションを適用（DB更新のたびに手動で打たなくてよい）
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]

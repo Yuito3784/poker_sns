@@ -18,7 +18,7 @@ Railpack のランタイムだと Prisma が OpenSSL 1.1 を参照して落ち�
 4. **Build Command / Start Command** は空で OK（Dockerfile の `CMD` が使われます）
 5. 保存して **Redeploy**
 
-※ マイグレーションはコンテナ内では実行しません。初回のみローカルで `prisma migrate deploy` を実行してください（下記「DBマイグレーション」参照）。
+※ バックエンドの **Dockerfile** では、起動時に `prisma migrate deploy` を実行するようにしています。**開発(dev)・本番(main)どちらの環境でも**デプロイのたびに未適用のマイグレーションが自動で適用され、DB の整合性が保たれます。手動でコマンドを打つ必要はありません（初回や特別な場合は下記「DBマイグレーション」参照）。
 
 ---
 
@@ -42,10 +42,12 @@ Railpack のランタイムだと Prisma が OpenSSL 1.1 を参照して落ち�
 
 ---
 
-## DBマイグレーション（初回のみ）
+## DBマイグレーション
 
-Railway のランタイムでは Prisma の OpenSSL 互換性の都合で `prisma migrate deploy` が失敗することがあります。  
-**初回のみ**、ローカルで以下を実行してテーブルを作成してください。
+通常は **デプロイ時にコンテナ起動で自動実行** されます（Dockerfile の CMD で `prisma migrate deploy` を実行）。  
+Railway で Dockerfile ビルドを使っている場合は、push して再デプロイすれば新しいマイグレーションも適用されます。
+
+**初回のみ** や、自動実行が失敗した場合などは、ローカルから以下で手動適用できます。
 
 1. Railway の PostgreSQL の **Variables** で **`DATABASE_PUBLIC_URL`** または **Connect** から接続文字列をコピー（外部接続用の URL）
 2. ローカルで:
