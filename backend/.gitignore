@@ -62,3 +62,6 @@ uploads/avatars/*
 uploads/posts/*
 !uploads/avatars/.gitkeep
 !uploads/posts/.gitkeep
+
+# DB backups (do not commit)
+/backups

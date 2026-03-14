@@ -47,6 +47,8 @@ Railpack のランタイムだと Prisma が OpenSSL 1.1 を参照して落ち�
 通常は **デプロイ時にコンテナ起動で自動実行** されます（Dockerfile の CMD で `prisma migrate deploy` を実行）。  
 Railway で Dockerfile ビルドを使っている場合は、push して再デプロイすれば新しいマイグレーションも適用されます。
 
+**マイグレーションを含むデプロイの前には、必ず DB バックアップを取得してください**（下記「DBバックアップ」参照）。
+
 **初回のみ** や、自動実行が失敗した場合などは、ローカルから以下で手動適用できます。
 
 1. Railway の PostgreSQL の **Variables** で **`DATABASE_PUBLIC_URL`** または **Connect** から接続文字列をコピー（外部接続用の URL）
@@ -80,6 +82,45 @@ DATABASE_URL="postgresql://..." npx prisma migrate deploy
 ```
 
 ※ 追加専用マイグレーションの例: `20260304000000_add_missing_after_old_init`（`migrations/` 内）。
+
+---
+
+## DBバックアップ（マイグレーション前に推奨）
+
+DB 更新（マイグレーション）のたびに、**実施前にバックアップを取る**と安全です。データに影響が出た場合も復旧できます。
+
+### 方法1: Railway のバックアップ機能（手軽）
+
+1. Railway ダッシュボード → 対象プロジェクト → **Postgres** サービス
+2. **「Backups」** タブを開く
+3. **スケジュールバックアップ**を有効にしておく（推奨）
+4. **マイグレーションを含むデプロイの前**に **「Backup Now」**（または手動バックアップ）を実行
+
+これで Railway 側にバックアップが残り、リストアもダッシュボードから行えます。
+
+### 方法2: ローカルで pg_dump を実行（手元にファイルが欲しい場合）
+
+マイグレーションやデプロイの**前**に、対象環境の DB に対してダンプを取ります。
+
+1. **pg_dump を用意する**
+   - macOS: `brew install libpq` のあと `export PATH="/opt/homebrew/opt/libpq/bin:$PATH"`
+   - Ubuntu: `sudo apt-get install postgresql-client`
+2. **接続情報を用意する**
+   - 開発 DB: Railway の Postgres → Variables の **`DATABASE_PUBLIC_URL`** をコピー
+   - 本番 DB: 本番用 Postgres の同様の URL（本番は取り扱いに注意）
+3. **バックアップ実行**
+   ```bash
+   cd backend
+   DATABASE_URL="postgresql://user:pass@host:port/railway" ./scripts/backup-db.sh
+   ```
+4. 出力ファイルは `backend/backups/backup-YYYYMMDD-HHMMSS.sql` に保存されます（`backups/` は .gitignore 済みでリポジトリには含めません）
+
+### 推奨フロー（マイグレーションを含む変更を dev/main に出すとき）
+
+1. **バックアップを取る**（上記の方法1 または 2）
+2. その後、通常どおり push → デプロイ（起動時に `prisma migrate deploy` が実行される）
+
+本番（main）にマージする前は、**本番用 Postgres のバックアップ**を必ず取得してください。
 
 ---
 
