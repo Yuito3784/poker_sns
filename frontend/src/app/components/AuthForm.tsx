@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { API_BASE } from "../../lib/api";
+import { parseApiError } from "../../lib/api-error";
 import type { User } from "../../lib/types";
 
 type MagicLinkState = "idle" | "sending" | "sent";
@@ -123,8 +124,8 @@ export default function AuthForm({ onAuthSuccess }: Props) {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "認証に失敗しました");
+        setError(await parseApiError(res));
+        return;
       }
 
       const data = await res.json();
@@ -134,8 +135,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
       onAuthSuccess(data.accessToken, data.user);
       setPassword("");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setError(message);
+      setError(err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください");
     } finally {
       setSubmitting(false);
     }
