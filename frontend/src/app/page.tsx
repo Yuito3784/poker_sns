@@ -9,7 +9,7 @@ import PostItem from "./components/PostItem";
 import PostSkeleton from "./components/PostSkeleton";
 import AdCard from "./components/AdCard";
 import Avatar from "./components/Avatar";
-import { API_BASE, fetchWithAuth, getValidTokenAsync } from "../lib/api";
+import { API_BASE, fetchWithAuth } from "../lib/api";
 import { formatRelativeTime } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -28,7 +28,7 @@ export default function Home() {
 function HomeContent() {
   const searchParams = useSearchParams();
   const quotePostId = searchParams.get("quote") || null;
-  const { auth, isInitialized, setAuth, clearAuth } = useAuth();
+  const { auth, isInitialized, setAuth } = useAuth();
   const token = auth?.token ?? null;
   const currentUser = auth?.user ?? null;
   const { showToast } = useToast();
@@ -67,6 +67,9 @@ function HomeContent() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [ads, setAds] = useState<Ad[]>([]);
+  const [timelineTab, setTimelineTab] = useState<"all" | "premium">("all");
+  const timelineTabRef = useRef<"all" | "premium">("all");
+  const [isPremiumOnlyPost, setIsPremiumOnlyPost] = useState(false);
 
   // Poker hand form state
   const [pokerTableType, setPokerTableType] = useState<"CASH" | "MTT" | "SNG" | "ZOOM">("CASH");
@@ -224,10 +227,6 @@ function HomeContent() {
     return pot;
   };
 
-  const handleUnauthorized = () => {
-    clearAuth();
-  };
-
   const getErrorMessage = (err: unknown): string => {
     if (err instanceof TypeError && (err.message === "Failed to fetch" || err.message === "NetworkError when attempting to fetch resource.")) {
       return "サーバーに接続できません。ネットワーク接続を確認してください。";
@@ -237,33 +236,40 @@ function HomeContent() {
 
   useEffect(() => {
     if (!token) return;
-    fetchTimeline();
+    fetchTimeline(undefined, false, timelineTab === "premium");
     fetchNotifications();
 
-    // SSE for real-time notifications（トークンを最新にして接続）
+    // SSE for real-time notifications（チケット方式で接続）
     let eventSource: EventSource | null = null;
     let closed = false;
 
     const connectSSE = async () => {
       if (closed) return;
-      const validToken = await getValidTokenAsync();
-      if (!validToken || closed) return;
-      eventSource = new EventSource(`${API_BASE}/notifications/stream?token=${encodeURIComponent(validToken)}`);
-      eventSource.onmessage = (event) => {
-        try {
-          const notification = JSON.parse(event.data);
-          setNotifications((prev) => [notification, ...prev]);
-        } catch {
-          // ignore parse errors
-        }
-      };
-      eventSource.onerror = () => {
-        // 切断時に古い接続を閉じて再接続
-        eventSource?.close();
-        if (!closed) {
-          setTimeout(connectSSE, 5000);
-        }
-      };
+      // Obtain a short-lived, single-use SSE ticket
+      try {
+        const res = await fetchWithAuth(`${API_BASE}/notifications/sse-ticket`, { method: "POST" });
+        if (!res.ok || closed) return;
+        const { ticket } = await res.json();
+        if (!ticket || closed) return;
+        eventSource = new EventSource(`${API_BASE}/notifications/stream?ticket=${encodeURIComponent(ticket)}`);
+        eventSource.onmessage = (event) => {
+          try {
+            const notification = JSON.parse(event.data);
+            setNotifications((prev) => [notification, ...prev]);
+          } catch {
+            // ignore parse errors
+          }
+        };
+        eventSource.onerror = () => {
+          eventSource?.close();
+          if (!closed) {
+            setTimeout(connectSSE, 5000);
+          }
+        };
+      } catch {
+        // Retry on failure
+        if (!closed) setTimeout(connectSSE, 5000);
+      }
     };
 
     connectSSE();
@@ -619,7 +625,7 @@ function HomeContent() {
     if (!token) return;
     try {
       const res = await fetchWithAuth(`${API_BASE}/notifications`);
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (res.ok) {
         const data = await res.json();
         setNotifications(data);
@@ -733,17 +739,21 @@ function HomeContent() {
     }
   };
 
-  const fetchTimeline = async (cursor?: string, append = false) => {
+  const fetchTimeline = async (cursor?: string, append = false, premiumOnly = false) => {
     if (!token) return;
     if (append) setLoadingMore(true);
     else setLoadingPosts(true);
     setError(null);
     try {
-      const url = cursor
-        ? `${API_BASE}/posts/timeline?cursor=${encodeURIComponent(cursor)}&limit=15`
-        : `${API_BASE}/posts/timeline?limit=15`;
+      const params = new URLSearchParams({ limit: "15" });
+      if (cursor) params.set("cursor", cursor);
+      if (premiumOnly) params.set("premiumOnly", "true");
+      const url = `${API_BASE}/posts/timeline?${params.toString()}`;
       const res = await fetchWithAuth(url);
-      if (res.status === 401) { handleUnauthorized(); return; }
+
+      if (res.status === 403) {
+        throw new Error("プレミアム限定タイムラインはプレミアム会員のみ閲覧できます");
+      }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? "タイムラインの取得に失敗しました");
@@ -783,7 +793,7 @@ function HomeContent() {
         if (entries[0].isIntersecting && timelineHasMoreRef.current && timelineCursorRef.current && !loadingMoreRef.current) {
           loadingMoreRef.current = true;
           setLoadingMore(true);
-          fetchTimeline(timelineCursorRef.current, true);
+          fetchTimeline(timelineCursorRef.current, true, timelineTabRef.current === "premium");
         }
       },
       { rootMargin: "200px" },
@@ -873,6 +883,18 @@ function HomeContent() {
     setShowPokerForm(false);
   };
 
+  const handleTabChange = (tab: "all" | "premium") => {
+    if (tab === timelineTab) return;
+    setTimelineTab(tab);
+    timelineTabRef.current = tab;
+    setPosts([]);
+    setTimelineCursor(null);
+    timelineCursorRef.current = null;
+    setTimelineHasMore(false);
+    timelineHasMoreRef.current = false;
+    fetchTimeline(undefined, false, tab === "premium");
+  };
+
   const handleCreatePost = async (e: FormEvent) => {
     e.preventDefault();
     if (!token) return;
@@ -920,13 +942,15 @@ function HomeContent() {
             }),
           }),
         });
-        if (res.status === 401) { handleUnauthorized(); return; }
+  
         if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "投稿に失敗しました"); }
         setContent("");
         resetPokerForm();
+        setIsPremiumOnlyPost(false);
         setShowComposeModal(false);
+        showToast("投稿しました");
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
-        await fetchTimeline();
+        await fetchTimeline(undefined, false, timelineTab === "premium");
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "エラーが発生しました";
         setError(message);
@@ -941,7 +965,6 @@ function HomeContent() {
             method: "POST",
             body: formData,
           });
-          if (uploadRes.status === 401) { handleUnauthorized(); return; }
           if (!uploadRes.ok) throw new Error("画像のアップロードに失敗しました");
           const uploadData = await uploadRes.json();
           imageUrl = uploadData.imageUrl;
@@ -949,16 +972,18 @@ function HomeContent() {
         const res = await fetchWithAuth(`${API_BASE}/posts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content, ...(imageUrl && { imageUrl }), ...(quotePostId && { parentPostId: quotePostId }) }),
+          body: JSON.stringify({ content, ...(imageUrl && { imageUrl }), ...(quotePostId && { parentPostId: quotePostId }), ...(isPremiumOnlyPost && { isPremiumOnly: true }) }),
         });
-        if (res.status === 401) { handleUnauthorized(); return; }
+  
         if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "投稿に失敗しました"); }
         setContent("");
         setImageFile(null);
         setImagePreview(null);
+        setIsPremiumOnlyPost(false);
         setShowComposeModal(false);
+        showToast("投稿しました");
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
-        await fetchTimeline();
+        await fetchTimeline(undefined, false, timelineTab === "premium");
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "エラーが発生しました";
         setError(message);
@@ -981,7 +1006,7 @@ function HomeContent() {
     showToast(wasLiked ? "いいねを取り消しました" : "いいねしました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/like`, { method: "POST" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) throw new Error();
     } catch {
       // Revert on failure
@@ -1007,7 +1032,7 @@ function HomeContent() {
     showToast(wasReposted ? "リポストを取り消しました" : "リポストしました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/repost`, { method: "POST" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) throw new Error();
     } catch {
       updatePost(postId, (p) => ({
@@ -1028,7 +1053,7 @@ function HomeContent() {
     showToast(wasBookmarked ? "ブックマークを解除しました" : "ブックマークに追加しました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/bookmark`, { method: "POST" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) throw new Error();
     } catch {
       updatePost(postId, (p) => ({ ...p, isBookmarked: wasBookmarked }));
@@ -1045,7 +1070,7 @@ function HomeContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: replyContent }),
       });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "返信に失敗しました"); }
       setReplyContent("");
       setReplyingTo(null);
@@ -1063,7 +1088,7 @@ function HomeContent() {
     if (!token) return;
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}`, { method: "DELETE" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "削除に失敗しました"); }
       setPosts((prev) => prev.filter((p) => p.id !== postId));
       showToast("投稿を削除しました");
@@ -1083,7 +1108,7 @@ function HomeContent() {
     showToast(wasFollowing ? "フォローを解除しました" : "フォローしました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/users/${username}/follow`, { method: "POST" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) throw new Error();
     } catch {
       setPosts((prev) => prev.map((p) =>
@@ -1393,6 +1418,24 @@ function HomeContent() {
             </button>
           </div>
           <div className="flex items-center gap-3">
+            {isPremium && (
+              <button
+                type="button"
+                onClick={() => setIsPremiumOnlyPost(!isPremiumOnlyPost)}
+                className="flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-all"
+                style={isPremiumOnlyPost
+                  ? { background: "rgba(201,168,76,0.15)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.35)" }
+                  : { color: "#6b7a66", border: "1px solid #1f2a1e" }
+                }
+                title="プレミアム会員のみに表示されます"
+              >
+                <svg className="h-3.5 w-3.5" fill={isPremiumOnlyPost ? "#c9a84c" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                <span>限定</span>
+              </button>
+            )}
+            {isPremiumOnlyPost && (
+              <span className="text-[11px]" style={{ color: "#9a7c35" }}>プレミアム会員のみに表示</span>
+            )}
             {content.length > 0 && (
               <div className="flex items-center gap-1.5">
                 <div className="relative h-5 w-5">
@@ -1594,7 +1637,7 @@ function HomeContent() {
   // --- Logged in: AppShell がサイドバーを描画するためメイン列のみ ---
   return (
     <>
-          <div className="sticky top-0 z-50 border-b px-4 py-3.5" style={{ background: "#080a08", borderColor: "#1f2a1e" }}>
+          <div className="sticky top-0 z-50 border-b px-4 py-3.5" style={{ background: "#131a14", borderColor: "#2a3828" }}>
             <h1 className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight" style={{ color: "#ddd6c8" }}>ホーム</h1>
           </div>
           {currentUser && !currentUser.emailVerified && (
@@ -1657,6 +1700,31 @@ function HomeContent() {
               <span className="text-[15px]" style={{ color: "#3a4238" }}>今日のハンドを共有する...</span>
             </div>
           </div>
+          {/* Timeline tabs */}
+          {isPremium && (
+            <div className="mx-3 mt-3 flex border-b" style={{ borderColor: "#1f2a1e" }}>
+              <button
+                onClick={() => handleTabChange("all")}
+                className="relative px-4 py-2.5 text-sm font-medium transition-colors"
+                style={{ color: timelineTab === "all" ? "#ddd6c8" : "#6b7a66" }}
+              >
+                すべて
+                {timelineTab === "all" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
+                )}
+              </button>
+              <button
+                onClick={() => handleTabChange("premium")}
+                className="relative px-4 py-2.5 text-sm font-medium transition-colors"
+                style={{ color: timelineTab === "premium" ? "#c9a84c" : "#6b7a66" }}
+              >
+                PREMIUM
+                {timelineTab === "premium" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
+                )}
+              </button>
+            </div>
+          )}
           {error && (
             <div className="mx-3 mt-3 rounded-lg px-4 py-3" style={{ background: "rgba(176,48,48,0.12)", border: "1px solid rgba(176,48,48,0.3)" }}>
               <p className="text-sm" style={{ color: "#f09090" }}>{error}</p>
@@ -1683,14 +1751,18 @@ function HomeContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
               </div>
-              <p className="font-semibold" style={{ color: "#ddd6c8" }}>まだ投稿がありません</p>
-              <p className="mt-1 text-sm" style={{ color: "#6b7a66" }}>最初のハンドを共有してみましょう</p>
+              <p className="font-semibold" style={{ color: "#ddd6c8" }}>
+                {timelineTab === "premium" ? "プレミアム限定投稿はまだありません" : "まだ投稿がありません"}
+              </p>
+              <p className="mt-1 text-sm" style={{ color: "#6b7a66" }}>
+                {timelineTab === "premium" ? "限定投稿を作成して、プレミアム会員だけの空間を活用しましょう" : "最初のハンドを共有してみましょう"}
+              </p>
               <button
-                onClick={() => setShowComposeModal(true)}
+                onClick={() => { if (timelineTab === "premium") setIsPremiumOnlyPost(true); setShowComposeModal(true); }}
                 className="mt-5 rounded px-6 py-2.5 text-sm font-semibold transition-colors"
                 style={{ background: "#c9a84c", color: "#0d1009" }}
               >
-                投稿する
+                {timelineTab === "premium" ? "限定投稿を作成" : "投稿する"}
               </button>
             </div>
           ) : (
@@ -1708,7 +1780,7 @@ function HomeContent() {
                 });
                 return items.map((item, idx) =>
                   item.type === "post" ? (
-                    <PostItem key={item.post.id} post={item.post} currentUser={currentUser} replyingTo={replyingTo} replyContent={replyContent} actionLoading={actionLoading} onSetReplyingTo={setReplyingTo} onSetReplyContent={setReplyContent} onToggleLike={handleToggleLike} onToggleRepost={handleToggleRepost} onToggleBookmark={handleToggleBookmark} onToggleFollow={handleToggleFollow} onReply={handleReply} onDelete={handleDeletePost} />
+                    <PostItem key={item.post.id} post={item.post} currentUser={currentUser} replyingTo={replyingTo} replyContent={replyContent} actionLoading={actionLoading} showFollowButton={false} onSetReplyingTo={setReplyingTo} onSetReplyContent={setReplyContent} onToggleLike={handleToggleLike} onToggleRepost={handleToggleRepost} onToggleBookmark={handleToggleBookmark} onToggleFollow={handleToggleFollow} onReply={handleReply} onDelete={handleDeletePost} />
                   ) : (
                     <AdCard key={`ad-${idx}-${item.ad.id}`} ad={item.ad} />
                   ),

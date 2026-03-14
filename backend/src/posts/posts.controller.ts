@@ -52,9 +52,10 @@ export class PostsController {
     @GetUser() user: { userId: string },
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: string,
+    @Query('premiumOnly') premiumOnly?: string,
   ) {
     const take = Math.min(parseInt(limit || '20', 10) || 20, 50);
-    return this.postsService.getTimelineForUser(user.userId, cursor, take);
+    return this.postsService.getTimelineForUser(user.userId, cursor, take, premiumOnly === 'true');
   }
 
   @Get('sitemap-data')

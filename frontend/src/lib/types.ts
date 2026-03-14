@@ -18,6 +18,7 @@ export type Post = {
   isPokerHand?: boolean;
   pokerHand?: PokerHand | null;
   parentPost?: Post | null;
+  isPremiumOnly?: boolean;
   isPinned?: boolean;
   createdAt: string;
   author: {
@@ -46,6 +47,7 @@ export type Reply = {
     id: string;
     name: string;
     username: string;
+    avatarUrl?: string | null;
   };
 };
 

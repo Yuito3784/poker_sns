@@ -159,6 +159,7 @@ model Post {
   parentPost    Post?       @relation("QuotePost", fields: [parentPostId], references: [id])
   quotePosts    Post[]      @relation("QuotePost")
   isPokerHand   Boolean     @default(false)
+  isPremiumOnly Boolean     @default(false)
   pokerHand     PokerHand?
   likes         Like[]
   replies       Reply[]
