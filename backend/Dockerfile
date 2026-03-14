@@ -31,4 +31,5 @@ RUN mkdir -p uploads/avatars uploads/posts
 
 EXPOSE 3001
 # 起動前に未適用のマイグレーションを適用（DB更新のたびに手動で打たなくてよい）
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
+# Prisma 5.x を明示（npx が 7.x を取らないように。7 は schema の url を廃止している）
+CMD ["sh", "-c", "npx prisma@5.22.0 migrate deploy && node dist/src/main.js"]
