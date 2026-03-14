@@ -149,7 +149,7 @@ describe('SubscriptionsService', () => {
   describe('handleWebhook – checkout.session.completed', () => {
     it('should set user status to active and store stripe IDs', async () => {
       const event = buildEvent('checkout.session.completed', {
-        metadata: { userId: FAKE_USER_ID },
+        metadata: { userId: FAKE_USER_ID, plan: 'monthly' },
         customer: FAKE_CUSTOMER_ID,
         subscription: FAKE_SUBSCRIPTION_ID,
       });
@@ -170,6 +170,7 @@ describe('SubscriptionsService', () => {
           stripeCustomerId: FAKE_CUSTOMER_ID,
           stripeSubscriptionId: FAKE_SUBSCRIPTION_ID,
           subscriptionStatus: 'active',
+          subscriptionPlan: 'monthly',
         },
       });
       expect(mockPrisma.subscriptionEvent.create).toHaveBeenCalledWith({
@@ -392,6 +393,7 @@ describe('SubscriptionsService', () => {
           subscriptionStatus: 'free',
           stripeSubscriptionId: null,
           subscriptionPeriodEnd: null,
+          subscriptionPlan: null,
         },
       });
       expect(mockPrisma.subscriptionEvent.create).toHaveBeenCalledWith({
@@ -592,11 +594,12 @@ describe('SubscriptionsService', () => {
       );
     });
 
-    it('should return status with cancelAtPeriodEnd=true for canceled with subscription', async () => {
+    it('should return status with cancelAtPeriodEnd=true for canceled with subscription and include plan', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
         subscriptionStatus: 'canceled',
         subscriptionPeriodEnd: new Date('2026-04-01'),
         stripeSubscriptionId: FAKE_SUBSCRIPTION_ID,
+        subscriptionPlan: 'monthly',
       });
 
       const result = await service.getStatus(FAKE_USER_ID);
@@ -604,6 +607,7 @@ describe('SubscriptionsService', () => {
       expect(result.status).toBe('canceled');
       expect(result.cancelAtPeriodEnd).toBe(true);
       expect(result.periodEnd).toBeTruthy();
+      expect(result.plan).toBe('monthly');
     });
 
     it('should return status with cancelAtPeriodEnd=false for active user', async () => {

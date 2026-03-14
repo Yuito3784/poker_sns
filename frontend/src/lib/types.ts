@@ -1,4 +1,5 @@
 import type { PokerHand } from "../app/components/PokerHandDisplay";
+import type { SubscriptionStatus } from "./subscription";
 
 export type User = {
   id: string;
@@ -7,7 +8,7 @@ export type User = {
   username: string;
   avatarUrl?: string | null;
   emailVerified?: boolean;
-  subscriptionStatus?: string;
+  subscriptionStatus?: SubscriptionStatus;
 };
 
 export type Post = {
@@ -24,7 +25,7 @@ export type Post = {
     name: string;
     username: string;
     avatarUrl?: string | null;
-    subscriptionStatus?: string;
+    subscriptionStatus?: SubscriptionStatus;
   };
   _count?: {
     likes: number;
@@ -73,7 +74,7 @@ export type UserProfile = {
   bio: string | null;
   avatarUrl: string | null;
   pinnedPostId: string | null;
-  subscriptionStatus?: string;
+  subscriptionStatus?: SubscriptionStatus;
   createdAt: string;
   _count: {
     followers: number;
@@ -286,7 +287,7 @@ export type CoachProfile = {
     username: string;
     avatarUrl?: string | null;
     bio?: string | null;
-    subscriptionStatus?: string;
+    subscriptionStatus?: SubscriptionStatus;
   };
   _count?: {
     bookings: number;

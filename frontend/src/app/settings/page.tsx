@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { isPremium } from "../../lib/subscription";
 
 type SubStatus = {
   status: string;
@@ -22,7 +23,7 @@ export default function SettingsPage() {
 function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { auth, isInitialized, clearAuth } = useAuth();
+  const { auth, isInitialized, clearAuth, setAuth } = useAuth();
   const token = auth?.token ?? null;
   const currentUser = auth?.user ?? null;
 
@@ -74,6 +75,9 @@ function SettingsContent() {
       if (res.ok) {
         const data = await res.json();
         setSubStatus(data);
+        if (auth?.user) {
+          setAuth(auth.token, { ...auth.user, subscriptionStatus: data.status });
+        }
       }
     } catch { /* ignore */ }
   };

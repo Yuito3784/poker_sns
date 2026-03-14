@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getValidToken } from "../lib/utils";
-import { registerAuthClearHandler, registerAuthRefreshHandler } from "../lib/api";
+import { API_BASE, fetchWithAuth, registerAuthClearHandler, registerAuthRefreshHandler } from "../lib/api";
 import type { User } from "../lib/types";
 
 type AuthState = {
@@ -88,6 +88,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       registerAuthClearHandler(() => {});
       registerAuthRefreshHandler(() => {});
     };
+  }, []);
+
+  // アプリ起動時にサブスクリプション状態をサーバーと同期
+  useEffect(() => {
+    const syncSubscription = async () => {
+      if (!authRef.current) return;
+      try {
+        const res = await fetchWithAuth(`${API_BASE}/subscriptions/status`);
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (!data || !data.status) return;
+        const current = authRef.current;
+        if (!current) return;
+        const updatedUser = { ...current.user, subscriptionStatus: data.status };
+        const nextState = { token: current.token, user: updatedUser };
+        setAuthState(nextState);
+        authRef.current = nextState;
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
+      } catch {
+        // ignore sync errors
+      }
+    };
+    if (typeof window !== "undefined") {
+      void syncSubscription();
+    }
   }, []);
 
   return (

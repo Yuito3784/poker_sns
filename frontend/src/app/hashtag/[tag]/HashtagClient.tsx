@@ -8,6 +8,7 @@ import { API_BASE, fetchWithAuth } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useToast } from "../../../contexts/ToastContext";
 import type { Post, Ad } from "../../../lib/types";
+import { isPremium } from "../../../lib/subscription";
 
 const PAGE_SIZE = 20;
 const AD_INSERT_EVERY = 3;
@@ -249,11 +250,11 @@ export default function HashtagClient() {
         ) : (
           <ul className="space-y-2.5 px-3 py-3">
             {(() => {
-              const isPremium = currentUser?.subscriptionStatus === "active" || currentUser?.subscriptionStatus === "canceled";
+              const premium = isPremium(currentUser?.subscriptionStatus);
               const items: Array<{ type: "post"; post: Post } | { type: "ad"; ad: Ad }> = [];
               posts.forEach((post, i) => {
                 items.push({ type: "post", post });
-                if (!isPremium && (i + 1) % AD_INSERT_EVERY === 0 && ads.length > 0) {
+                if (!premium && (i + 1) % AD_INSERT_EVERY === 0 && ads.length > 0) {
                   const adIndex = Math.floor((i + 1) / AD_INSERT_EVERY) - 1;
                   items.push({ type: "ad", ad: ads[adIndex % ads.length] });
                 }

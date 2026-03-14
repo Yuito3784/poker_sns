@@ -70,6 +70,12 @@ export class SubscriptionsService {
       success_url: `${frontendUrl}/settings?subscription=success`,
       cancel_url: `${frontendUrl}/settings?subscription=canceled`,
       metadata: { userId, plan },
+      subscription_data: {
+        metadata: {
+          userId,
+          plan,
+        },
+      },
     });
 
     return { checkoutUrl: session.url };
@@ -124,6 +130,7 @@ export class SubscriptionsService {
         subscriptionStatus: true,
         subscriptionPeriodEnd: true,
         stripeSubscriptionId: true,
+        subscriptionPlan: true,
       },
     });
     if (!user) throw new UnauthorizedException();
@@ -137,6 +144,7 @@ export class SubscriptionsService {
       status: user.subscriptionStatus,
       periodEnd: user.subscriptionPeriodEnd?.toISOString() ?? null,
       cancelAtPeriodEnd,
+      plan: user.subscriptionPlan ?? null,
     };
   }
 
@@ -209,12 +217,15 @@ export class SubscriptionsService {
         ? session.subscription
         : session.subscription?.id;
 
+    const plan = (session.metadata?.plan as 'monthly' | 'annual' | undefined) ?? null;
+
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         stripeCustomerId: session.customer as string,
         stripeSubscriptionId: subscriptionId || null,
         subscriptionStatus: 'active',
+        subscriptionPlan: plan ?? undefined,
       },
     });
 
@@ -309,12 +320,15 @@ export class SubscriptionsService {
       current_period_end: number;
     };
     const status = sub.cancel_at_period_end ? 'canceled' : 'active';
+    const plan =
+      (subscription.metadata?.plan as 'monthly' | 'annual' | undefined) ?? null;
 
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         subscriptionStatus: status,
         subscriptionPeriodEnd: new Date(sub.current_period_end * 1000),
+        subscriptionPlan: plan ?? undefined,
       },
     });
 
@@ -347,6 +361,7 @@ export class SubscriptionsService {
         subscriptionStatus: 'free',
         stripeSubscriptionId: null,
         subscriptionPeriodEnd: null,
+        subscriptionPlan: null,
       },
     });
 

@@ -59,6 +59,7 @@ model User {
   mutedUsers    Mute[]   @relation("Muter")
   mutedBy       Mute[]   @relation("Muted")
   subscriptionStatus    String    @default("free")  // "free" | "active" | "canceled" | "past_due"
+  subscriptionPlan      String?               // "monthly" | "annual" など将来拡張用
   stripeCustomerId      String?   @unique
   stripeSubscriptionId  String?   @unique
   subscriptionPeriodEnd DateTime?

@@ -14,6 +14,7 @@ import { formatRelativeTime } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import type { User, Post, Notification, Ad } from "../lib/types";
+import { isPremium as isPremiumStatus } from "../lib/subscription";
 
 
 export default function Home() {
@@ -31,7 +32,7 @@ function HomeContent() {
   const token = auth?.token ?? null;
   const currentUser = auth?.user ?? null;
   const { showToast } = useToast();
-  const isPremium = currentUser?.subscriptionStatus === "active" || currentUser?.subscriptionStatus === "canceled";
+  const isPremium = isPremiumStatus(currentUser?.subscriptionStatus);
   const charLimit = isPremium ? 1000 : 280;
   const charWarnThreshold = isPremium ? 950 : 250;
 
@@ -1696,7 +1697,7 @@ function HomeContent() {
             <ul className="space-y-3 px-3 py-3">
               {(() => {
                 const AD_INSERT_EVERY = 3;
-                const isPremium = currentUser?.subscriptionStatus === "active" || currentUser?.subscriptionStatus === "canceled";
+                const isPremium = isPremiumStatus(currentUser?.subscriptionStatus);
                 const items: Array<{ type: "post"; post: Post } | { type: "ad"; ad: Ad }> = [];
                 posts.forEach((post, i) => {
                   items.push({ type: "post", post });
