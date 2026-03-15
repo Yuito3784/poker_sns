@@ -228,14 +228,21 @@ export class PostsService {
     }));
   }
 
-  async getByUserId(userId: string, currentUserId: string | null, take = 50, skip = 0) {
+  async getByUserId(userId: string, currentUserId: string | null, take = 50, skip = 0, premiumOnly = false) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { pinnedPostId: true },
     });
     const isPremium = currentUserId ? await this.isPremiumUser(currentUserId) : false;
+    const whereFilter: Record<string, unknown> = { authorId: userId };
+    if (premiumOnly) {
+      if (!isPremium) return [];
+      whereFilter.isPremiumOnly = true;
+    } else if (!isPremium) {
+      whereFilter.isPremiumOnly = false;
+    }
     const posts = await this.prisma.post.findMany({
-      where: { authorId: userId, ...(!isPremium && { isPremiumOnly: false }) },
+      where: whereFilter,
       orderBy: { createdAt: 'desc' },
       take,
       skip,
