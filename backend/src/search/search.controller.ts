@@ -9,6 +9,14 @@ import { GetUser } from '../auth/get-user.decorator';
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
+  @Get('trending-hashtags')
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
+  @Header('Cache-Control', 'public, max-age=60')
+  getTrendingHashtags(@Query('limit') limit?: string) {
+    const parsedLimit = Math.min(Math.max(parseInt(limit ?? '10', 10) || 10, 1), 50);
+    return this.searchService.getTrendingHashtags(parsedLimit);
+  }
+
   @Get('users')
   @Throttle({ default: { ttl: 60000, limit: 20 } })
   @Header('Cache-Control', 'no-store, no-cache, must-revalidate')

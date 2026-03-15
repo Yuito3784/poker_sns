@@ -64,6 +64,37 @@ export class SearchService {
     return Object.fromEntries(uniqueIds.map((id) => [id, set.has(id)]));
   }
 
+  async getTrendingHashtags(limit: number = 10) {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const trending = await this.prisma.postHashtag.groupBy({
+      by: ['hashtagId'],
+      where: {
+        post: {
+          createdAt: { gte: sevenDaysAgo },
+        },
+      },
+      _count: { hashtagId: true },
+      orderBy: { _count: { hashtagId: 'desc' } },
+      take: limit,
+    });
+
+    if (trending.length === 0) return [];
+
+    const hashtags = await this.prisma.hashtag.findMany({
+      where: { id: { in: trending.map((t) => t.hashtagId) } },
+      select: { id: true, name: true },
+    });
+
+    const hashtagMap = new Map(hashtags.map((h) => [h.id, h.name]));
+
+    return trending.map((t) => ({
+      name: hashtagMap.get(t.hashtagId) ?? '',
+      count: t._count.hashtagId,
+    })).filter((t) => t.name);
+  }
+
   async searchPosts(query: string, userId: string) {
     const posts = await this.prisma.post.findMany({
       where: {
