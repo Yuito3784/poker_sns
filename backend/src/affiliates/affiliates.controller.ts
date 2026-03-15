@@ -19,6 +19,13 @@ import { AdminGuard } from '../auth/admin.guard';
 export class AffiliatesController {
   constructor(private readonly affiliatesService: AffiliatesService) {}
 
+  @Get('sidebar')
+  @Public()
+  findSidebarRandom(@Query('limit') limit?: string) {
+    const parsed = Math.min(Math.max(parseInt(limit ?? '3', 10) || 3, 1), 10);
+    return this.affiliatesService.findSidebarRandom(parsed);
+  }
+
   @Get()
   @Public()
   findAll(

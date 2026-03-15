@@ -6,6 +6,28 @@ import { PrismaService } from '../prisma.service';
 export class AffiliatesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findSidebarRandom(limit: number = 3) {
+    const all = await this.prisma.affiliatePartner.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        category: true,
+        logoUrl: true,
+        bonus: true,
+        sortOrder: true,
+      },
+    });
+    // Fisher-Yates shuffle
+    for (let i = all.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j], all[i]];
+    }
+    return all.slice(0, limit);
+  }
+
   async findAll(category?: AffiliateCategory, featured?: boolean) {
     const where: Record<string, unknown> = { isActive: true };
     if (category) where.category = category;
