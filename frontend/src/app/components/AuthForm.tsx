@@ -132,6 +132,9 @@ export default function AuthForm({ onAuthSuccess }: Props) {
       if (data.refreshToken) {
         localStorage.setItem("refreshToken", data.refreshToken);
       }
+      if (mode === "register") {
+        localStorage.removeItem("hasCompletedOnboarding");
+      }
       onAuthSuccess(data.accessToken, data.user);
       setPassword("");
     } catch (err: unknown) {
