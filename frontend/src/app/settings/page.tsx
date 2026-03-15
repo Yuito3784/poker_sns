@@ -63,10 +63,7 @@ function SettingsContent() {
     if (!token) return;
     // チェックアウトから戻ってきた場合は confirm-session に任せる（レースコンディション防止）
     if (searchParams.get("subscription") === "success") return;
-    setSubFetchError(null);
-    fetchSubStatus().then((data) => {
-      if (!data) setSubFetchError("課金状況の取得に失敗しました");
-    });
+    fetchSubStatus();
   }, [token]);
 
   useEffect(() => {
@@ -133,6 +130,7 @@ function SettingsContent() {
   }, [searchParams]);
 
   const fetchSubStatus = async (): Promise<SubStatus | null> => {
+    setSubFetchError(null);
     try {
       const res = await fetchWithAuth(`${API_BASE}/subscriptions/status`);
       if (res.ok) {
@@ -143,8 +141,14 @@ function SettingsContent() {
         }
         return data;
       }
+      const message =
+        res.status === 401
+          ? "ログインの有効期限が切れている可能性があります。ページを再読み込みするか、再度ログインしてください。"
+          : await parseApiError(res);
+      setSubFetchError(message);
       return null;
     } catch {
+      setSubFetchError("接続に失敗しました。ネットワークを確認して再試行してください。");
       return null;
     }
   };
@@ -321,12 +325,7 @@ function SettingsContent() {
               <p className="text-sm" style={{ color: "#c9a84c" }}>{subFetchError}</p>
               <button
                 type="button"
-                onClick={() => {
-                  setSubFetchError(null);
-                  fetchSubStatus().then((data) => {
-                    if (!data) setSubFetchError("課金状況の取得に失敗しました");
-                  });
-                }}
+                onClick={() => fetchSubStatus()}
                 className="rounded px-4 py-2 text-sm font-medium transition-colors"
                 style={{ border: "1px solid #2a3828", color: "#ddd6c8" }}
               >
