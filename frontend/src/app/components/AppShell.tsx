@@ -53,18 +53,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!currentUser) return;
-    const fetchFeaturedPartners = async () => {
+    const fetchSidebarPartners = async () => {
       try {
-        const res = await fetch(`${API_BASE}/affiliates?featured=true`);
+        const res = await fetch(`${API_BASE}/affiliates/sidebar?limit=3`);
         if (res.ok) {
           const data = await res.json();
-          setFeaturedPartners(Array.isArray(data) ? data.slice(0, 3) : []);
+          setFeaturedPartners(Array.isArray(data) ? data : []);
         }
       } catch {
         /* ignore */
       }
     };
-    fetchFeaturedPartners();
+    fetchSidebarPartners();
   }, [currentUser]);
 
   const handleLogout = async () => {

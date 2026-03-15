@@ -9,6 +9,7 @@ import { API_BASE, fetchWithAuth } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useToast } from "../../../contexts/ToastContext";
 import type { Post, UserProfile, ProfileUser } from "../../../lib/types";
+import { isPremium as isPremiumStatus } from "../../../lib/subscription";
 
 function AvatarDisplay({ profile, size = "lg" }: { profile: { name: string; avatarUrl?: string | null }; size?: "sm" | "lg" }) {
   return (
@@ -40,7 +41,8 @@ export default function ProfileClient() {
   const [editName, setEditName] = useState("");
   const [editUsername, setEditUsername] = useState("");
   const [editBio, setEditBio] = useState("");
-  const [activeTab, setActiveTab] = useState<"posts" | "likes" | "bookmarks">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "likes" | "bookmarks" | "premium">("posts");
+  const viewerIsPremium = isPremiumStatus(currentUser?.subscriptionStatus);
   const [showListModal, setShowListModal] = useState<"followers" | "following" | null>(null);
   const [listUsers, setListUsers] = useState<ProfileUser[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -79,6 +81,7 @@ export default function ProfileClient() {
       if (activeTab === "posts") fetchPosts();
       else if (activeTab === "likes" && token) fetchLikedPosts();
       else if (activeTab === "bookmarks" && currentUserId === profile.id) fetchBookmarks();
+      else if (activeTab === "premium" && token) fetchPremiumPosts();
     }
   }, [profile, activeTab, currentUserId, token]);
 
@@ -133,6 +136,20 @@ export default function ProfileClient() {
     if (!profile || currentUserId !== profile.id) return;
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/user/${profile.id}/bookmarks`);
+      if (res.ok) setPosts(await res.json());
+      else setPosts([]);
+    } catch {
+      setPosts([]);
+    }
+  };
+
+  const fetchPremiumPosts = async () => {
+    if (!profile || !token || !viewerIsPremium) {
+      setPosts([]);
+      return;
+    }
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/posts/user/${profile.id}?premiumOnly=true`);
       if (res.ok) setPosts(await res.json());
       else setPosts([]);
     } catch {
@@ -708,6 +725,14 @@ export default function ProfileClient() {
             >
               投稿
             </button>
+            <button
+              onClick={() => setActiveTab("premium")}
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-center transition-colors flex items-center justify-center gap-1"
+              style={activeTab === "premium" ? { color: "#c9a84c", borderBottom: "2px solid #c9a84c" } : { color: "#6b7a66" }}
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+              限定
+            </button>
             {currentUser && (
               <button
                 onClick={() => setActiveTab("likes")}
@@ -734,17 +759,37 @@ export default function ProfileClient() {
                 <svg className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                 <p className="mt-2 text-sm" style={{ color: "#6b7a66" }}>このユーザーをブロックしています</p>
               </div>
+            ) : activeTab === "premium" && !viewerIsPremium ? (
+              <div className="py-12 text-center">
+                <div
+                  className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full"
+                  style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)" }}
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="#c9a84c" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                </div>
+                <p className="font-semibold" style={{ color: "#ddd6c8" }}>プレミアム限定コンテンツ</p>
+                <p className="mt-1 text-sm" style={{ color: "#6b7a66" }}>プレミアム会員になると、限定投稿の閲覧・作成ができます</p>
+                <button
+                  onClick={() => router.push("/settings")}
+                  className="mt-5 rounded px-6 py-2.5 text-sm font-semibold transition-colors"
+                  style={{ background: "#c9a84c", color: "#0d1009" }}
+                >
+                  限定投稿を見る
+                </button>
+              </div>
             ) : posts.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-sm" style={{ color: "#9a8e7a" }}>
                   {activeTab === "posts" && "まだ投稿がありません"}
                   {activeTab === "likes" && "いいねした投稿がありません"}
                   {activeTab === "bookmarks" && "保存した投稿がありません"}
+                  {activeTab === "premium" && "プレミアム限定投稿はありません"}
                 </p>
                 <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>
                   {activeTab === "posts" && "最初の投稿をしてみましょう"}
                   {activeTab === "likes" && "気に入った投稿にいいねしましょう"}
                   {activeTab === "bookmarks" && "後で読みたい投稿をブックマークしましょう"}
+                  {activeTab === "premium" && "このユーザーはまだ限定投稿をしていません"}
                 </p>
               </div>
             ) : (

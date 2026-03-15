@@ -76,12 +76,21 @@ function SearchContent() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [trendingHashtags, setTrendingHashtags] = useState<{ name: string; count: number }[]>([]);
 
   useEffect(() => {
     if (isInitialized && !auth) {
       router.push("/");
     }
   }, [isInitialized, auth, router]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchWithAuth(`${API_BASE}/search/trending-hashtags?limit=10`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => { if (Array.isArray(data)) setTrendingHashtags(data); })
+      .catch(() => {});
+  }, [token]);
 
   useEffect(() => {
     setSearchQuery(initialQuery);
@@ -280,10 +289,30 @@ function SearchContent() {
             <p className="text-sm" style={{ color: "#6b7a66" }}>検索中...</p>
           </div>
         ) : searchQuery.trim().length < 2 ? (
-          <div className="px-4 py-12 text-center">
-            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>2文字以上で検索してください</p>
-            <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>ユーザー名や投稿内容で検索できます</p>
+          <div className="px-4 py-8">
+            {trendingHashtags.length > 0 && (
+              <div className="mb-6">
+                <h3 className="mb-3 text-sm font-semibold" style={{ color: "#9a8e7a" }}>トレンド</h3>
+                <div className="flex flex-wrap gap-2">
+                  {trendingHashtags.map((tag) => (
+                    <button
+                      key={tag.name}
+                      onClick={() => router.push(`/hashtag/${encodeURIComponent(tag.name)}`)}
+                      className="rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/5"
+                      style={{ border: "1px solid #2a3828", color: "#c9a84c" }}
+                    >
+                      #{tag.name}
+                      <span className="ml-1.5 text-xs" style={{ color: "#6b7a66" }}>{tag.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="text-center">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+              <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>2文字以上で検索してください</p>
+              <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>ユーザー名や投稿内容で検索できます</p>
+            </div>
           </div>
         ) : !hasResults ? (
           <div className="px-4 py-12 text-center">

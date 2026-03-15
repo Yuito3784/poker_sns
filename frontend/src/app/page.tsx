@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import CardSelector from "./components/CardSelector";
 import { type PokerAction } from "./components/PokerHandDisplay";
 import AuthForm from "./components/AuthForm";
@@ -9,6 +9,7 @@ import PostItem from "./components/PostItem";
 import PostSkeleton from "./components/PostSkeleton";
 import AdCard from "./components/AdCard";
 import Avatar from "./components/Avatar";
+import OnboardingModal from "./components/OnboardingModal";
 import { API_BASE, fetchWithAuth } from "../lib/api";
 import { formatRelativeTime } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
@@ -26,6 +27,7 @@ export default function Home() {
 }
 
 function HomeContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const quotePostId = searchParams.get("quote") || null;
   const { auth, isInitialized, setAuth } = useAuth();
@@ -70,6 +72,7 @@ function HomeContent() {
   const [timelineTab, setTimelineTab] = useState<"all" | "premium">("all");
   const timelineTabRef = useRef<"all" | "premium">("all");
   const [isPremiumOnlyPost, setIsPremiumOnlyPost] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Poker hand form state
   const [pokerTableType, setPokerTableType] = useState<"CASH" | "MTT" | "SNG" | "ZOOM">("CASH");
@@ -104,6 +107,13 @@ function HomeContent() {
         return ["UTG", "UTG1", "UTG2", "MP", "MP1", "MP2", "CO", "BTN", "SB", "BB"];
     }
   };
+
+  // Show onboarding for new users
+  useEffect(() => {
+    if (currentUser && !localStorage.getItem("hasCompletedOnboarding")) {
+      setShowOnboarding(true);
+    }
+  }, [currentUser]);
 
   // テーブルサイズ変更時、Heroポジションが有効でなければ先頭にリセット
   useEffect(() => {
@@ -751,8 +761,14 @@ function HomeContent() {
       const url = `${API_BASE}/posts/timeline?${params.toString()}`;
       const res = await fetchWithAuth(url);
 
-      if (res.status === 403) {
-        throw new Error("プレミアム限定タイムラインはプレミアム会員のみ閲覧できます");
+      if (res.status === 403 && premiumOnly) {
+        setPosts([]);
+        setTimelineHasMore(false);
+        timelineHasMoreRef.current = false;
+        if (!append) setLoadingPosts(false);
+        else setLoadingMore(false);
+        loadingMoreRef.current = false;
+        return;
       }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -1377,8 +1393,8 @@ function HomeContent() {
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between border-t pt-3" style={{ borderColor: "#1f2a1e" }}>
-          <div className="flex items-center gap-1">
+        <div className="border-t pt-3" style={{ borderColor: "#1f2a1e" }}>
+          <div className="flex flex-wrap items-center gap-2">
             <label
               className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-all ${showPokerForm ? "cursor-not-allowed opacity-40 pointer-events-none" : "cursor-pointer"}`}
               style={imageFile ? { background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)" } : { color: "#6b7a66", border: "1px solid #1f2a1e" }}
@@ -1416,8 +1432,6 @@ function HomeContent() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776" /></svg>
               <span>ハンド</span>
             </button>
-          </div>
-          <div className="flex items-center gap-3">
             {isPremium && (
               <button
                 type="button"
@@ -1433,28 +1447,30 @@ function HomeContent() {
                 <span>限定</span>
               </button>
             )}
-            {isPremiumOnlyPost && (
-              <span className="text-[11px]" style={{ color: "#9a7c35" }}>プレミアム会員のみに表示</span>
-            )}
-            {content.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <div className="relative h-5 w-5">
-                  <svg className="h-5 w-5 -rotate-90" viewBox="0 0 20 20">
-                    <circle cx="10" cy="10" r="8" fill="none" stroke="#1f2a1e" strokeWidth="2" />
-                    <circle cx="10" cy="10" r="8" fill="none" stroke={content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#c9a84c"} strokeWidth="2" strokeDasharray={`${(content.length / charLimit) * 50.3} 50.3`} strokeLinecap="round" />
-                  </svg>
+            <div className="ml-auto flex items-center gap-2">
+              {isPremiumOnlyPost && (
+                <span className="hidden text-[11px] sm:inline" style={{ color: "#9a7c35" }}>限定投稿</span>
+              )}
+              {content.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <div className="relative h-5 w-5">
+                    <svg className="h-5 w-5 -rotate-90" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="8" fill="none" stroke="#1f2a1e" strokeWidth="2" />
+                      <circle cx="10" cy="10" r="8" fill="none" stroke={content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#c9a84c"} strokeWidth="2" strokeDasharray={`${(content.length / charLimit) * 50.3} 50.3`} strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <span className={`text-xs tabular-nums ${content.length >= charLimit ? "font-semibold" : ""}`} style={{ color: content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#6b7a66" }}>{charLimit - content.length}</span>
                 </div>
-                <span className={`text-xs tabular-nums ${content.length >= charLimit ? "font-semibold" : ""}`} style={{ color: content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#6b7a66" }}>{charLimit - content.length}</span>
-              </div>
-            )}
-            <button
-              type="submit"
-              className="rounded px-5 py-2 text-sm font-semibold transition-colors disabled:opacity-40"
-              style={{ background: "#c9a84c", color: "#0d1009" }}
-              disabled={!canSubmit || content.length > charLimit}
-            >
-              投稿する
-            </button>
+              )}
+              <button
+                type="submit"
+                className="whitespace-nowrap rounded px-5 py-2 text-sm font-semibold transition-colors disabled:opacity-40"
+                style={{ background: "#c9a84c", color: "#0d1009" }}
+                disabled={!canSubmit || content.length > charLimit}
+              >
+                投稿する
+              </button>
+            </div>
           </div>
         </div>
         {/* Premium upsell: show when free user exceeds 250 chars */}
@@ -1637,6 +1653,7 @@ function HomeContent() {
   // --- Logged in: AppShell がサイドバーを描画するためメイン列のみ ---
   return (
     <>
+      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
           <div className="sticky top-0 z-50 border-b px-4 py-3.5" style={{ background: "#131a14", borderColor: "#2a3828" }}>
             <h1 className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight" style={{ color: "#ddd6c8" }}>ホーム</h1>
           </div>
@@ -1701,30 +1718,29 @@ function HomeContent() {
             </div>
           </div>
           {/* Timeline tabs */}
-          {isPremium && (
-            <div className="mx-3 mt-3 flex border-b" style={{ borderColor: "#1f2a1e" }}>
-              <button
-                onClick={() => handleTabChange("all")}
-                className="relative px-4 py-2.5 text-sm font-medium transition-colors"
-                style={{ color: timelineTab === "all" ? "#ddd6c8" : "#6b7a66" }}
-              >
-                すべて
-                {timelineTab === "all" && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
-                )}
-              </button>
-              <button
-                onClick={() => handleTabChange("premium")}
-                className="relative px-4 py-2.5 text-sm font-medium transition-colors"
-                style={{ color: timelineTab === "premium" ? "#c9a84c" : "#6b7a66" }}
-              >
-                PREMIUM
-                {timelineTab === "premium" && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
-                )}
-              </button>
-            </div>
-          )}
+          <div className="mx-3 mt-3 flex border-b" style={{ borderColor: "#1f2a1e" }}>
+            <button
+              onClick={() => handleTabChange("all")}
+              className="relative px-4 py-2.5 text-sm font-medium transition-colors"
+              style={{ color: timelineTab === "all" ? "#ddd6c8" : "#6b7a66" }}
+            >
+              すべて
+              {timelineTab === "all" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
+              )}
+            </button>
+            <button
+              onClick={() => handleTabChange("premium")}
+              className="relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors"
+              style={{ color: timelineTab === "premium" ? "#c9a84c" : "#6b7a66" }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+              PREMIUM
+              {timelineTab === "premium" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
+              )}
+            </button>
+          </div>
           {error && (
             <div className="mx-3 mt-3 rounded-lg px-4 py-3" style={{ background: "rgba(176,48,48,0.12)", border: "1px solid rgba(176,48,48,0.3)" }}>
               <p className="text-sm" style={{ color: "#f09090" }}>{error}</p>
@@ -1752,17 +1768,34 @@ function HomeContent() {
                 </svg>
               </div>
               <p className="font-semibold" style={{ color: "#ddd6c8" }}>
-                {timelineTab === "premium" ? "プレミアム限定投稿はまだありません" : "まだ投稿がありません"}
+                {timelineTab === "premium"
+                  ? (isPremium ? "プレミアム限定投稿はまだありません" : "プレミアム限定コンテンツ")
+                  : "まだ投稿がありません"}
               </p>
               <p className="mt-1 text-sm" style={{ color: "#6b7a66" }}>
-                {timelineTab === "premium" ? "限定投稿を作成して、プレミアム会員だけの空間を活用しましょう" : "最初のハンドを共有してみましょう"}
+                {timelineTab === "premium"
+                  ? (isPremium
+                    ? "限定投稿を作成して、プレミアム会員だけの空間を活用しましょう"
+                    : "プレミアム会員になると、限定投稿の閲覧・作成ができます")
+                  : "最初のハンドを共有してみましょう"}
               </p>
               <button
-                onClick={() => { if (timelineTab === "premium") setIsPremiumOnlyPost(true); setShowComposeModal(true); }}
+                onClick={() => {
+                  if (timelineTab === "premium") {
+                    if (isPremium) {
+                      setIsPremiumOnlyPost(true);
+                      setShowComposeModal(true);
+                    } else {
+                      router.push("/settings");
+                    }
+                  } else {
+                    setShowComposeModal(true);
+                  }
+                }}
                 className="mt-5 rounded px-6 py-2.5 text-sm font-semibold transition-colors"
                 style={{ background: "#c9a84c", color: "#0d1009" }}
               >
-                {timelineTab === "premium" ? "限定投稿を作成" : "投稿する"}
+                {timelineTab === "premium" ? (isPremium ? "限定投稿を作成" : "限定投稿を見る") : "投稿する"}
               </button>
             </div>
           ) : (
