@@ -13,7 +13,7 @@ import { useToast } from "../../contexts/ToastContext";
 import type { Notification } from "../../lib/types";
 import type { AffiliatePartner } from "../../lib/types";
 
-const SIDEBAR_EXCLUDE_PATHS = ["/lp", "/forgot-password", "/reset-password", "/verify-email"];
+const SIDEBAR_EXCLUDE_PATHS = ["/lp", "/forgot-password", "/reset-password", "/verify-email", "/tokushoho"];
 
 function shouldShowSidebars(pathname: string): boolean {
   if (!pathname) return false;
