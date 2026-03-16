@@ -480,13 +480,18 @@ export default function AuthForm({ onAuthSuccess }: Props) {
         </div>
       )}
       {mode === "register" && (
-        <p className="mt-4 text-center text-[11px]" style={{ color: "#6b7a66" }}>
-          登録することで、
-          <a href="/terms" className="hover:underline" style={{ color: "#c9a84c" }}>利用規約</a>
-          と
-          <a href="/privacy" className="hover:underline" style={{ color: "#c9a84c" }}>プライバシーポリシー</a>
-          に同意したものとみなされます。
-        </p>
+        <div className="mt-4 space-y-2 text-center text-[11px]" style={{ color: "#6b7a66" }}>
+          <p>本サービスは18歳以上の方のみご利用いただけます。</p>
+          <p>
+            登録することで、
+            <a href="/terms" className="hover:underline" style={{ color: "#c9a84c" }}>利用規約</a>
+            、
+            <a href="/privacy" className="hover:underline" style={{ color: "#c9a84c" }}>プライバシーポリシー</a>
+            、
+            <a href="/tokushoho" className="hover:underline" style={{ color: "#c9a84c" }}>特定商取引法に基づく表記</a>
+            に同意したものとみなされます。
+          </p>
+        </div>
       )}
     </div>
   );
