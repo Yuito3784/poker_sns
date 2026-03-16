@@ -216,8 +216,8 @@ export default function BookmarksPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "#0d1009", color: "#ddd6c8" }}>
-      <div className="mx-auto max-w-xl min-h-screen">
+    <div className="min-h-screen pb-14" style={{ background: "#0d1009", color: "#ddd6c8" }}>
+      <div className="mx-auto max-w-xl min-h-screen pb-4">
         <div className="sticky top-0 z-50 flex items-center gap-4 border-b px-4 py-3.5" style={{ background: "#131a14", borderColor: "#2a3828" }}>
           <button onClick={() => router.back()} className="rounded-lg p-1.5 transition-colors hover:bg-white/5" style={{ color: "#9a8e7a" }}>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>

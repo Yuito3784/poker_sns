@@ -52,9 +52,10 @@ export class PostsController {
     @GetUser() user: { userId: string },
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: string,
+    @Query('premiumOnly') premiumOnly?: string,
   ) {
     const take = Math.min(parseInt(limit || '20', 10) || 20, 50);
-    return this.postsService.getTimelineForUser(user.userId, cursor, take);
+    return this.postsService.getTimelineForUser(user.userId, cursor, take, premiumOnly === 'true');
   }
 
   @Get('sitemap-data')
@@ -110,10 +111,11 @@ export class PostsController {
     @Param('userId') userId: string,
     @Query('take') take?: string,
     @Query('skip') skip?: string,
+    @Query('premiumOnly') premiumOnly?: string,
   ) {
     const t = Math.min(parseInt(take || '50', 10) || 50, 100);
     const s = parseInt(skip || '0', 10) || 0;
-    return this.postsService.getByUserId(userId, user?.userId ?? null, t, s);
+    return this.postsService.getByUserId(userId, user?.userId ?? null, t, s, premiumOnly === 'true');
   }
 
   @Delete(':id')

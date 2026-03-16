@@ -25,8 +25,11 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/scripts ./scripts
 
 RUN mkdir -p uploads/avatars uploads/posts
 
 EXPOSE 3001
-CMD ["node", "dist/src/main.js"]
+# 起動前に未適用のマイグレーションを適用（DB更新のたびに手動で打たなくてよい）
+# Prisma 5.x を明示（npx が 7.x を取らないように。7 は schema の url を廃止している）
+CMD ["sh", "-c", "npx prisma@5.22.0 migrate deploy && node dist/src/main.js"]

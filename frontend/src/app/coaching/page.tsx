@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Avatar from "../components/Avatar";
 import { fetchWithAuth, API_BASE } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 import type { CoachProfile } from "../../lib/types";
@@ -88,9 +89,9 @@ export default function CoachingPage() {
         )}
 
         {loading ? (
-          <div className="py-12 text-center" style={{ color: "#4a5245" }}>読み込み中...</div>
+          <div className="py-12 text-center" style={{ color: "#6b7a66" }}>読み込み中...</div>
         ) : coaches.length === 0 ? (
-          <div className="py-12 text-center" style={{ color: "#4a5245" }}>コーチがまだ登録されていません</div>
+          <div className="py-12 text-center" style={{ color: "#6b7a66" }}>コーチがまだ登録されていません</div>
         ) : (
           <div className="space-y-4">
             {coaches.map((coach) => (
@@ -101,13 +102,7 @@ export default function CoachingPage() {
                 style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
               >
                 <div className="flex items-start gap-3">
-                  {coach.user?.avatarUrl ? (
-                    <img src={coach.user.avatarUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-semibold" style={{ background: "#192118", color: "#7a7260" }}>
-                      {coach.user?.name?.[0] || "?"}
-                    </div>
-                  )}
+                  <Avatar avatarUrl={coach.user?.avatarUrl ?? null} name={coach.user?.name ?? ""} size="lg" className="h-12 w-12" />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold" style={{ color: "#ddd6c8" }}>{coach.user?.name}</h3>
@@ -129,7 +124,7 @@ export default function CoachingPage() {
                     <div className="text-sm font-semibold" style={{ color: "#c9a84c" }}>
                       {coach.hourlyRate.toLocaleString()}円/h
                     </div>
-                    <div className="mt-1 text-xs" style={{ color: "#4a5245" }}>
+                    <div className="mt-1 text-xs" style={{ color: "#6b7a66" }}>
                       {coach._count?.bookings || 0}件の予約
                     </div>
                   </div>

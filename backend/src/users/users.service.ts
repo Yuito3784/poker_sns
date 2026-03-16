@@ -101,6 +101,21 @@ export class UsersService {
     return { isFollowing: !!follow };
   }
 
+  /** 複数ユーザーに対するフォロー状態を一括取得（検索結果の isFollowing 補正用） */
+  async getFollowingStatusBatch(followerId: string, followingIds: string[]): Promise<Record<string, boolean>> {
+    if (followingIds.length === 0) return {};
+    const uniqueIds = [...new Set(followingIds)].slice(0, 50);
+    const follows = await this.prisma.follow.findMany({
+      where: {
+        followerId,
+        followingId: { in: uniqueIds },
+      },
+      select: { followingId: true },
+    });
+    const set = new Set(follows.map((f) => f.followingId));
+    return Object.fromEntries(uniqueIds.map((id) => [id, set.has(id)]));
+  }
+
   async getFollowers(username: string, take = 50, skip = 0) {
     const user = await this.prisma.user.findUnique({
       where: { username },
@@ -155,11 +170,20 @@ export class UsersService {
     return follows.map((f) => f.following);
   }
 
-  async updateProfile(userId: string, data: { name?: string; bio?: string }) {
+  async updateProfile(userId: string, data: { name?: string; username?: string; bio?: string }) {
+    if (data.username !== undefined) {
+      const existing = await this.prisma.user.findUnique({
+        where: { username: data.username },
+      });
+      if (existing && existing.id !== userId) {
+        throw new BadRequestException('このユーザー名は既に使用されています。');
+      }
+    }
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         ...(data.name && { name: data.name }),
+        ...(data.username !== undefined && { username: data.username }),
         ...(data.bio !== undefined && { bio: data.bio }),
       },
       select: {

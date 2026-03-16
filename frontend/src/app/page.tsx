@@ -1,19 +1,21 @@
 "use client";
 
 import { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import CardSelector from "./components/CardSelector";
 import { type PokerAction } from "./components/PokerHandDisplay";
 import AuthForm from "./components/AuthForm";
 import PostItem from "./components/PostItem";
 import PostSkeleton from "./components/PostSkeleton";
 import AdCard from "./components/AdCard";
-import AffiliateCard from "./components/AffiliateCard";
-import { API_BASE, fetchWithAuth, getValidTokenAsync } from "../lib/api";
+import Avatar from "./components/Avatar";
+import OnboardingModal from "./components/OnboardingModal";
+import { API_BASE, fetchWithAuth } from "../lib/api";
 import { formatRelativeTime } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import type { User, Post, Notification, Ad, AffiliatePartner } from "../lib/types";
+import type { User, Post, Notification, Ad } from "../lib/types";
+import { isPremium as isPremiumStatus } from "../lib/subscription";
 
 
 export default function Home() {
@@ -25,13 +27,14 @@ export default function Home() {
 }
 
 function HomeContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const quotePostId = searchParams.get("quote") || null;
-  const { auth, isInitialized, setAuth, clearAuth } = useAuth();
+  const { auth, isInitialized, setAuth } = useAuth();
   const token = auth?.token ?? null;
   const currentUser = auth?.user ?? null;
   const { showToast } = useToast();
-  const isPremium = currentUser?.subscriptionStatus === "active" || currentUser?.subscriptionStatus === "canceled";
+  const isPremium = isPremiumStatus(currentUser?.subscriptionStatus);
   const charLimit = isPremium ? 1000 : 280;
   const charWarnThreshold = isPremium ? 950 : 250;
 
@@ -65,9 +68,11 @@ function HomeContent() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [rightSidebarSearch, setRightSidebarSearch] = useState("");
   const [ads, setAds] = useState<Ad[]>([]);
-  const [featuredPartners, setFeaturedPartners] = useState<AffiliatePartner[]>([]);
+  const [timelineTab, setTimelineTab] = useState<"all" | "premium">("all");
+  const timelineTabRef = useRef<"all" | "premium">("all");
+  const [isPremiumOnlyPost, setIsPremiumOnlyPost] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Poker hand form state
   const [pokerTableType, setPokerTableType] = useState<"CASH" | "MTT" | "SNG" | "ZOOM">("CASH");
@@ -102,6 +107,13 @@ function HomeContent() {
         return ["UTG", "UTG1", "UTG2", "MP", "MP1", "MP2", "CO", "BTN", "SB", "BB"];
     }
   };
+
+  // Show onboarding for new users
+  useEffect(() => {
+    if (currentUser && !localStorage.getItem("hasCompletedOnboarding")) {
+      setShowOnboarding(true);
+    }
+  }, [currentUser]);
 
   // テーブルサイズ変更時、Heroポジションが有効でなければ先頭にリセット
   useEffect(() => {
@@ -225,10 +237,6 @@ function HomeContent() {
     return pot;
   };
 
-  const handleUnauthorized = () => {
-    clearAuth();
-  };
-
   const getErrorMessage = (err: unknown): string => {
     if (err instanceof TypeError && (err.message === "Failed to fetch" || err.message === "NetworkError when attempting to fetch resource.")) {
       return "サーバーに接続できません。ネットワーク接続を確認してください。";
@@ -238,33 +246,40 @@ function HomeContent() {
 
   useEffect(() => {
     if (!token) return;
-    fetchTimeline();
+    fetchTimeline(undefined, false, timelineTab === "premium");
     fetchNotifications();
 
-    // SSE for real-time notifications（トークンを最新にして接続）
+    // SSE for real-time notifications（チケット方式で接続）
     let eventSource: EventSource | null = null;
     let closed = false;
 
     const connectSSE = async () => {
       if (closed) return;
-      const validToken = await getValidTokenAsync();
-      if (!validToken || closed) return;
-      eventSource = new EventSource(`${API_BASE}/notifications/stream?token=${encodeURIComponent(validToken)}`);
-      eventSource.onmessage = (event) => {
-        try {
-          const notification = JSON.parse(event.data);
-          setNotifications((prev) => [notification, ...prev]);
-        } catch {
-          // ignore parse errors
-        }
-      };
-      eventSource.onerror = () => {
-        // 切断時に古い接続を閉じて再接続
-        eventSource?.close();
-        if (!closed) {
-          setTimeout(connectSSE, 5000);
-        }
-      };
+      // Obtain a short-lived, single-use SSE ticket
+      try {
+        const res = await fetchWithAuth(`${API_BASE}/notifications/sse-ticket`, { method: "POST" });
+        if (!res.ok || closed) return;
+        const { ticket } = await res.json();
+        if (!ticket || closed) return;
+        eventSource = new EventSource(`${API_BASE}/notifications/stream?ticket=${encodeURIComponent(ticket)}`);
+        eventSource.onmessage = (event) => {
+          try {
+            const notification = JSON.parse(event.data);
+            setNotifications((prev) => [notification, ...prev]);
+          } catch {
+            // ignore parse errors
+          }
+        };
+        eventSource.onerror = () => {
+          eventSource?.close();
+          if (!closed) {
+            setTimeout(connectSSE, 5000);
+          }
+        };
+      } catch {
+        // Retry on failure
+        if (!closed) setTimeout(connectSSE, 5000);
+      }
     };
 
     connectSSE();
@@ -620,7 +635,7 @@ function HomeContent() {
     if (!token) return;
     try {
       const res = await fetchWithAuth(`${API_BASE}/notifications`);
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (res.ok) {
         const data = await res.json();
         setNotifications(data);
@@ -634,6 +649,13 @@ function HomeContent() {
     if (token && currentUser) fetchNotifications();
   }, [token, currentUser]);
 
+  useEffect(() => {
+    if (currentUser && searchParams.get("compose") === "1") {
+      setShowComposeModal(true);
+      if (typeof window !== "undefined") window.history.replaceState({}, "", "/");
+    }
+  }, [currentUser, searchParams]);
+
   const fetchAds = async () => {
     try {
       const res = await fetch(`${API_BASE}/ads/feed?limit=10`);
@@ -646,21 +668,8 @@ function HomeContent() {
     }
   };
 
-  const fetchFeaturedPartners = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/affiliates?featured=true`);
-      if (res.ok) {
-        const data = await res.json();
-        setFeaturedPartners(Array.isArray(data) ? data.slice(0, 3) : []);
-      }
-    } catch { /* ignore */ }
-  };
-
   useEffect(() => {
-    if (currentUser) {
-      fetchAds();
-      fetchFeaturedPartners();
-    }
+    if (currentUser) fetchAds();
   }, [currentUser]);
 
   const handleAuthSuccess = (newToken: string, user: User) => {
@@ -740,17 +749,27 @@ function HomeContent() {
     }
   };
 
-  const fetchTimeline = async (cursor?: string, append = false) => {
+  const fetchTimeline = async (cursor?: string, append = false, premiumOnly = false) => {
     if (!token) return;
     if (append) setLoadingMore(true);
     else setLoadingPosts(true);
     setError(null);
     try {
-      const url = cursor
-        ? `${API_BASE}/posts/timeline?cursor=${encodeURIComponent(cursor)}&limit=15`
-        : `${API_BASE}/posts/timeline?limit=15`;
+      const params = new URLSearchParams({ limit: "15" });
+      if (cursor) params.set("cursor", cursor);
+      if (premiumOnly) params.set("premiumOnly", "true");
+      const url = `${API_BASE}/posts/timeline?${params.toString()}`;
       const res = await fetchWithAuth(url);
-      if (res.status === 401) { handleUnauthorized(); return; }
+
+      if (res.status === 403 && premiumOnly) {
+        setPosts([]);
+        setTimelineHasMore(false);
+        timelineHasMoreRef.current = false;
+        if (!append) setLoadingPosts(false);
+        else setLoadingMore(false);
+        loadingMoreRef.current = false;
+        return;
+      }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? "タイムラインの取得に失敗しました");
@@ -790,7 +809,7 @@ function HomeContent() {
         if (entries[0].isIntersecting && timelineHasMoreRef.current && timelineCursorRef.current && !loadingMoreRef.current) {
           loadingMoreRef.current = true;
           setLoadingMore(true);
-          fetchTimeline(timelineCursorRef.current, true);
+          fetchTimeline(timelineCursorRef.current, true, timelineTabRef.current === "premium");
         }
       },
       { rootMargin: "200px" },
@@ -880,6 +899,18 @@ function HomeContent() {
     setShowPokerForm(false);
   };
 
+  const handleTabChange = (tab: "all" | "premium") => {
+    if (tab === timelineTab) return;
+    setTimelineTab(tab);
+    timelineTabRef.current = tab;
+    setPosts([]);
+    setTimelineCursor(null);
+    timelineCursorRef.current = null;
+    setTimelineHasMore(false);
+    timelineHasMoreRef.current = false;
+    fetchTimeline(undefined, false, tab === "premium");
+  };
+
   const handleCreatePost = async (e: FormEvent) => {
     e.preventDefault();
     if (!token) return;
@@ -927,13 +958,15 @@ function HomeContent() {
             }),
           }),
         });
-        if (res.status === 401) { handleUnauthorized(); return; }
+  
         if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "投稿に失敗しました"); }
         setContent("");
         resetPokerForm();
+        setIsPremiumOnlyPost(false);
         setShowComposeModal(false);
+        showToast("投稿しました");
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
-        await fetchTimeline();
+        await fetchTimeline(undefined, false, timelineTab === "premium");
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "エラーが発生しました";
         setError(message);
@@ -948,7 +981,6 @@ function HomeContent() {
             method: "POST",
             body: formData,
           });
-          if (uploadRes.status === 401) { handleUnauthorized(); return; }
           if (!uploadRes.ok) throw new Error("画像のアップロードに失敗しました");
           const uploadData = await uploadRes.json();
           imageUrl = uploadData.imageUrl;
@@ -956,16 +988,18 @@ function HomeContent() {
         const res = await fetchWithAuth(`${API_BASE}/posts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content, ...(imageUrl && { imageUrl }), ...(quotePostId && { parentPostId: quotePostId }) }),
+          body: JSON.stringify({ content, ...(imageUrl && { imageUrl }), ...(quotePostId && { parentPostId: quotePostId }), ...(isPremiumOnlyPost && { isPremiumOnly: true }) }),
         });
-        if (res.status === 401) { handleUnauthorized(); return; }
+  
         if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "投稿に失敗しました"); }
         setContent("");
         setImageFile(null);
         setImagePreview(null);
+        setIsPremiumOnlyPost(false);
         setShowComposeModal(false);
+        showToast("投稿しました");
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
-        await fetchTimeline();
+        await fetchTimeline(undefined, false, timelineTab === "premium");
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "エラーが発生しました";
         setError(message);
@@ -988,7 +1022,7 @@ function HomeContent() {
     showToast(wasLiked ? "いいねを取り消しました" : "いいねしました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/like`, { method: "POST" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) throw new Error();
     } catch {
       // Revert on failure
@@ -1014,7 +1048,7 @@ function HomeContent() {
     showToast(wasReposted ? "リポストを取り消しました" : "リポストしました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/repost`, { method: "POST" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) throw new Error();
     } catch {
       updatePost(postId, (p) => ({
@@ -1035,7 +1069,7 @@ function HomeContent() {
     showToast(wasBookmarked ? "ブックマークを解除しました" : "ブックマークに追加しました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/bookmark`, { method: "POST" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) throw new Error();
     } catch {
       updatePost(postId, (p) => ({ ...p, isBookmarked: wasBookmarked }));
@@ -1052,7 +1086,7 @@ function HomeContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: replyContent }),
       });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "返信に失敗しました"); }
       setReplyContent("");
       setReplyingTo(null);
@@ -1070,7 +1104,7 @@ function HomeContent() {
     if (!token) return;
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}`, { method: "DELETE" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "削除に失敗しました"); }
       setPosts((prev) => prev.filter((p) => p.id !== postId));
       showToast("投稿を削除しました");
@@ -1090,7 +1124,7 @@ function HomeContent() {
     showToast(wasFollowing ? "フォローを解除しました" : "フォローしました");
     try {
       const res = await fetchWithAuth(`${API_BASE}/users/${username}/follow`, { method: "POST" });
-      if (res.status === 401) { handleUnauthorized(); return; }
+
       if (!res.ok) throw new Error();
     } catch {
       setPosts((prev) => prev.map((p) =>
@@ -1098,16 +1132,6 @@ function HomeContent() {
       ));
       showToast("エラーが発生しました", "error");
     }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await fetchWithAuth(`${API_BASE}/auth/logout`, { method: "POST" });
-    } catch {
-      // ignore - still clear local state
-    }
-    setPosts([]);
-    clearAuth();
   };
 
   // ---- Compose Form JSX ----
@@ -1369,8 +1393,8 @@ function HomeContent() {
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between border-t pt-3" style={{ borderColor: "#1f2a1e" }}>
-          <div className="flex items-center gap-1">
+        <div className="border-t pt-3" style={{ borderColor: "#1f2a1e" }}>
+          <div className="flex flex-wrap items-center gap-2">
             <label
               className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-all ${showPokerForm ? "cursor-not-allowed opacity-40 pointer-events-none" : "cursor-pointer"}`}
               style={imageFile ? { background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)" } : { color: "#6b7a66", border: "1px solid #1f2a1e" }}
@@ -1408,27 +1432,45 @@ function HomeContent() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776" /></svg>
               <span>ハンド</span>
             </button>
-          </div>
-          <div className="flex items-center gap-3">
-            {content.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <div className="relative h-5 w-5">
-                  <svg className="h-5 w-5 -rotate-90" viewBox="0 0 20 20">
-                    <circle cx="10" cy="10" r="8" fill="none" stroke="#1f2a1e" strokeWidth="2" />
-                    <circle cx="10" cy="10" r="8" fill="none" stroke={content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#c9a84c"} strokeWidth="2" strokeDasharray={`${(content.length / charLimit) * 50.3} 50.3`} strokeLinecap="round" />
-                  </svg>
-                </div>
-                <span className={`text-xs tabular-nums ${content.length >= charLimit ? "font-semibold" : ""}`} style={{ color: content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#6b7a66" }}>{charLimit - content.length}</span>
-              </div>
+            {isPremium && (
+              <button
+                type="button"
+                onClick={() => setIsPremiumOnlyPost(!isPremiumOnlyPost)}
+                className="flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-all"
+                style={isPremiumOnlyPost
+                  ? { background: "rgba(201,168,76,0.15)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.35)" }
+                  : { color: "#6b7a66", border: "1px solid #1f2a1e" }
+                }
+                title="プレミアム会員のみに表示されます"
+              >
+                <svg className="h-3.5 w-3.5" fill={isPremiumOnlyPost ? "#c9a84c" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                <span>限定</span>
+              </button>
             )}
-            <button
-              type="submit"
-              className="rounded px-5 py-2 text-sm font-semibold transition-colors disabled:opacity-40"
-              style={{ background: "#c9a84c", color: "#0d1009" }}
-              disabled={!canSubmit || content.length > charLimit}
-            >
-              投稿する
-            </button>
+            <div className="ml-auto flex items-center gap-2">
+              {isPremiumOnlyPost && (
+                <span className="hidden text-[11px] sm:inline" style={{ color: "#9a7c35" }}>限定投稿</span>
+              )}
+              {content.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <div className="relative h-5 w-5">
+                    <svg className="h-5 w-5 -rotate-90" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="8" fill="none" stroke="#1f2a1e" strokeWidth="2" />
+                      <circle cx="10" cy="10" r="8" fill="none" stroke={content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#c9a84c"} strokeWidth="2" strokeDasharray={`${(content.length / charLimit) * 50.3} 50.3`} strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <span className={`text-xs tabular-nums ${content.length >= charLimit ? "font-semibold" : ""}`} style={{ color: content.length >= charLimit ? "#e05050" : content.length >= charWarnThreshold ? "#c9a84c" : "#6b7a66" }}>{charLimit - content.length}</span>
+                </div>
+              )}
+              <button
+                type="submit"
+                className="whitespace-nowrap rounded px-5 py-2 text-sm font-semibold transition-colors disabled:opacity-40"
+                style={{ background: "#c9a84c", color: "#0d1009" }}
+                disabled={!canSubmit || content.length > charLimit}
+              >
+                投稿する
+              </button>
+            </div>
           </div>
         </div>
         {/* Premium upsell: show when free user exceeds 250 chars */}
@@ -1454,7 +1496,10 @@ function HomeContent() {
     return (
       <div className="min-h-screen" style={{ background: "#0d1009" }}>
         {/* Hero */}
-        <div className="relative overflow-hidden px-4 pb-10 pt-16 text-center">
+        <div className="relative overflow-hidden px-4 pb-12 pt-12 text-center sm:pb-16 sm:pt-20">
+          {/* subtle background glow (mobile でも軽めに） */}
+          <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-[#c9a84c1a] blur-3xl sm:h-64 sm:w-64" />
+          <div className="pointer-events-none absolute -left-24 bottom-0 h-40 w-40 rounded-full bg-[#3b52401a] blur-3xl sm:h-56 sm:w-56" />
           <div className="relative mx-auto max-w-2xl">
             <div className="mb-8 flex justify-center">
               <div
@@ -1476,14 +1521,16 @@ function HomeContent() {
             >
               Poker SNS
             </h1>
-            <p className="mt-4 text-lg leading-relaxed sm:text-xl" style={{ color: "#6b7a66" }}>
-              ポーカーハンドを共有して、もっと上手くなる
+            <p className="mt-4 text-base leading-relaxed sm:text-xl" style={{ color: "#6b7a66" }}>
+              ポーカーハンドを共有して、
+              <br className="sm:hidden" />
+              もっと上手くなる
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-3">
               {["ハンドを記録", "仲間と議論", "戦略を磨く", "成長を実感"].map((text) => (
                 <span
                   key={text}
-                  className="rounded px-3 py-1.5 text-sm"
+                  className="w-full rounded px-3 py-1.5 text-center text-xs sm:w-auto sm:text-sm"
                   style={{
                     background: "rgba(201,168,76,0.06)",
                     border: "1px solid rgba(201,168,76,0.18)",
@@ -1596,6 +1643,7 @@ function HomeContent() {
           <div className="flex flex-wrap justify-center gap-4 text-xs" style={{ color: "#2a3828" }}>
             <a href="/terms" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>利用規約</a>
             <a href="/privacy" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>プライバシーポリシー</a>
+            <a href="/tokushoho" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>特定商取引法に基づく表記</a>
           </div>
           <p className="mt-2 text-[11px]" style={{ color: "#2a3828" }}>© 2026 Poker SNS</p>
         </div>
@@ -1603,159 +1651,21 @@ function HomeContent() {
     );
   }
 
-  // --- Logged in: 3-column layout (左サイドバー + メイン + 右サイドバー) ---
+  // --- Logged in: AppShell がサイドバーを描画するためメイン列のみ ---
   return (
-    <div className="min-h-screen" style={{ background: "#0d1009", color: "#ddd6c8" }}>
-      <div className="mx-auto flex min-h-screen max-w-[1280px]">
-        {/* Left Sidebar */}
-        <aside
-          className="sticky top-0 hidden h-screen w-20 flex-col justify-between p-2 md:flex lg:w-64 lg:px-3 lg:py-3"
-          style={{ background: "#080a08", borderRight: "1px solid #1f2a1e" }}
-        >
-          <div>
-            <div className="mb-6 flex items-center gap-2.5 px-2 py-2">
-              <div
-                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: "linear-gradient(135deg, rgba(201,168,76,0.18), rgba(154,124,53,0.1))",
-                  border: "1px solid rgba(201,168,76,0.25)",
-                }}
-              >
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="#c9a84c" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                </svg>
-              </div>
-              <span
-                className="hidden font-[family-name:var(--font-playfair)] text-lg font-semibold tracking-tight lg:inline"
-                style={{ color: "#ddd6c8" }}
-              >
-                Poker SNS
-              </span>
-            </div>
-            <nav className="space-y-0.5">
-              {/* ホーム */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 lg:text-sm" style={{ color: "#c9a84c", background: "rgba(201,168,76,0.06)" }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
-                <span className="hidden lg:inline">ホーム</span>
-              </button>
-              {/* 検索 */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/search"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-                <span className="hidden lg:inline">検索</span>
-              </button>
-              {/* 通知 */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/notifications"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <div className="relative">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
-                  {unreadCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold" style={{ background: "#c9a84c", color: "#0d1009" }}>{unreadCount}</span>}
-                </div>
-                <span className="hidden lg:inline">通知</span>
-              </button>
-              {/* トレンド */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/explore"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.468 5.99 5.99 0 00-1.925 3.547 5.975 5.975 0 01-2.133-1.001A3.75 3.75 0 0012 18z" /></svg>
-                <span className="hidden lg:inline">トレンド</span>
-              </button>
-              {/* ブックマーク */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/bookmarks"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
-                <span className="hidden lg:inline">ブックマーク</span>
-              </button>
-              {/* サロン */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/salons"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
-                <span className="hidden lg:inline">サロン</span>
-              </button>
-              {/* トーナメント */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/tournaments"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-5.54 0" /></svg>
-                <span className="hidden lg:inline">トーナメント</span>
-              </button>
-              {/* コーチング */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/coaching"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.636 50.636 0 00-2.658-.813A59.906 59.906 0 0112 3.493a59.903 59.903 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" /></svg>
-                <span className="hidden lg:inline">コーチング</span>
-              </button>
-              {/* おすすめ */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/partners"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
-                <span className="hidden lg:inline">おすすめ</span>
-              </button>
-              {/* 設定 */}
-              <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/settings"; }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/[0.03] lg:text-sm" style={{ color: "#6b7a66" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#9a8e7a"; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}>
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                <span className="hidden lg:inline">設定</span>
-              </button>
-            </nav>
-            <button
-              onClick={() => { if (currentUser && !currentUser.emailVerified) { showToast("メールアドレスの認証が必要です", "error"); return; } setShowComposeModal(true); }}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all"
-              style={{ background: "#c9a84c", color: "#0d1009" }}
-            >
-              <svg className="h-5 w-5 lg:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              <span className="hidden lg:inline">投稿する</span>
-            </button>
-          </div>
-          <div className="border-t pt-2" style={{ borderColor: "#1f2a1e" }}>
-            <button
-              onClick={() => { if (typeof window !== "undefined") window.location.href = `/profile/${currentUser.username}`; }}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.03]"
-            >
-              {currentUser.avatarUrl ? (
-                <img
-                  src={`${API_BASE}${currentUser.avatarUrl}`}
-                  alt={currentUser.name}
-                  className="h-8 w-8 rounded-full object-cover"
-                  style={{ border: "1px solid rgba(201,168,76,0.2)" }}
-                />
-              ) : (
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
-                  style={{
-                    background: "rgba(201,168,76,0.1)",
-                    border: "1px solid rgba(201,168,76,0.2)",
-                    color: "#c9a84c",
-                  }}
-                >
-                  {currentUser.name.charAt(0)}
-                </div>
-              )}
-              <div className="hidden flex-1 text-left lg:block">
-                <div className="text-sm font-semibold" style={{ color: "#ddd6c8" }}>{currentUser.name}</div>
-                <div className="text-xs" style={{ color: "#6b7a66" }}>@{currentUser.username}</div>
-              </div>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="mt-0.5 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-red-900/20"
-              style={{ color: "#6b7a66" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#e05050"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6b7a66"; }}
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
-              <span className="hidden lg:inline">ログアウト</span>
-            </button>
-            <div className="mt-2 hidden border-t pt-2 lg:block" style={{ borderColor: "#1f2a1e" }}>
-              <div className="flex flex-wrap gap-x-2 gap-y-0.5 px-2">
-                <a href="/terms" className="text-[10px] transition-colors hover:underline" style={{ color: "#2a3828" }}>利用規約</a>
-                <span className="text-[10px]" style={{ color: "#2a3828" }}>·</span>
-                <a href="/privacy" className="text-[10px] transition-colors hover:underline" style={{ color: "#2a3828" }}>プライバシー</a>
-              </div>
-              <p className="mt-0.5 px-2 text-[9px]" style={{ color: "#1f2a1e" }}>© 2026 Poker SNS</p>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Column */}
-        <main className="min-h-screen flex-1 pb-20 md:max-w-xl md:pb-0" style={{ background: "#0d1009" }}>
-          <div className="sticky top-0 z-50 border-b px-4 py-3.5" style={{ background: "#080a08", borderColor: "#1f2a1e" }}>
+    <>
+      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+          <div className="sticky top-0 z-50 border-b px-4 py-3.5" style={{ background: "#131a14", borderColor: "#2a3828" }}>
             <h1 className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-tight" style={{ color: "#ddd6c8" }}>ホーム</h1>
           </div>
           {currentUser && !currentUser.emailVerified && (
-            <div className="relative z-[45] flex items-center justify-between border-b px-4 py-2.5" style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}>
-              <p className="text-xs" style={{ color: "#c9a84c" }}>メールアドレスが未認証です。投稿するには認証が必要です。</p>
+            <div
+              className="relative z-[45] flex flex-col gap-2 border-b px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+              style={{ borderColor: "rgba(201,168,76,0.2)", background: "rgba(201,168,76,0.06)" }}
+            >
+              <p className="text-xs leading-relaxed" style={{ color: "#c9a84c" }}>
+                メールアドレスが未認証です。投稿するには認証が必要です。
+              </p>
               <button
                 type="button"
                 disabled={resendVerificationLoading}
@@ -1779,7 +1689,7 @@ function HomeContent() {
                     setResendVerificationLoading(false);
                   }
                 }}
-                className="ml-2 flex-shrink-0 cursor-pointer rounded px-3 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-70"
+                className="w-full cursor-pointer rounded px-3 py-1.5 text-center text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:py-1"
                 style={{ background: "#c9a84c", color: "#0d1009" }}
               >
                 {resendVerificationLoading ? "送信中…" : "再送信"}
@@ -1804,27 +1714,33 @@ function HomeContent() {
             onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#1f2a1e"; }}
           >
             <div className="flex items-center gap-3">
-              {currentUser.avatarUrl ? (
-                <img
-                  src={`${API_BASE}${currentUser.avatarUrl}`}
-                  alt={currentUser.name}
-                  className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
-                  style={{ border: "1px solid rgba(201,168,76,0.2)" }}
-                />
-              ) : (
-                <div
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                  style={{
-                    background: "rgba(201,168,76,0.1)",
-                    border: "1px solid rgba(201,168,76,0.2)",
-                    color: "#c9a84c",
-                  }}
-                >
-                  {currentUser.name.charAt(0)}
-                </div>
-              )}
+              <Avatar avatarUrl={currentUser.avatarUrl} name={currentUser.name} size="md" />
               <span className="text-[15px]" style={{ color: "#3a4238" }}>今日のハンドを共有する...</span>
             </div>
+          </div>
+          {/* Timeline tabs */}
+          <div className="mx-3 mt-3 flex border-b" style={{ borderColor: "#1f2a1e" }}>
+            <button
+              onClick={() => handleTabChange("all")}
+              className="relative px-4 py-2.5 text-sm font-medium transition-colors"
+              style={{ color: timelineTab === "all" ? "#ddd6c8" : "#6b7a66" }}
+            >
+              すべて
+              {timelineTab === "all" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
+              )}
+            </button>
+            <button
+              onClick={() => handleTabChange("premium")}
+              className="relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors"
+              style={{ color: timelineTab === "premium" ? "#c9a84c" : "#6b7a66" }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+              PREMIUM
+              {timelineTab === "premium" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
+              )}
+            </button>
           </div>
           {error && (
             <div className="mx-3 mt-3 rounded-lg px-4 py-3" style={{ background: "rgba(176,48,48,0.12)", border: "1px solid rgba(176,48,48,0.3)" }}>
@@ -1852,21 +1768,42 @@ function HomeContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
               </div>
-              <p className="font-semibold" style={{ color: "#ddd6c8" }}>まだ投稿がありません</p>
-              <p className="mt-1 text-sm" style={{ color: "#6b7a66" }}>最初のハンドを共有してみましょう</p>
+              <p className="font-semibold" style={{ color: "#ddd6c8" }}>
+                {timelineTab === "premium"
+                  ? (isPremium ? "プレミアム限定投稿はまだありません" : "プレミアム限定コンテンツ")
+                  : "まだ投稿がありません"}
+              </p>
+              <p className="mt-1 text-sm" style={{ color: "#6b7a66" }}>
+                {timelineTab === "premium"
+                  ? (isPremium
+                    ? "限定投稿を作成して、プレミアム会員だけの空間を活用しましょう"
+                    : "プレミアム会員になると、限定投稿の閲覧・作成ができます")
+                  : "最初のハンドを共有してみましょう"}
+              </p>
               <button
-                onClick={() => setShowComposeModal(true)}
+                onClick={() => {
+                  if (timelineTab === "premium") {
+                    if (isPremium) {
+                      setIsPremiumOnlyPost(true);
+                      setShowComposeModal(true);
+                    } else {
+                      router.push("/settings");
+                    }
+                  } else {
+                    setShowComposeModal(true);
+                  }
+                }}
                 className="mt-5 rounded px-6 py-2.5 text-sm font-semibold transition-colors"
                 style={{ background: "#c9a84c", color: "#0d1009" }}
               >
-                投稿する
+                {timelineTab === "premium" ? (isPremium ? "限定投稿を作成" : "限定投稿を見る") : "投稿する"}
               </button>
             </div>
           ) : (
             <ul className="space-y-3 px-3 py-3">
               {(() => {
                 const AD_INSERT_EVERY = 3;
-                const isPremium = currentUser?.subscriptionStatus === "active" || currentUser?.subscriptionStatus === "canceled";
+                const isPremium = isPremiumStatus(currentUser?.subscriptionStatus);
                 const items: Array<{ type: "post"; post: Post } | { type: "ad"; ad: Ad }> = [];
                 posts.forEach((post, i) => {
                   items.push({ type: "post", post });
@@ -1877,7 +1814,7 @@ function HomeContent() {
                 });
                 return items.map((item, idx) =>
                   item.type === "post" ? (
-                    <PostItem key={item.post.id} post={item.post} currentUser={currentUser} replyingTo={replyingTo} replyContent={replyContent} actionLoading={actionLoading} onSetReplyingTo={setReplyingTo} onSetReplyContent={setReplyContent} onToggleLike={handleToggleLike} onToggleRepost={handleToggleRepost} onToggleBookmark={handleToggleBookmark} onToggleFollow={handleToggleFollow} onReply={handleReply} onDelete={handleDeletePost} />
+                    <PostItem key={item.post.id} post={item.post} currentUser={currentUser} replyingTo={replyingTo} replyContent={replyContent} actionLoading={actionLoading} showFollowButton={false} onSetReplyingTo={setReplyingTo} onSetReplyContent={setReplyContent} onToggleLike={handleToggleLike} onToggleRepost={handleToggleRepost} onToggleBookmark={handleToggleBookmark} onToggleFollow={handleToggleFollow} onReply={handleReply} onDelete={handleDeletePost} />
                   ) : (
                     <AdCard key={`ad-${idx}-${item.ad.id}`} ad={item.ad} />
                   ),
@@ -1890,57 +1827,6 @@ function HomeContent() {
               )}
             </ul>
           )}
-        </main>
-
-        {/* Right Sidebar */}
-        <aside className="sticky top-0 hidden h-screen flex-shrink-0 overflow-y-auto px-4 xl:block xl:w-80 xl:pt-3">
-          <div
-            className="rounded-lg px-4 py-2.5 transition-all"
-            style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
-          >
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const q = rightSidebarSearch.trim();
-                if (q && typeof window !== "undefined") {
-                  window.location.href = `/search?q=${encodeURIComponent(q)}`;
-                }
-              }}
-              className="flex items-center gap-2"
-            >
-              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#6b7a66" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-              <input
-                type="text"
-                className="flex-1 bg-transparent text-sm outline-none"
-                placeholder="検索"
-                style={{ color: "#ddd6c8" }}
-                value={rightSidebarSearch}
-                onChange={(e) => setRightSidebarSearch(e.target.value)}
-              />
-            </form>
-          </div>
-          {featuredPartners.length > 0 && (
-            <div className="mt-3 rounded-lg p-4" style={{ background: "#131a14", border: "1px solid #1f2a1e" }}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7a66" }}>
-                おすすめサービス
-              </h3>
-              <div className="space-y-2">
-                {featuredPartners.map((partner) => (
-                  <AffiliateCard key={partner.id} partner={partner} referrer="sidebar" compact />
-                ))}
-              </div>
-              <button
-                onClick={() => { if (typeof window !== "undefined") window.location.href = "/partners"; }}
-                className="mt-3 w-full text-center text-xs font-medium transition-colors hover:underline"
-                style={{ color: "#c9a84c" }}
-              >
-                すべて見る
-              </button>
-            </div>
-          )}
-        </aside>
-      </div>
-
       {/* Compose Modal */}
       {showComposeModal && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-[8vh] backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.75)" }}>
@@ -1966,30 +1852,6 @@ function HomeContent() {
         </div>
       )}
 
-      {/* Mobile Bottom Nav */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around py-2 md:hidden"
-        style={{
-          background: "#080a08",
-          borderTop: "1px solid #1f2a1e",
-          boxShadow: "0 -2px 20px rgba(0,0,0,0.5)",
-        }}
-      >
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }} className="flex flex-col items-center gap-0.5 p-2" style={{ color: "#c9a84c" }}>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
-        </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/search"; }} className="flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-        </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = "/notifications"; }} className="relative flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
-          {unreadCount > 0 && <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold" style={{ background: "#c9a84c", color: "#0d1009" }}>{unreadCount}</span>}
-        </button>
-        <button onClick={() => { if (typeof window !== "undefined") window.location.href = `/profile/${currentUser.username}`; }} className="flex flex-col items-center gap-0.5 p-2 transition-colors" style={{ color: "#6b7a66" }}>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-        </button>
-      </nav>
-
       {/* Mobile FAB */}
       <button
         onClick={() => { if (currentUser && !currentUser.emailVerified) { showToast("メールアドレスの認証が必要です", "error"); return; } setShowComposeModal(true); }}
@@ -1998,7 +1860,6 @@ function HomeContent() {
       >
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
       </button>
-
-    </div>
+    </>
   );
 }

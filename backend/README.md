@@ -48,6 +48,16 @@ $ docker compose exec backend /app/node_modules/.bin/prisma migrate deploy
 
 **ローカルでメール認証メールが届かない場合:** SMTP 未設定だとメールは送信されません。開発時は画面上の「再送信」を押すと、API が認証リンクを返すためそのまま認証ページへ飛び、メールなしで認証完了できます。バックエンドログにも `[DEV] 認証リンク` が出力されます。
 
+### ポーカー投稿のダミーデータ（10件）
+
+DB に少なくとも1人ユーザーがいる状態で、`backend` ディレクトリで以下を実行するとポーカー投稿が10件作成されます（投稿者＝DB の先頭ユーザー）。
+
+```bash
+$ npm run seed:poker-posts
+```
+
+初回は `npx prisma generate` が未実行の場合は先に実行してください。Docker で DB を使っている場合は、ホストから実行する際に `DATABASE_URL` がコンテナ内の DB を指すようにしてください（例: `.env` の `DATABASE_URL`）。
+
 ## Compile and run the project
 
 ```bash

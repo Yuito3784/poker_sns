@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { AffiliatesController } from './affiliates.controller';
 import { AffiliatesService } from './affiliates.service';
 import { PrismaService } from '../prisma.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
+  imports: [AuthModule],
   controllers: [AffiliatesController],
   providers: [AffiliatesService, PrismaService],
 })

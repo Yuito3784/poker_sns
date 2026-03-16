@@ -127,9 +127,9 @@ export default function TournamentsPage() {
         )}
 
         {loading ? (
-          <div className="py-12 text-center" style={{ color: "#4a5245" }}>読み込み中...</div>
+          <div className="py-12 text-center" style={{ color: "#6b7a66" }}>読み込み中...</div>
         ) : tournaments.length === 0 ? (
-          <div className="py-12 text-center" style={{ color: "#4a5245" }}>トーナメントがありません</div>
+          <div className="py-12 text-center" style={{ color: "#6b7a66" }}>トーナメントがありません</div>
         ) : (
           <div className="space-y-4">
             {tournaments.map((t) => (
@@ -148,7 +148,7 @@ export default function TournamentsPage() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm line-clamp-2" style={{ color: "#7a7260" }}>{t.description}</p>
-                    <div className="mt-2 flex items-center gap-4 text-xs" style={{ color: "#4a5245" }}>
+                    <div className="mt-2 flex items-center gap-4 text-xs" style={{ color: "#6b7a66" }}>
                       <span>{new Date(t.startAt).toLocaleString("ja-JP")}</span>
                       <span>{t._count?.participants || 0}/{t.maxPlayers}人</span>
                       <span>{t.organizer?.name}</span>

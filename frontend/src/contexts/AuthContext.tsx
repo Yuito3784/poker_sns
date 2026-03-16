@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getValidToken } from "../lib/utils";
-import { registerAuthClearHandler, registerAuthRefreshHandler } from "../lib/api";
+import { API_BASE, fetchWithAuth, registerAuthClearHandler, registerAuthRefreshHandler } from "../lib/api";
 import type { User } from "../lib/types";
 
 type AuthState = {
@@ -65,10 +65,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     registerAuthRefreshHandler((newToken: string) => {
-      // 現在の user 情報を保持したまま token だけ更新
-      const currentUser = authRef.current?.user;
-      if (currentUser) {
-        const state = { token: newToken, user: currentUser };
+      // リフレッシュ時は、localStorage に保存された最新の user 情報も反映する
+      let user = authRef.current?.user ?? null;
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          try {
+            user = JSON.parse(stored);
+          } catch {
+            // ignore parse error and fall back to current user
+          }
+        }
+      }
+      if (user) {
+        const state = { token: newToken, user };
         setAuthState(state);
         authRef.current = state;
       }
@@ -78,6 +88,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       registerAuthClearHandler(() => {});
       registerAuthRefreshHandler(() => {});
     };
+  }, []);
+
+  // クロスタブ同期: 別タブでのログイン/ログアウトを検知
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "token") {
+        if (!e.newValue) {
+          // 別タブでログアウト
+          setAuthState(null);
+          authRef.current = null;
+        } else {
+          // 別タブでログインまたはトークン更新
+          const stored = localStorage.getItem("user");
+          if (stored) {
+            try {
+              const user = JSON.parse(stored);
+              const state = { token: e.newValue, user };
+              setAuthState(state);
+              authRef.current = state;
+            } catch { /* ignore */ }
+          }
+        }
+      }
+      if (e.key === "user" && e.newValue && authRef.current) {
+        try {
+          const user = JSON.parse(e.newValue);
+          const state = { token: authRef.current.token, user };
+          setAuthState(state);
+          authRef.current = state;
+        } catch { /* ignore */ }
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  // アプリ起動時にサブスクリプション状態をサーバーと同期
+  useEffect(() => {
+    const syncSubscription = async () => {
+      if (!authRef.current) return;
+      // チェックアウト成功直後はconfirm-sessionに任せる（レースコンディション防止）
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("subscription") === "success") return;
+      }
+      try {
+        const res = await fetchWithAuth(`${API_BASE}/subscriptions/status`);
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (!data || !data.status) return;
+        const current = authRef.current;
+        if (!current) return;
+        const updatedUser = { ...current.user, subscriptionStatus: data.status };
+        const nextState = { token: current.token, user: updatedUser };
+        setAuthState(nextState);
+        authRef.current = nextState;
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
+      } catch {
+        // ignore sync errors
+      }
+    };
+    if (typeof window !== "undefined") {
+      void syncSubscription();
+    }
   }, []);
 
   return (

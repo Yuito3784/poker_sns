@@ -1,4 +1,5 @@
 import type { PokerHand } from "../app/components/PokerHandDisplay";
+import type { SubscriptionStatus } from "./subscription";
 
 export type User = {
   id: string;
@@ -7,7 +8,7 @@ export type User = {
   username: string;
   avatarUrl?: string | null;
   emailVerified?: boolean;
-  subscriptionStatus?: string;
+  subscriptionStatus?: SubscriptionStatus;
 };
 
 export type Post = {
@@ -17,6 +18,7 @@ export type Post = {
   isPokerHand?: boolean;
   pokerHand?: PokerHand | null;
   parentPost?: Post | null;
+  isPremiumOnly?: boolean;
   isPinned?: boolean;
   createdAt: string;
   author: {
@@ -24,7 +26,7 @@ export type Post = {
     name: string;
     username: string;
     avatarUrl?: string | null;
-    subscriptionStatus?: string;
+    subscriptionStatus?: SubscriptionStatus;
   };
   _count?: {
     likes: number;
@@ -45,6 +47,7 @@ export type Reply = {
     id: string;
     name: string;
     username: string;
+    avatarUrl?: string | null;
   };
 };
 
@@ -73,7 +76,7 @@ export type UserProfile = {
   bio: string | null;
   avatarUrl: string | null;
   pinnedPostId: string | null;
-  subscriptionStatus?: string;
+  subscriptionStatus?: SubscriptionStatus;
   createdAt: string;
   _count: {
     followers: number;
@@ -89,6 +92,8 @@ export type ProfileUser = {
   bio: string | null;
   avatarUrl: string | null;
   _count?: { followers: number; following: number; posts: number };
+  /** 検索結果などで、現在ユーザーがこのユーザーをフォローしているか */
+  isFollowing?: boolean;
 };
 
 export type SearchResults = {
@@ -225,6 +230,48 @@ export type TournamentParticipant = {
   };
 };
 
+// --- Creator Earnings ---
+export type CreatorEarning = {
+  id: string;
+  creatorId: string;
+  type: "SALON_SUBSCRIPTION" | "PAID_CONTENT";
+  grossAmount: number;
+  platformFee: number;
+  netAmount: number;
+  description?: string | null;
+  stripePaymentId?: string | null;
+  salonId?: string | null;
+  paidContentId?: string | null;
+  payoutId?: string | null;
+  createdAt: string;
+  salon?: { id: string; name: string; slug: string } | null;
+  paidContent?: { id: string; postId: string } | null;
+};
+
+export type EarningsSummary = {
+  grossTotal: number;
+  feeTotal: number;
+  netTotal: number;
+  transactionCount: number;
+  pendingPayout: number;
+  monthly: {
+    month: string;
+    gross: number;
+    fee: number;
+    net: number;
+  }[];
+};
+
+export type CreatorPayout = {
+  id: string;
+  creatorId: string;
+  amount: number;
+  status: "PENDING" | "COMPLETED";
+  note?: string | null;
+  paidAt?: string | null;
+  createdAt: string;
+};
+
 // --- Coaching ---
 export type CoachProfile = {
   id: string;
@@ -242,7 +289,7 @@ export type CoachProfile = {
     username: string;
     avatarUrl?: string | null;
     bio?: string | null;
-    subscriptionStatus?: string;
+    subscriptionStatus?: SubscriptionStatus;
   };
   _count?: {
     bookings: number;

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -14,4 +14,8 @@ export class CreatePostDto {
   @IsString()
   @IsOptional()
   parentPostId?: string; // 引用ポスト用
+
+  @IsBoolean()
+  @IsOptional()
+  isPremiumOnly?: boolean;
 }

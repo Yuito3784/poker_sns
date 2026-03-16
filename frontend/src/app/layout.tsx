@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Playfair_Display, Noto_Sans_JP } from "next/font/goo
 import "./globals.css";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Providers from "./components/Providers";
+import AppShell from "./components/AppShell";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 
 const geistSans = Geist({
@@ -88,7 +89,7 @@ export default function RootLayout({
       >
         <GoogleAnalytics />
         <ErrorBoundary>
-          <Providers>{children}</Providers>
+          <Providers><AppShell>{children}</AppShell></Providers>
         </ErrorBoundary>
       </body>
     </html>

@@ -1,9 +1,10 @@
-import { Controller, Get, Patch, Param, Sse, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Post, Query, Sse, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { Observable, filter, map } from 'rxjs';
 import { Throttle } from '@nestjs/throttler';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
+import { Public } from '../auth/public.decorator';
 
 interface MessageEvent {
   data: string | object;
@@ -19,10 +20,32 @@ export class NotificationsController {
     return this.notificationsService.getNotifications(user.userId);
   }
 
+  /** Issue a short-lived, single-use ticket for SSE connection */
+  @Post('sse-ticket')
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  issueSseTicket(@GetUser() user: { userId: string }) {
+    const ticket = this.notificationsService.issueSseTicket(user.userId);
+    return { ticket };
+  }
+
+  /**
+   * SSE stream authenticated via single-use ticket (not JWT in URL).
+   * The JwtAuthGuard on the class won't block this because we use @Public-like
+   * handling below via ticket validation.
+   */
   @Sse('stream')
-  stream(@GetUser() user: { userId: string }): Observable<MessageEvent> {
+  @Public()
+  stream(@Query('ticket') ticket: string): Observable<MessageEvent> {
+    if (!ticket) {
+      throw new UnauthorizedException('SSE ticket is required');
+    }
+    const userId = this.notificationsService.consumeSseTicket(ticket);
+    if (!userId) {
+      throw new UnauthorizedException('Invalid or expired SSE ticket');
+    }
+
     return this.notificationsService.notifications$.pipe(
-      filter((event) => event.userId === user.userId),
+      filter((event) => event.userId === userId),
       map((event) => ({
         data: event.notification,
       })),

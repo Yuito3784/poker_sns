@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { PrismaService } from '../prisma.service';
 import { JwtStrategy } from './jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { AdminGuard } from './admin.guard';
 
 @Module({
   imports: [
@@ -15,9 +16,9 @@ import { GoogleStrategy } from './strategies/google.strategy';
       signOptions: { expiresIn: '15m' },
     }),
   ],
-  providers: [AuthService, PrismaService, JwtStrategy, GoogleStrategy],
+  providers: [AuthService, PrismaService, JwtStrategy, GoogleStrategy, AdminGuard],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, AdminGuard],
 })
 export class AuthModule {}
 

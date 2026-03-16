@@ -236,23 +236,25 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-[#0d1009] text-[#ddd6c8]">
       <div className="mx-auto max-w-xl min-h-screen">
-        <div className="sticky top-0 z-50 rounded-b-xl border-b border-amber-500/10 bg-[#1a2f1c] shadow-[0_2px_12px_rgba(0,0,0,0.15)]">
+        <div className="sticky top-0 z-50 border-b" style={{ background: "#131a14", borderColor: "#2a3828" }}>
           <div className="flex items-center gap-4 px-4 py-3">
             <button onClick={() => router.back()} className="rounded-lg p-1.5 text-[#8ba388] transition-colors hover:bg-white/5 hover:text-amber-400">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
             </button>
             <h1 className="font-[family-name:var(--font-playfair)] text-xl text-[#e8f0e6]">トレンド</h1>
           </div>
-          <div className="flex border-t border-white/5">
+          <div className="flex" style={{ borderTop: "1px solid #1f2a1e" }}>
             <button
               onClick={() => setPeriod("24h")}
-              className={`flex-1 py-2.5 text-center text-sm font-medium transition-colors ${period === "24h" ? "border-b-2 border-amber-400 text-amber-400" : "text-[#8ba388] hover:bg-white/5 hover:text-[#e8f0e6]"}`}
+              className="flex-1 py-2.5 text-center text-sm font-medium transition-colors"
+              style={period === "24h" ? { color: "#c9a84c", borderBottom: "2px solid #c9a84c" } : { color: "#6b7a66" }}
             >
               24時間
             </button>
             <button
               onClick={() => setPeriod("7d")}
-              className={`flex-1 py-2.5 text-center text-sm font-medium transition-colors ${period === "7d" ? "border-b-2 border-amber-400 text-amber-400" : "text-[#8ba388] hover:bg-white/5 hover:text-[#e8f0e6]"}`}
+              className="flex-1 py-2.5 text-center text-sm font-medium transition-colors"
+              style={period === "7d" ? { color: "#c9a84c", borderBottom: "2px solid #c9a84c" } : { color: "#6b7a66" }}
             >
               7日間
             </button>
@@ -265,8 +267,9 @@ export default function ExplorePage() {
           </div>
         ) : posts.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <svg className="mx-auto h-12 w-12 text-[#4a5245]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.468 5.99 5.99 0 00-1.925 3.547 5.975 5.975 0 01-2.133-1.001A3.75 3.75 0 0012 18z" /></svg>
-            <p className="mt-3 text-sm text-[#6b7a66]">この期間のトレンド投稿がありません</p>
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.468 5.99 5.99 0 00-1.925 3.547 5.975 5.975 0 01-2.133-1.001A3.75 3.75 0 0012 18z" /></svg>
+            <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>この期間のトレンド投稿がありません</p>
+            <p className="mt-1 text-xs" style={{ color: "#6b7a66" }}>別の期間を選択してみてください</p>
           </div>
         ) : (
           <ul className="space-y-2.5 px-3 py-3">

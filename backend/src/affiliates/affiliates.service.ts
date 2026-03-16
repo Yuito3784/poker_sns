@@ -6,6 +6,28 @@ import { PrismaService } from '../prisma.service';
 export class AffiliatesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findSidebarRandom(limit: number = 3) {
+    const all = await this.prisma.affiliatePartner.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        category: true,
+        logoUrl: true,
+        bonus: true,
+        sortOrder: true,
+      },
+    });
+    // Fisher-Yates shuffle
+    for (let i = all.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j], all[i]];
+    }
+    return all.slice(0, limit);
+  }
+
   async findAll(category?: AffiliateCategory, featured?: boolean) {
     const where: Record<string, unknown> = { isActive: true };
     if (category) where.category = category;
@@ -75,5 +97,44 @@ export class AffiliatesService {
       });
 
     return partner.affiliateUrl;
+  }
+
+  async getClickAnalytics(from?: Date, to?: Date) {
+    const where: Record<string, unknown> = {};
+    if (from || to) {
+      where.createdAt = {};
+      if (from) (where.createdAt as Record<string, unknown>).gte = from;
+      if (to) (where.createdAt as Record<string, unknown>).lte = to;
+    }
+
+    const partners = await this.prisma.affiliatePartner.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, slug: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    const clicks = await this.prisma.affiliateClick.groupBy({
+      by: ['partnerId'],
+      where,
+      _count: true,
+    });
+
+    const authenticatedClicks = await this.prisma.affiliateClick.groupBy({
+      by: ['partnerId'],
+      where: { ...where, userId: { not: null } },
+      _count: true,
+    });
+
+    const clickMap = new Map(clicks.map((c) => [c.partnerId, c._count]));
+    const authClickMap = new Map(authenticatedClicks.map((c) => [c.partnerId, c._count]));
+
+    return partners.map((p) => ({
+      partnerId: p.id,
+      name: p.name,
+      slug: p.slug,
+      totalClicks: clickMap.get(p.id) || 0,
+      authenticatedClicks: authClickMap.get(p.id) || 0,
+      anonymousClicks: (clickMap.get(p.id) || 0) - (authClickMap.get(p.id) || 0),
+    }));
   }
 }

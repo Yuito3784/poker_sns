@@ -1,5 +1,6 @@
 # compiled output
 /dist
+.next
 /node_modules
 /build
 
@@ -62,3 +63,6 @@ uploads/avatars/*
 uploads/posts/*
 !uploads/avatars/.gitkeep
 !uploads/posts/.gitkeep
+
+# DB backups (do not commit)
+/backups

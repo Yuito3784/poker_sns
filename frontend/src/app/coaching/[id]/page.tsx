@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Avatar from "../../components/Avatar";
 import { fetchWithAuth, API_BASE } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import type { CoachProfile } from "../../../lib/types";
@@ -54,8 +55,8 @@ export default function CoachDetailPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#4a5245" }}>読み込み中...</div>;
-  if (!coach) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#4a5245" }}>コーチが見つかりません</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#6b7a66" }}>読み込み中...</div>;
+  if (!coach) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d1009", color: "#6b7a66" }}>コーチが見つかりません</div>;
 
   const estimatedAmount = Math.round((coach.hourlyRate * bookingForm.durationMinutes) / 60);
 
@@ -68,13 +69,7 @@ export default function CoachDetailPage() {
 
         <div className="rounded-xl p-6" style={{ background: "#131a14", border: "1px solid #1f2a1e" }}>
           <div className="flex items-start gap-4">
-            {coach.user?.avatarUrl ? (
-              <img src={coach.user.avatarUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-full text-xl font-semibold" style={{ background: "#192118", color: "#7a7260" }}>
-                {coach.user?.name?.[0] || "?"}
-              </div>
-            )}
+            <Avatar avatarUrl={coach.user?.avatarUrl ?? null} name={coach.user?.name ?? ""} size="2xl" />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold" style={{ color: "#ddd6c8" }}>{coach.user?.name}</h1>
@@ -94,7 +89,7 @@ export default function CoachDetailPage() {
 
           {coach.experience && (
             <div className="mt-3">
-              <span className="text-xs" style={{ color: "#4a5245" }}>経歴: </span>
+              <span className="text-xs" style={{ color: "#6b7a66" }}>経歴: </span>
               <span className="text-sm" style={{ color: "#7a7260" }}>{coach.experience}</span>
             </div>
           )}

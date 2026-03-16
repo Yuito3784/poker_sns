@@ -59,6 +59,7 @@ model User {
   mutedUsers    Mute[]   @relation("Muter")
   mutedBy       Mute[]   @relation("Muted")
   subscriptionStatus    String    @default("free")  // "free" | "active" | "canceled" | "past_due"
+  subscriptionPlan      String?               // "monthly" | "annual" など将来拡張用
   stripeCustomerId      String?   @unique
   stripeSubscriptionId  String?   @unique
   subscriptionPeriodEnd DateTime?
@@ -75,6 +76,8 @@ model User {
   tournamentEntries     TournamentParticipant[] @relation("TournamentEntries")
   coachProfile          CoachProfile?  @relation("CoachProfile")
   coachBookings         CoachBooking[] @relation("CoachBookings")
+  creatorEarnings       CreatorEarning[] @relation("CreatorEarnings")
+  creatorPayouts        CreatorPayout[]  @relation("CreatorPayouts")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -156,6 +159,7 @@ model Post {
   parentPost    Post?       @relation("QuotePost", fields: [parentPostId], references: [id])
   quotePosts    Post[]      @relation("QuotePost")
   isPokerHand   Boolean     @default(false)
+  isPremiumOnly Boolean     @default(false)
   pokerHand     PokerHand?
   likes         Like[]
   replies       Reply[]
@@ -445,6 +449,7 @@ model PaidContent {
   price       Int      // price in JPY
   previewText String?  // free preview portion
   purchases   ContentPurchase[]
+  earnings    CreatorEarning[] @relation("ContentEarnings")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -479,6 +484,7 @@ model Salon {
   isActive        Boolean  @default(true)
   members         SalonMember[]
   posts           SalonPost[]
+  earnings        CreatorEarning[] @relation("SalonEarnings")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -619,4 +625,54 @@ model AiAnalysisUsage {
 
   @@unique([userId, yearMonth])
   @@index([userId])
+}
+
+// --- Creator Earnings ---
+
+enum EarningType {
+  SALON_SUBSCRIPTION
+  PAID_CONTENT
+}
+
+enum PayoutStatus {
+  PENDING
+  COMPLETED
+}
+
+model CreatorEarning {
+  id              String       @id @default(uuid())
+  creator         User         @relation("CreatorEarnings", fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId       String
+  type            EarningType
+  grossAmount     Int
+  platformFee     Int
+  netAmount       Int
+  description     String?
+  stripePaymentId String?
+  salonId         String?
+  salon           Salon?       @relation("SalonEarnings", fields: [salonId], references: [id], onDelete: SetNull)
+  paidContentId   String?
+  paidContent     PaidContent? @relation("ContentEarnings", fields: [paidContentId], references: [id], onDelete: SetNull)
+  payoutId        String?
+  payout          CreatorPayout? @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  createdAt       DateTime     @default(now())
+
+  @@index([creatorId, createdAt(sort: Desc)])
+  @@index([creatorId, type])
+  @@index([payoutId])
+}
+
+model CreatorPayout {
+  id         String           @id @default(uuid())
+  creator    User             @relation("CreatorPayouts", fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId  String
+  amount     Int
+  status     PayoutStatus     @default(PENDING)
+  note       String?
+  paidAt     DateTime?
+  earnings   CreatorEarning[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([creatorId, status])
 }

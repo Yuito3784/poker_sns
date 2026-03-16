@@ -253,16 +253,34 @@ export class SalonsService {
       },
     });
 
-    // Notify salon owner
+    // Notify salon owner + record earning
     const salon = await this.prisma.salon.findUnique({ where: { id: salonId } });
     if (salon) {
-      await this.prisma.notification.create({
-        data: {
-          userId: salon.ownerId,
-          fromUserId: userId,
-          type: 'SALON_JOIN',
-        },
-      });
+      const grossAmount = salon.monthlyPrice;
+      const platformFee = Math.round(grossAmount * 0.15);
+      const netAmount = grossAmount - platformFee;
+
+      await this.prisma.$transaction([
+        this.prisma.notification.create({
+          data: {
+            userId: salon.ownerId,
+            fromUserId: userId,
+            type: 'SALON_JOIN',
+          },
+        }),
+        this.prisma.creatorEarning.create({
+          data: {
+            creatorId: salon.ownerId,
+            type: 'SALON_SUBSCRIPTION',
+            grossAmount,
+            platformFee,
+            netAmount,
+            description: `サロン「${salon.name}」新規加入`,
+            stripePaymentId: subscriptionId || null,
+            salonId: salon.id,
+          },
+        }),
+      ]);
     }
   }
 
@@ -280,12 +298,133 @@ export class SalonsService {
       throw new BadRequestException('Invalid webhook signature');
     }
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      await this.handleCheckoutCompleted(session);
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await this.handleCheckoutCompleted(session);
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        await this.handleSubscriptionUpdated(sub);
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as Stripe.Subscription;
+        await this.handleSubscriptionDeleted(sub);
+        break;
+      }
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        await this.handleInvoicePaid(invoice);
+        break;
+      }
     }
 
     return { received: true };
+  }
+
+  /** Handle subscription status changes */
+  private async handleSubscriptionUpdated(sub: Stripe.Subscription) {
+    const member = await this.prisma.salonMember.findUnique({
+      where: { stripeSubscriptionId: sub.id },
+    });
+    if (!member) return;
+
+    let newStatus = 'active';
+    if (sub.cancel_at_period_end) {
+      newStatus = 'canceled';
+    } else if (sub.status === 'past_due') {
+      newStatus = 'past_due';
+    }
+
+    await this.prisma.salonMember.update({
+      where: { id: member.id },
+      data: { status: newStatus },
+    });
+  }
+
+  /** Handle subscription deletion */
+  private async handleSubscriptionDeleted(sub: Stripe.Subscription) {
+    const member = await this.prisma.salonMember.findUnique({
+      where: { stripeSubscriptionId: sub.id },
+    });
+    if (!member) return;
+
+    await this.prisma.salonMember.update({
+      where: { id: member.id },
+      data: { status: 'canceled' },
+    });
+  }
+
+  /** Handle recurring invoice payment — record CreatorEarning */
+  private async handleInvoicePaid(invoice: Stripe.Invoice) {
+    // Stripe SDK v20.x: subscription may be on the object but not in the type
+    const rawSub = (invoice as unknown as Record<string, unknown>).subscription;
+    const subId =
+      typeof rawSub === 'string'
+        ? rawSub
+        : (rawSub as { id: string } | null)?.id;
+    if (!subId) return;
+
+    const member = await this.prisma.salonMember.findUnique({
+      where: { stripeSubscriptionId: subId },
+      include: { salon: true },
+    });
+    if (!member || !member.salon) return;
+
+    // Idempotency: skip if earning already recorded for this invoice
+    const existing = await this.prisma.creatorEarning.findFirst({
+      where: { stripePaymentId: invoice.id },
+    });
+    if (existing) return;
+
+    const grossAmount = member.salon.monthlyPrice;
+    const platformFee = Math.round(grossAmount * 0.15);
+    const netAmount = grossAmount - platformFee;
+
+    await this.prisma.creatorEarning.create({
+      data: {
+        creatorId: member.salon.ownerId,
+        type: 'SALON_SUBSCRIPTION',
+        grossAmount,
+        platformFee,
+        netAmount,
+        description: `サロン「${member.salon.name}」継続課金`,
+        stripePaymentId: invoice.id,
+        salonId: member.salon.id,
+      },
+    });
+  }
+
+  /** Get salon earnings for owner */
+  async getSalonEarnings(userId: string) {
+    const salons = await this.prisma.salon.findMany({
+      where: { ownerId: userId },
+      select: { id: true, name: true, slug: true },
+    });
+
+    const salonIds = salons.map((s) => s.id);
+
+    const agg = await this.prisma.creatorEarning.aggregate({
+      where: { creatorId: userId, type: 'SALON_SUBSCRIPTION', salonId: { in: salonIds } },
+      _sum: { grossAmount: true, platformFee: true, netAmount: true },
+      _count: true,
+    });
+
+    const pendingPayout = await this.prisma.creatorEarning.aggregate({
+      where: { creatorId: userId, type: 'SALON_SUBSCRIPTION', payoutId: null },
+      _sum: { netAmount: true },
+    });
+
+    return {
+      totalTransactions: agg._count,
+      grossTotal: agg._sum.grossAmount || 0,
+      feeTotal: agg._sum.platformFee || 0,
+      netTotal: agg._sum.netAmount || 0,
+      pendingPayout: pendingPayout._sum.netAmount || 0,
+      salons,
+    };
   }
 
   /** Get salons owned by user */

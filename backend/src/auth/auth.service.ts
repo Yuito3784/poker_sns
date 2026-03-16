@@ -31,6 +31,9 @@ export class AuthService {
   // ── OAuth セッション (一時トークン、5分TTL) ─────────────────────
   private readonly oauthSessions = new Map<string, { data: OAuthSessionData; expiresAt: Date }>();
 
+  // ── LINE OAuth state (CSRF対策、10分TTL) ─────────────────────────
+  private readonly lineStateStore = new Map<string, { expiresAt: Date }>();
+
   storeOAuthSession(data: OAuthSessionData): string {
     const sessionId = randomBytes(16).toString('hex');
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5分
@@ -61,6 +64,7 @@ export class AuthService {
           passwordHash,
           name: dto.name,
           username: dto.username,
+          avatarUrl: null,
         },
       });
 
@@ -383,10 +387,28 @@ export class AuthService {
 
   // ── OAuth helpers ──────────────────────────────────────────────
 
+  /** 英数字のランダム文字列 */
+  private generateRandomAlphanumeric(length: number): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const bytes = randomBytes(length);
+    for (let i = 0; i < length; i++) {
+      result += chars[bytes[i]! % chars.length];
+    }
+    return result;
+  }
+
+  /** OAuth（LINE/Google/X）新規ユーザー用: どのプロバイダでログインしたか分からないよう英数字12文字ランダム */
+  private generateOAuthRandomUsernameBase(): string {
+    return this.generateRandomAlphanumeric(12);
+  }
+
   private async generateUniqueUsername(base: string): Promise<string> {
     const cleaned = base
       .toLowerCase()
       .replace(/[^a-z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
       .slice(0, 16);
     const username = cleaned || 'user';
     const existing = await this.prisma.user.findUnique({ where: { username } });
@@ -431,10 +453,9 @@ export class AuthService {
       return this.buildAuthResponse(user);
     }
 
-    // New user
-    const username = await this.generateUniqueUsername(
-      profile.email.split('@')[0],
-    );
+    // New user（LINE/Google/X 共通: 英数字12文字ランダム、画像未設定時は null でフロントが DefaultAvatar 表示）
+    const baseName = this.generateOAuthRandomUsernameBase();
+    const username = await this.generateUniqueUsername(baseName);
     user = await this.prisma.user.create({
       data: {
         email: profile.email,
@@ -442,7 +463,7 @@ export class AuthService {
         username,
         passwordHash: null,
         googleId: profile.googleId,
-        avatarUrl: profile.avatar,
+        avatarUrl: null,
         emailVerified: true,
       },
     });
@@ -450,30 +471,54 @@ export class AuthService {
   }
 
   getLineAuthUrl(): string {
+    const state = randomBytes(16).toString('hex');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10分
+    this.lineStateStore.set(state, { expiresAt });
+    // 期限切れを掃除
+    for (const [key, val] of this.lineStateStore.entries()) {
+      if (val.expiresAt < new Date()) this.lineStateStore.delete(key);
+    }
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.LINE_CLIENT_ID || '',
-      redirect_uri: `${process.env.API_URL || 'http://localhost:4000'}/auth/line/callback`,
-      state: randomBytes(8).toString('hex'),
+      redirect_uri: this.getLineRedirectUri(),
+      state,
       scope: 'profile openid email',
     });
     return `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`;
   }
 
-  async handleLineCallback(code: string) {
+  private getLineRedirectUri(): string {
+    return `${process.env.API_URL || 'http://localhost:3001'}/auth/line/callback`;
+  }
+
+  async handleLineCallback(code: string, state: string | undefined) {
+    // state 検証（CSRF対策）
+    if (!state) {
+      throw new BadRequestException('LINE認証のstateがありません。');
+    }
+    const stored = this.lineStateStore.get(state);
+    this.lineStateStore.delete(state);
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new BadRequestException('LINE認証のstateが無効または期限切れです。');
+    }
+
+    const redirectUri = this.getLineRedirectUri();
     const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: `${process.env.API_URL || 'http://localhost:4000'}/auth/line/callback`,
+        redirect_uri: redirectUri,
         client_id: process.env.LINE_CLIENT_ID || '',
         client_secret: process.env.LINE_CLIENT_SECRET || '',
       }).toString(),
     });
 
     if (!tokenRes.ok) {
+      const errBody = await tokenRes.text();
+      this.logger.warn(`LINE token error: ${tokenRes.status} ${errBody}`);
       throw new BadRequestException('LINE認証に失敗しました。');
     }
     const tokenData = (await tokenRes.json()) as { access_token: string };
@@ -482,37 +527,43 @@ export class AuthService {
     const profileRes = await fetch('https://api.line.me/v2/profile', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
+    if (!profileRes.ok) {
+      this.logger.warn(`LINE profile error: ${profileRes.status}`);
+      throw new BadRequestException('LINEプロフィールの取得に失敗しました。');
+    }
     const profile = (await profileRes.json()) as {
       userId: string;
       displayName: string;
       pictureUrl?: string;
     };
 
-    // Email via userinfo (requires email scope)
+    // Email via userinfo (LINEはメールを返さない場合がある)
     let email: string | null = null;
     try {
       const userInfoRes = await fetch(
         'https://api.line.me/oauth2/v2.1/userinfo',
         { headers: { Authorization: `Bearer ${tokenData.access_token}` } },
       );
-      const userInfo = (await userInfoRes.json()) as { email?: string };
-      email = userInfo.email ?? null;
+      if (userInfoRes.ok) {
+        const userInfo = (await userInfoRes.json()) as { email?: string };
+        email = userInfo.email ?? null;
+      }
     } catch {
       /* email not available */
     }
 
-    if (!email) {
-      throw new BadRequestException(
-        'LINEアカウントにメールアドレスが設定されていないため、ログインできません。メールアドレスとパスワードでご登録ください。',
-      );
-    }
+    // メールが無い場合はプレースホルダー（LINEのみでログイン可能にする）
+    const emailToUse =
+      email ||
+      `line-${profile.userId.replace(/[^a-zA-Z0-9_-]/g, '_')}@users.poker-sns.local`;
+    const emailVerified = !!email;
 
     let user = await this.prisma.user.findUnique({
       where: { lineId: profile.userId },
     });
     if (user) return this.buildAuthResponse(user);
 
-    user = await this.prisma.user.findUnique({ where: { email } });
+    user = await this.prisma.user.findUnique({ where: { email: emailToUse } });
     if (user) {
       user = await this.prisma.user.update({
         where: { id: user.id },
@@ -521,16 +572,18 @@ export class AuthService {
       return this.buildAuthResponse(user);
     }
 
-    const username = await this.generateUniqueUsername(email.split('@')[0]);
+    // New user（LINE/Google/X 共通: 英数字12文字ランダム）
+    const baseName = this.generateOAuthRandomUsernameBase();
+    const username = await this.generateUniqueUsername(baseName);
     user = await this.prisma.user.create({
       data: {
-        email,
+        email: emailToUse,
         name: profile.displayName,
         username,
         passwordHash: null,
         lineId: profile.userId,
-        avatarUrl: profile.pictureUrl ?? null,
-        emailVerified: true,
+        avatarUrl: null,
+        emailVerified,
       },
     });
     return this.buildAuthResponse(user);
@@ -613,8 +666,8 @@ export class AuthService {
   private readonly xStateStore = new Map<string, { codeVerifier: string; expiresAt: number }>();
 
   getXAuthUrl(): { url: string; state: string } {
-    const clientId = process.env.X_CLIENT_ID || '';
-    if (!clientId) throw new BadRequestException('X OAuth is not configured');
+    const clientId = (process.env.X_CLIENT_ID || '').trim();
+    if (!clientId || clientId === 'xxx') throw new BadRequestException('X OAuth is not configured');
 
     const state = randomBytes(16).toString('hex');
     const codeVerifier = randomBytes(32).toString('base64url');
@@ -633,7 +686,7 @@ export class AuthService {
       if (val.expiresAt < Date.now()) this.xStateStore.delete(key);
     }
 
-    const apiUrl = process.env.API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.API_URL || 'http://localhost:3001';
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: clientId,
@@ -659,9 +712,12 @@ export class AuthService {
     const { codeVerifier } = stored;
     this.xStateStore.delete(state);
 
-    const clientId = process.env.X_CLIENT_ID || '';
-    const clientSecret = process.env.X_CLIENT_SECRET || '';
-    const apiUrl = process.env.API_URL || 'http://localhost:4000';
+    const clientId = (process.env.X_CLIENT_ID || '').trim();
+    const clientSecret = (process.env.X_CLIENT_SECRET || '').trim();
+    if (!clientId || clientId === 'xxx' || !clientSecret || clientSecret === 'xxx') {
+      throw new BadRequestException('X OAuth is not configured');
+    }
+    const apiUrl = process.env.API_URL || 'http://localhost:3001';
 
     // Exchange code for tokens
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -742,8 +798,9 @@ export class AuthService {
       return this.buildAuthResponse(user);
     }
 
-    // Create new user
-    const username = await this.generateUniqueUsername(xPayload.xUsername || email.split('@')[0]);
+    // Create new user（LINE/Google/X 共通: 英数字12文字ランダム）
+    const baseName = this.generateOAuthRandomUsernameBase();
+    const username = await this.generateUniqueUsername(baseName);
     try {
       user = await this.prisma.user.create({
         data: {
@@ -752,7 +809,7 @@ export class AuthService {
           username,
           passwordHash: null,
           xId: xPayload.xId,
-          avatarUrl: xPayload.xAvatar,
+          avatarUrl: null,
           emailVerified: false,
         },
       });

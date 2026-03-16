@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { API_BASE } from "../../lib/api";
+import { parseApiError } from "../../lib/api-error";
 import type { User } from "../../lib/types";
 
 type MagicLinkState = "idle" | "sending" | "sent";
@@ -123,19 +124,21 @@ export default function AuthForm({ onAuthSuccess }: Props) {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "認証に失敗しました");
+        setError(await parseApiError(res));
+        return;
       }
 
       const data = await res.json();
       if (data.refreshToken) {
         localStorage.setItem("refreshToken", data.refreshToken);
       }
+      if (mode === "register") {
+        localStorage.removeItem("hasCompletedOnboarding");
+      }
       onAuthSuccess(data.accessToken, data.user);
       setPassword("");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setError(message);
+      setError(err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください");
     } finally {
       setSubmitting(false);
     }
@@ -180,7 +183,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
 
   return (
     <div
-      className="w-full max-w-sm rounded-xl p-8"
+      className="w-full max-w-sm rounded-xl p-6 sm:p-8"
       style={{
         background: "#0f1410",
         border: "1px solid #1f2a1e",
@@ -188,7 +191,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
       }}
     >
       {/* Logo */}
-      <div className="mb-6 text-center">
+      <div className="mb-5 text-center sm:mb-6">
         <div className="mb-3 flex justify-center">
           <div
             className="flex h-12 w-12 items-center justify-center rounded-full"
@@ -227,24 +230,17 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           <GoogleIcon />
           Googleでログイン
         </a>
-        <div className="grid grid-cols-2 gap-2">
-          <a
-            href={`${API_BASE}/auth/line`}
-            className="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-white transition-all active:scale-[0.98]"
-            style={{ background: "#00b900", border: "1px solid #009900" }}
-          >
-            <LineIcon />
-            LINE
-          </a>
-          <a
-            href={`${API_BASE}/auth/x`}
-            className="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-white transition-all active:scale-[0.98]"
-            style={{ background: "#111", border: "1px solid #333" }}
-          >
-            <XIcon />
-            X
-          </a>
-        </div>
+        <a
+          href={`${API_BASE}/auth/line`}
+          className="flex w-full items-center justify-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-all active:scale-[0.98]"
+          style={{ background: "#00b900", border: "1px solid #009900" }}
+        >
+          <LineIcon />
+          LINEでログイン
+        </a>
+        {/* Xログインは一時無効（復活時は grid grid-cols-2 で LINE と X を並べる）
+        <a href={`${API_BASE}/auth/x`} ...>X</a>
+        */}
       </div>
 
       {/* Divider */}
@@ -282,7 +278,8 @@ export default function AuthForm({ onAuthSuccess }: Props) {
         </div>
       )}
 
-      {/* Magic Link panel (login mode only) */}
+      {/* メールリンクログインは一時無効
+      Magic Link panel (login mode only)
       {mode === "login" && showMagicLink && (
         <div
           className="mb-4 rounded-lg p-4"
@@ -340,6 +337,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           )}
         </div>
       )}
+      */}
 
       <form onSubmit={handleSubmit} className="space-y-3">
         {mode === "register" && (
@@ -468,6 +466,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           >
             パスワードをお忘れですか？
           </a>
+          {/* メールリンクログインは一時無効
           <span style={{ color: "#2a3828" }}>|</span>
           <button
             type="button"
@@ -477,16 +476,22 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           >
             {showMagicLink ? "パスワードでログイン" : "メールリンクでログイン"}
           </button>
+          */}
         </div>
       )}
       {mode === "register" && (
-        <p className="mt-4 text-center text-[11px]" style={{ color: "#6b7a66" }}>
-          登録することで、
-          <a href="/terms" className="hover:underline" style={{ color: "#c9a84c" }}>利用規約</a>
-          と
-          <a href="/privacy" className="hover:underline" style={{ color: "#c9a84c" }}>プライバシーポリシー</a>
-          に同意したものとみなされます。
-        </p>
+        <div className="mt-4 space-y-2 text-center text-[11px]" style={{ color: "#6b7a66" }}>
+          <p>本サービスは18歳以上の方のみご利用いただけます。</p>
+          <p>
+            登録することで、
+            <a href="/terms" className="hover:underline" style={{ color: "#c9a84c" }}>利用規約</a>
+            、
+            <a href="/privacy" className="hover:underline" style={{ color: "#c9a84c" }}>プライバシーポリシー</a>
+            、
+            <a href="/tokushoho" className="hover:underline" style={{ color: "#c9a84c" }}>特定商取引法に基づく表記</a>
+            に同意したものとみなされます。
+          </p>
+        </div>
       )}
     </div>
   );

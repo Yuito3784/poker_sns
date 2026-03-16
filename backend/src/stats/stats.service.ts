@@ -9,6 +9,41 @@ import { PrismaService } from '../prisma.service';
 export class StatsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getPlatformStats() {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [
+      totalUsers,
+      activeUsers30d,
+      totalPosts,
+      totalPokerHands,
+      premiumSubscribers,
+      affiliatePartners,
+    ] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.count({
+        where: { updatedAt: { gte: thirtyDaysAgo } },
+      }),
+      this.prisma.post.count(),
+      this.prisma.post.count({ where: { isPokerHand: true } }),
+      this.prisma.user.count({
+        where: { subscriptionStatus: 'active' },
+      }),
+      this.prisma.affiliatePartner.count({ where: { isActive: true } }),
+    ]);
+
+    return {
+      totalUsers,
+      activeUsers30d,
+      totalPosts,
+      totalPokerHands,
+      premiumSubscribers,
+      affiliatePartners,
+      generatedAt: now.toISOString(),
+    };
+  }
+
   async getDashboard(userId: string, targetUserId: string) {
     // Only premium users can view detailed stats
     const user = await this.prisma.user.findUnique({

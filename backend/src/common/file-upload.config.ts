@@ -86,11 +86,17 @@ const fileFilter = (
   callback(null, true);
 };
 
+/** Get a safe, whitelisted extension from the original filename */
+function safeExtname(originalname: string): string {
+  const ext = extname(originalname).toLowerCase();
+  return ALLOWED_EXTENSIONS.includes(ext) ? ext : '.bin';
+}
+
 export const avatarUploadConfig: MulterOptions = {
   storage: diskStorage({
     destination: './uploads/avatars',
     filename: (_req, file, cb) => {
-      const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
+      const uniqueName = `${uuidv4()}${safeExtname(file.originalname)}`;
       cb(null, uniqueName);
     },
   }),
@@ -102,7 +108,7 @@ export const postImageUploadConfig: MulterOptions = {
   storage: diskStorage({
     destination: './uploads/posts',
     filename: (_req, file, cb) => {
-      const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
+      const uniqueName = `${uuidv4()}${safeExtname(file.originalname)}`;
       cb(null, uniqueName);
     },
   }),
