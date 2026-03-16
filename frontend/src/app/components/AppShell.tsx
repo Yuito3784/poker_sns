@@ -185,6 +185,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <a href="/terms" className="text-[10px] transition-colors hover:underline" style={{ color: "#2a3828" }}>利用規約</a>
                 <span className="text-[10px]" style={{ color: "#2a3828" }}>·</span>
                 <a href="/privacy" className="text-[10px] transition-colors hover:underline" style={{ color: "#2a3828" }}>プライバシー</a>
+                <span className="text-[10px]" style={{ color: "#2a3828" }}>·</span>
+                <a href="/tokushoho" className="text-[10px] transition-colors hover:underline" style={{ color: "#2a3828" }}>特定商取引法</a>
               </div>
               <p className="mt-0.5 px-2 text-[9px]" style={{ color: "#1f2a1e" }}>© 2026 Poker SNS</p>
             </div>
