@@ -1643,6 +1643,7 @@ function HomeContent() {
           <div className="flex flex-wrap justify-center gap-4 text-xs" style={{ color: "#2a3828" }}>
             <a href="/terms" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>利用規約</a>
             <a href="/privacy" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>プライバシーポリシー</a>
+            <a href="/tokushoho" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>特定商取引法に基づく表記</a>
           </div>
           <p className="mt-2 text-[11px]" style={{ color: "#2a3828" }}>© 2026 Poker SNS</p>
         </div>
