@@ -22,6 +22,8 @@ type OAuthSessionData =
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly invalidCredentialsMessage =
+    'メールアドレスまたはパスワードが違います';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -91,19 +93,18 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(this.invalidCredentialsMessage);
     }
 
     if (!user.passwordHash) {
-      throw new UnauthorizedException(
-        'このアカウントはGoogle、LINE、またはXでログインしてください。',
-      );
+      // アカウントの存在やログイン方式を露出しない（アカウント列挙対策）
+      throw new UnauthorizedException(this.invalidCredentialsMessage);
     }
 
     const isValid = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!isValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(this.invalidCredentialsMessage);
     }
 
     return this.buildAuthResponse(user);
