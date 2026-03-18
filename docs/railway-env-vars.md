@@ -49,6 +49,9 @@ Railway で Dockerfile ビルドを使っている場合は、push して再デ�
 
 **マイグレーションを含むデプロイの前には、必ず DB バックアップを取得してください**（下記「DBバックアップ」参照）。
 
+**P3005（The database schema is not empty）** が出る場合は、既存 DB のベースラインが必要です。  
+→ **[docs/PRISMA_P3005_BASELINE.md](./PRISMA_P3005_BASELINE.md)** の手順に従って、各環境の DB で `migrate resolve --applied` を実行してください。
+
 **初回のみ** や、自動実行が失敗した場合などは、ローカルから以下で手動適用できます。
 
 1. Railway の PostgreSQL の **Variables** で **`DATABASE_PUBLIC_URL`** または **Connect** から接続文字列をコピー（外部接続用の URL）
