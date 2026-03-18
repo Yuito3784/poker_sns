@@ -45,7 +45,8 @@ services:
       start_period: 30s
     environment:
       PORT: 3001
-      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/poker_sns
+      # リポジトリ直下の .env の DATABASE_URL で上書き可能（未指定ならローカルDB）
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/poker_sns}
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       API_URL: ${API_URL:-http://localhost:3001}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
