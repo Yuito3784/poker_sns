@@ -6,6 +6,18 @@ export const metadata: Metadata = {
 };
 
 export default function TokushohoPage() {
+  const businessName = process.env.NEXT_PUBLIC_TOKUSHOHO_BUSINESS_NAME ?? "Poker SNS";
+  const operatorName = process.env.NEXT_PUBLIC_TOKUSHOHO_OPERATOR_NAME ?? "大原 唯人";
+  const address =
+    process.env.NEXT_PUBLIC_TOKUSHOHO_ADDRESS ??
+    "（Stripe の審査通過のため、事業者住所を記載してください）";
+  const phone =
+    process.env.NEXT_PUBLIC_TOKUSHOHO_PHONE ??
+    "（Stripe の審査通過のため、サポート用の電話番号を記載してください）";
+  const contactHours = process.env.NEXT_PUBLIC_TOKUSHOHO_CONTACT_HOURS ?? "平日 10:00〜18:00";
+  const supportEmail = process.env.NEXT_PUBLIC_TOKUSHOHO_SUPPORT_EMAIL ?? "support@pokersns.com";
+  const salesUrl = process.env.NEXT_PUBLIC_TOKUSHOHO_SALES_URL ?? "https://poker-sns.vercel.app/lp";
+
   return (
     <div className="min-h-screen bg-[#0d1009] text-[#ddd6c8]">
       <div className="mx-auto max-w-2xl px-4 py-12">
@@ -35,18 +47,13 @@ export default function TokushohoPage() {
         <div className="space-y-6 text-sm leading-relaxed text-[#9a8e7a]">
           <table className="w-full border-collapse">
             <tbody>
-              <Row label="販売業者" value="Poker SNS" />
-              <Row label="運営統括責任者" value="大原 唯人" />
-              <Row
-                label="所在地"
-                value="請求があった場合、遅滞なく開示いたします。お問い合わせは下記メールアドレスまでご連絡ください。"
-              />
-              <Row
-                label="電話番号"
-                value="請求があった場合、遅滞なく開示いたします。お問い合わせは下記メールアドレスまでご連絡ください。"
-              />
-              <Row label="メールアドレス" value="support@pokersns.com" />
-              <Row label="販売URL" value="https://poker-sns.vercel.app/lp" />
+              <Row label="販売事業者" value={`${operatorName}（屋号：${businessName}）`} />
+              <Row label="運営統括責任者" value={operatorName} />
+              <Row label="所在地" value={address} />
+              <Row label="電話番号" value={phone} />
+              <Row label="お問い合わせ受付時間" value={contactHours} />
+              <Row label="メールアドレス" value={supportEmail} />
+              <Row label="販売URL" value={salesUrl} />
               <Row
                 label="販売価格"
                 value="プレミアムプラン: 月額980円（税込）。詳細は設定画面のサブスクリプションページをご確認ください。"
@@ -69,7 +76,7 @@ export default function TokushohoPage() {
               />
               <Row
                 label="返品・キャンセルについて"
-                value="デジタルサービスの性質上、決済完了後の返金はお受けしておりません。サブスクリプションはいつでも解約可能です。解約した場合、現在の課金期間の終了日まで引き続きプレミアム機能をご利用いただけます。次回更新日以降の課金は発生しません。"
+                value="＜お客様都合の解約＞ デジタルサービスの性質上、課金期間途中の返金はお受けしておりません。サブスクリプションはいつでも解約可能です。解約した場合、現在の課金期間の終了日まで引き続きプレミアム機能をご利用いただけます。次回更新日以降の課金は発生しません。＜当社起因の不具合・誤課金＞ 二重課金等の誤請求が判明した場合は、確認後に返金または調整対応を行います。サービスが提供できない重大な障害が当社の責により継続した場合は、状況に応じて返金または代替対応を行います。いずれの場合も上記メールアドレスまでご連絡ください。"
               />
               <Row
                 label="中途解約について"
