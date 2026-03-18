@@ -36,11 +36,23 @@ function VerifyEmailContent() {
         if (res.ok) {
           setStatus("success");
           setMessage(data.message || "メールアドレスが確認されました。");
-          // Sync AuthContext（auth は deps に含めず、成功時の setAuth で effect が再実行されないようにする）
-          if (auth) {
-            try {
-              setAuth(auth.token, { ...auth.user, emailVerified: true });
-            } catch { /* ignore */ }
+          // Sync AuthContext:
+          // - `auth` が初回レンダー時点で null になっているケースがある（依存に auth を入れていないため）。
+          // - その場合でも localStorage から復元して、UI/投稿可否を即時反映する。
+          try {
+            if (typeof window !== "undefined") {
+              const token = localStorage.getItem("token");
+              const stored = localStorage.getItem("user");
+              if (token && stored) {
+                const parsedUser = JSON.parse(stored);
+                setAuth(token, { ...parsedUser, emailVerified: true });
+              } else if (auth) {
+                // フォールバック（localStorage が無い/壊れているなど）
+                setAuth(auth.token, { ...auth.user, emailVerified: true });
+              }
+            }
+          } catch {
+            /* ignore */
           }
         } else {
           setStatus("error");

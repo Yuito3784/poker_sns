@@ -10,9 +10,12 @@ const ALLOWED_MIME_TYPES = [
   'image/png',
   'image/webp',
   'image/gif',
+  // HEIC/HEIF (スマホの高効率画像)
+  'image/heic',
+  'image/heif',
 ];
 
-const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -42,6 +45,16 @@ const IMAGE_SIGNATURES: { mime: string; check: (buf: Buffer) => boolean }[] = [
       buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
       buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50,
   },
+  // HEIC/HEIF (High Efficiency Image File Format)
+  {
+    mime: 'image/heic',
+    check: (buf) =>
+      buf.length >= 12 &&
+      // "ftyp" box at bytes 4-7
+      buf[4] === 0x66 && buf[5] === 0x74 && buf[6] === 0x79 && buf[7] === 0x70 &&
+      // brand starting with "he" (heic / heix / hevc など)
+      buf[8] === 0x68 && buf[9] === 0x65,
+  },
 ];
 
 /**
@@ -54,7 +67,7 @@ export function validateFileSignature(file: Express.Multer.File): void {
   if (!isValid) {
     try { unlinkSync(file.path); } catch { /* best effort cleanup */ }
     throw new BadRequestException(
-      'ファイルの内容が許可された画像形式と一致しません。jpg, png, webp, gif のみ対応しています。',
+      'ファイルの内容が許可された画像形式と一致しません。jpg, png, webp, gif, heic のみ対応しています。',
     );
   }
 }
