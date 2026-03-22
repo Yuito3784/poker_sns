@@ -317,7 +317,8 @@ export default function PostDetailClient() {
             <div className="mt-3">
               <img
                 src={`${API_BASE}${post.imageUrl}`}
-                alt="投稿画像"
+                alt={post.content ? `${post.author.name}の投稿画像` : "投稿画像"}
+                loading="lazy"
                 className="max-h-96 rounded-xl border border-[#1f2a1e] object-cover"
                 onError={(e) => {
                   const target = e.currentTarget;

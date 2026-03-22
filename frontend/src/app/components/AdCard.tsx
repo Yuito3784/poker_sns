@@ -39,6 +39,7 @@ export default function AdCard({ ad }: Props) {
             <img
               src={ad.imageUrl}
               alt={ad.title}
+              loading="lazy"
               className="h-32 w-full object-cover"
               referrerPolicy="no-referrer"
             />

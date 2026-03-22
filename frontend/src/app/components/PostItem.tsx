@@ -222,7 +222,8 @@ export default function PostItem({
             <div className="mt-2.5">
               <img
                 src={`${API_BASE}${post.imageUrl}`}
-                alt="投稿画像"
+                alt={post.content ? `${post.author.name}の投稿画像` : "投稿画像"}
+                loading="lazy"
                 className="max-h-80 rounded-lg object-cover"
                 style={{ border: "1px solid #1f2a1e" }}
                 onError={(e) => {

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  OnModuleDestroy,
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomBytes, createHash } from 'crypto';
@@ -20,15 +21,37 @@ type OAuthSessionData =
   | { kind: 'x_pending'; xProfile: Record<string, unknown>; xToken: string };
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleDestroy {
   private readonly logger = new Logger(AuthService.name);
   private readonly invalidCredentialsMessage =
     'メールアドレスまたはパスワードが違います';
+  private readonly cleanupInterval: ReturnType<typeof setInterval>;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    // 10分ごとに期限切れの in-memory セッションをクリーンアップ
+    this.cleanupInterval = setInterval(() => this.cleanupExpiredSessions(), 10 * 60 * 1000);
+  }
+
+  onModuleDestroy() {
+    clearInterval(this.cleanupInterval);
+  }
+
+  private cleanupExpiredSessions() {
+    const now = new Date();
+    const nowMs = Date.now();
+    for (const [key, val] of this.oauthSessions.entries()) {
+      if (val.expiresAt < now) this.oauthSessions.delete(key);
+    }
+    for (const [key, val] of this.lineStateStore.entries()) {
+      if (val.expiresAt < now) this.lineStateStore.delete(key);
+    }
+    for (const [key, val] of this.xStateStore.entries()) {
+      if (val.expiresAt < nowMs) this.xStateStore.delete(key);
+    }
+  }
 
   // ── OAuth セッション (一時トークン、5分TTL) ─────────────────────
   private readonly oauthSessions = new Map<string, { data: OAuthSessionData; expiresAt: Date }>();
@@ -160,7 +183,9 @@ export class AuthService {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.warn(`Verification email send failed: ${msg}`);
-      this.logger.log(`[DEV] 認証リンク（SMTP未設定時はこのURLをブラウザで開く）: ${verifyUrl}`);
+      if (process.env.NODE_ENV !== 'production') {
+        this.logger.log(`[DEV] 認証リンク（SMTP未設定時はこのURLをブラウザで開く）: ${verifyUrl}`);
+      }
       const isDev = process.env.NODE_ENV !== 'production';
       if (isDev) {
         return { message: 'メール送信に失敗しました（SMTP未設定）。下記リンクで認証できます。', verificationLink: verifyUrl };

@@ -34,6 +34,7 @@ export default function Avatar({
       <img
         src={src}
         alt={name}
+        loading="lazy"
         className={`${sizeClass} flex-shrink-0 rounded-full object-cover ${className}`}
         style={{ border: "1.5px solid rgba(201,168,76,0.2)", ...style }}
       />

@@ -29,17 +29,19 @@ async function bootstrap() {
 
   app.use(
     helmet({
-      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginResourcePolicy: { policy: 'same-origin' },
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", 'https://js.stripe.com'],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'"],
-          fontSrc: ["'self'", 'https:'],
+          imgSrc: ["'self'", 'data:', 'blob:'],
+          connectSrc: ["'self'", 'https://api.stripe.com'],
+          fontSrc: ["'self'"],
           objectSrc: ["'none'"],
           frameSrc: ["'self'", 'https://www.youtube-nocookie.com', 'https://js.stripe.com'],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
           upgradeInsecureRequests: [],
         },
       },
