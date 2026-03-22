@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, ValidateIf } from 'class-validator';
 
 export class CreatePostDto {
@@ -8,11 +9,18 @@ export class CreatePostDto {
   @MaxLength(1000, { message: '投稿は1000文字以内で入力してください' })
   content: string;
 
-  @IsString()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value !== 'string') return value;
+    const t = value.trim();
+    return t === '' ? undefined : t;
+  })
   @IsOptional()
-  // 現在フロントは `/uploads/posts/<filename>` という相対パスを渡すため、URLとして厳密検証しない
+  @IsString()
+  // 現在フロントは `/uploads/posts/<filename>` または https の絶対URLを渡す
   @Matches(/^(https?:\/\/.+|\/uploads\/posts\/.+)$/, {
-    message: '有効なURLを入力してください',
+    message:
+      '添付画像のパスまたはURLの形式が正しくありません。画像をアップロードし直すか、https:// で始まる画像URLを指定してください。',
   })
   imageUrl?: string;
 
