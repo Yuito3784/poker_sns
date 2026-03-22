@@ -1,6 +1,9 @@
 import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
 import sanitizeHtml from 'sanitize-html';
 
+/** サーバー生成のパス・URL は sanitize で変形されると API バリデーションと不整合になるためそのまま通す */
+const SKIP_SANITIZE_STRING_KEYS = new Set(['imageUrl']);
+
 @Injectable()
 export class SanitizeInputPipe implements PipeTransform {
   transform(value: unknown, metadata: ArgumentMetadata) {
@@ -15,7 +18,11 @@ export class SanitizeInputPipe implements PipeTransform {
     const result: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(obj)) {
       if (typeof val === 'string') {
-        result[key] = sanitizeHtml(val, { allowedTags: [], allowedAttributes: {} });
+        if (SKIP_SANITIZE_STRING_KEYS.has(key)) {
+          result[key] = val;
+        } else {
+          result[key] = sanitizeHtml(val, { allowedTags: [], allowedAttributes: {} });
+        }
       } else if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
         result[key] = this.sanitizeObject(val as Record<string, unknown>);
       } else if (Array.isArray(val)) {

@@ -27,12 +27,21 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      message =
-        typeof exceptionResponse === 'string'
-          ? exceptionResponse
-          : (exceptionResponse as Record<string, unknown>).message
-            ? String((exceptionResponse as Record<string, unknown>).message)
-            : exception.message;
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+      } else if (exceptionResponse && typeof exceptionResponse === 'object') {
+        const r = exceptionResponse as Record<string, unknown>;
+        const m = r.message;
+        if (Array.isArray(m)) {
+          message = m.map((x) => String(x)).filter(Boolean).join(' ');
+        } else if (typeof m === 'string' && m.trim()) {
+          message = m;
+        } else {
+          message = exception.message;
+        }
+      } else {
+        message = exception.message;
+      }
       errorName = exception.name;
     } else if (exception instanceof Error) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;

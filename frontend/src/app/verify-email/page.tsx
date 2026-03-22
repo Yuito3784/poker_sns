@@ -36,20 +36,39 @@ function VerifyEmailContent() {
         if (res.ok) {
           setStatus("success");
           setMessage(data.message || "メールアドレスが確認されました。");
-          // Sync AuthContext（auth は deps に含めず、成功時の setAuth で effect が再実行されないようにする）
-          if (auth) {
-            try {
-              setAuth(auth.token, { ...auth.user, emailVerified: true });
-            } catch { /* ignore */ }
+          // Sync AuthContext:
+          // - `auth` が初回レンダー時点で null になっているケースがある（依存に auth を入れていないため）。
+          // - その場合でも localStorage から復元して、UI/投稿可否を即時反映する。
+          try {
+            if (typeof window !== "undefined") {
+              const token = localStorage.getItem("token");
+              const stored = localStorage.getItem("user");
+              if (token && stored) {
+                const parsedUser = JSON.parse(stored);
+                setAuth(token, { ...parsedUser, emailVerified: true });
+              } else if (auth) {
+                // フォールバック（localStorage が無い/壊れているなど）
+                setAuth(auth.token, { ...auth.user, emailVerified: true });
+              }
+            }
+          } catch {
+            /* ignore */
           }
         } else {
           setStatus("error");
           setMessage(data.message || "確認に失敗しました。");
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         setStatus("error");
-        setMessage("エラーが発生しました。");
+        const failedToFetch =
+          err instanceof TypeError ||
+          (err instanceof Error && /failed to fetch|networkerror|load failed/i.test(err.message));
+        setMessage(
+          failedToFetch
+            ? "サーバーに接続できませんでした。通信状況をご確認のうえ、しばらくしてから再度お試しください。"
+            : "エラーが発生しました。",
+        );
       });
     // auth を deps に入れると成功時の setAuth で effect が再実行され、2回目でトークン消費済みエラーになるため意図的に除外
   // eslint-disable-next-line react-hooks/exhaustive-deps
