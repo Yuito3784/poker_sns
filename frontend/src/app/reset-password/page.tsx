@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { API_BASE } from "../../lib/api";
+import { formatClientSideError, userMessageFromApiBody } from "../../lib/api-error";
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -39,12 +40,12 @@ function ResetPasswordContent() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "エラーが発生しました");
+        setError(userMessageFromApiBody(data, "エラーが発生しました"));
+        return;
       }
       setSuccess(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setError(message);
+      setError(formatClientSideError(err, "エラーが発生しました"));
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { API_BASE } from "../../lib/api";
-import { parseApiError } from "../../lib/api-error";
+import { formatClientSideError, parseApiError } from "../../lib/api-error";
 import type { User } from "../../lib/types";
 
 type MagicLinkState = "idle" | "sending" | "sent";
@@ -138,7 +138,7 @@ export default function AuthForm({ onAuthSuccess }: Props) {
       onAuthSuccess(data.accessToken, data.user);
       setPassword("");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "接続に失敗しました。しばらくしてからお試しください");
+      setError(formatClientSideError(err, "接続に失敗しました。しばらくしてからお試しください"));
     } finally {
       setSubmitting(false);
     }

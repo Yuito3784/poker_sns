@@ -11,6 +11,7 @@ import AdCard from "./components/AdCard";
 import Avatar from "./components/Avatar";
 import OnboardingModal from "./components/OnboardingModal";
 import { API_BASE, fetchWithAuth } from "../lib/api";
+import { formatClientSideError, parseApiError, userMessageFromApiBody } from "../lib/api-error";
 import { formatRelativeTime } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -235,13 +236,6 @@ function HomeContent() {
       playerBets.forEach((amount) => { pot += amount; });
     }
     return pot;
-  };
-
-  const getErrorMessage = (err: unknown): string => {
-    if (err instanceof TypeError && (err.message === "Failed to fetch" || err.message === "NetworkError when attempting to fetch resource.")) {
-      return "サーバーに接続できません。ネットワーク接続を確認してください。";
-    }
-    return err instanceof Error ? err.message : "エラーが発生しました";
   };
 
   useEffect(() => {
@@ -713,8 +707,8 @@ function HomeContent() {
           setOauthError("ログイン処理に失敗しました。もう一度お試しください。");
         }
       })
-      .catch(() => {
-        setOauthError("ログイン処理に失敗しました。もう一度お試しください。");
+      .catch((err: unknown) => {
+        setOauthError(formatClientSideError(err, "ログイン処理に失敗しました。もう一度お試しください。"));
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -736,14 +730,14 @@ function HomeContent() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "登録に失敗しました");
+        throw new Error(userMessageFromApiBody(data, "登録に失敗しました"));
       }
       const data = await res.json();
       if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
       handleAuthSuccess(data.accessToken, data.user);
       setXPending(null);
     } catch (err: unknown) {
-      setXEmailError(err instanceof Error ? err.message : "エラーが発生しました");
+      setXEmailError(formatClientSideError(err, "エラーが発生しました"));
     } finally {
       setXEmailSubmitting(false);
     }
@@ -772,7 +766,7 @@ function HomeContent() {
       }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "タイムラインの取得に失敗しました");
+        throw new Error(userMessageFromApiBody(data, "タイムラインの取得に失敗しました"));
       }
       const data = await res.json();
       const items = Array.isArray(data) ? data : (data.posts ?? data);
@@ -792,7 +786,7 @@ function HomeContent() {
       setTimelineCursor(newCursor);
       timelineCursorRef.current = newCursor;
     } catch (err: unknown) {
-      setError(getErrorMessage(err));
+      setError(formatClientSideError(err, "エラーが発生しました"));
     } finally {
       setLoadingPosts(false);
       setLoadingMore(false);
@@ -959,7 +953,10 @@ function HomeContent() {
           }),
         });
   
-        if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "投稿に失敗しました"); }
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(userMessageFromApiBody(data, "投稿に失敗しました"));
+        }
         setContent("");
         resetPokerForm();
         setIsPremiumOnlyPost(false);
@@ -968,8 +965,7 @@ function HomeContent() {
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
         await fetchTimeline(undefined, false, timelineTab === "premium");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "エラーが発生しました";
-        setError(message);
+        setError(formatClientSideError(err, "エラーが発生しました"));
       }
     } else {
       try {
@@ -981,7 +977,7 @@ function HomeContent() {
             method: "POST",
             body: formData,
           });
-          if (!uploadRes.ok) throw new Error("画像のアップロードに失敗しました");
+          if (!uploadRes.ok) throw new Error(await parseApiError(uploadRes));
           const uploadData = await uploadRes.json();
           imageUrl = uploadData.imageUrl;
         }
@@ -991,7 +987,10 @@ function HomeContent() {
           body: JSON.stringify({ content, ...(imageUrl && { imageUrl }), ...(quotePostId && { parentPostId: quotePostId }), ...(isPremiumOnlyPost && { isPremiumOnly: true }) }),
         });
   
-        if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "投稿に失敗しました"); }
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(userMessageFromApiBody(data, "投稿に失敗しました"));
+        }
         setContent("");
         setImageFile(null);
         setImagePreview(null);
@@ -1001,7 +1000,7 @@ function HomeContent() {
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
         await fetchTimeline(undefined, false, timelineTab === "premium");
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "エラーが発生しました";
+        const message = formatClientSideError(err, "エラーが発生しました");
         setError(message);
         showToast(message, "error");
       }
@@ -1087,7 +1086,10 @@ function HomeContent() {
         body: JSON.stringify({ content: replyContent }),
       });
 
-      if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "返信に失敗しました"); }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(userMessageFromApiBody(data, "返信に失敗しました"));
+      }
       setReplyContent("");
       setReplyingTo(null);
       updatePost(postId, (p) => ({
@@ -1096,7 +1098,7 @@ function HomeContent() {
       }));
       showToast("返信しました");
     } catch (err: unknown) {
-      setError(getErrorMessage(err));
+      setError(formatClientSideError(err, "エラーが発生しました"));
     }
   };
 
@@ -1105,11 +1107,14 @@ function HomeContent() {
     try {
       const res = await fetchWithAuth(`${API_BASE}/posts/${postId}`, { method: "DELETE" });
 
-      if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message ?? "削除に失敗しました"); }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(userMessageFromApiBody(data, "削除に失敗しました"));
+      }
       setPosts((prev) => prev.filter((p) => p.id !== postId));
       showToast("投稿を削除しました");
     } catch (err: unknown) {
-      setError(getErrorMessage(err));
+      setError(formatClientSideError(err, "エラーが発生しました"));
     }
   };
 
@@ -1684,7 +1689,7 @@ function HomeContent() {
                       return;
                     }
                     if (!res.ok) {
-                      showToast(data.message ?? "再送信に失敗しました", "error");
+                      showToast(userMessageFromApiBody(data, "再送信に失敗しました"), "error");
                       return;
                     }
                     showToast("確認メールを再送信しました");

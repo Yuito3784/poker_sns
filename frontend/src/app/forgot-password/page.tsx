@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { API_BASE } from "../../lib/api";
+import { formatClientSideError, parseApiError } from "../../lib/api-error";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -20,13 +21,12 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "エラーが発生しました");
+        setError(await parseApiError(res));
+        return;
       }
       setSent(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "エラーが発生しました";
-      setError(message);
+      setError(formatClientSideError(err, "エラーが発生しました"));
     } finally {
       setLoading(false);
     }
