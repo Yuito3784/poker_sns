@@ -59,9 +59,16 @@ function VerifyEmailContent() {
           setMessage(data.message || "確認に失敗しました。");
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         setStatus("error");
-        setMessage("エラーが発生しました。");
+        const failedToFetch =
+          err instanceof TypeError ||
+          (err instanceof Error && /failed to fetch|networkerror|load failed/i.test(err.message));
+        setMessage(
+          failedToFetch
+            ? "サーバーに接続できませんでした。通信状況をご確認のうえ、しばらくしてから再度お試しください。"
+            : "エラーが発生しました。",
+        );
       });
     // auth を deps に入れると成功時の setAuth で effect が再実行され、2回目でトークン消費済みエラーになるため意図的に除外
   // eslint-disable-next-line react-hooks/exhaustive-deps
