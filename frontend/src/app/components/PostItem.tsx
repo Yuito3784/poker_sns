@@ -75,14 +75,22 @@ export default function PostItem({
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, textarea, input")) return;
+    router.push(`/post/${post.id}`);
+  };
+
   return (
     <li
-      className="group rounded-lg transition-all"
+      className="group cursor-pointer rounded-lg transition-all"
       style={{
         background: "#151c15",
         border: "1px solid #2a3828",
         boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
       }}
+      onClick={handleCardClick}
       onMouseEnter={(e) => { (e.currentTarget as HTMLLIElement).style.borderColor = "#3a4a38"; }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLLIElement).style.borderColor = "#2a3828"; }}
     >

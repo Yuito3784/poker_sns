@@ -12,10 +12,9 @@ import Avatar from "./components/Avatar";
 import OnboardingModal from "./components/OnboardingModal";
 import { API_BASE, fetchWithAuth } from "../lib/api";
 import { formatClientSideError, parseApiError, userMessageFromApiBody } from "../lib/api-error";
-import { formatRelativeTime } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import type { User, Post, Notification, Ad } from "../lib/types";
+import type { User, Post, Ad } from "../lib/types";
 import { isPremium as isPremiumStatus } from "../lib/subscription";
 
 
@@ -57,7 +56,6 @@ function HomeContent() {
   const timelineCursorRef = useRef<string | null>(null);
   const timelineHasMoreRef = useRef(false);
   const loadingMoreRef = useRef(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [xPending, setXPending] = useState<{ xProfile: { id: string; name: string; username: string; avatarUrl: string | null }; xToken: string } | null>(null);
   const [xEmail, setXEmail] = useState("");
@@ -242,46 +240,6 @@ function HomeContent() {
   useEffect(() => {
     if (!token) return;
     fetchTimeline(undefined, false, timelineTab === "premium");
-    fetchNotifications();
-
-    // SSE for real-time notifications（チケット方式で接続）
-    let eventSource: EventSource | null = null;
-    let closed = false;
-
-    const connectSSE = async () => {
-      if (closed) return;
-      // Obtain a short-lived, single-use SSE ticket
-      try {
-        const res = await fetchWithAuth(`${API_BASE}/notifications/sse-ticket`, { method: "POST" });
-        if (!res.ok || closed) return;
-        const { ticket } = await res.json();
-        if (!ticket || closed) return;
-        eventSource = new EventSource(`${API_BASE}/notifications/stream?ticket=${encodeURIComponent(ticket)}`);
-        eventSource.onmessage = (event) => {
-          try {
-            const notification = JSON.parse(event.data);
-            setNotifications((prev) => [notification, ...prev]);
-          } catch {
-            // ignore parse errors
-          }
-        };
-        eventSource.onerror = () => {
-          eventSource?.close();
-          if (!closed) {
-            setTimeout(connectSSE, 5000);
-          }
-        };
-      } catch {
-        // Retry on failure
-        if (!closed) setTimeout(connectSSE, 5000);
-      }
-    };
-
-    connectSSE();
-    return () => {
-      closed = true;
-      eventSource?.close();
-    };
   }, [token]);
 
   // プリフロップ初期セットアップ
@@ -625,24 +583,6 @@ function HomeContent() {
       return changed ? next : prev;
     });
   }, [pokerStreets, pokerBlinds, pokerHeroPosition, pokerTableSize]);
-
-  const fetchNotifications = async () => {
-    if (!token) return;
-    try {
-      const res = await fetchWithAuth(`${API_BASE}/notifications`);
-
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data);
-      }
-    } catch {
-      // 通知取得失敗は無視
-    }
-  };
-
-  useEffect(() => {
-    if (token && currentUser) fetchNotifications();
-  }, [token, currentUser]);
 
   useEffect(() => {
     if (currentUser && searchParams.get("compose") === "1") {
@@ -1526,8 +1466,6 @@ function HomeContent() {
       </form>
     </div>
   );
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   // --- 認証未確定時は背景のみ（読み込み画面なし、useLayoutEffectで即時に確定）---
   if (!isInitialized) {

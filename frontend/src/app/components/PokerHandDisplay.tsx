@@ -1,5 +1,18 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 export type PokerAction = {
   id?: string;
@@ -150,6 +163,7 @@ function ActionBadge({ action }: { action: PokerAction }) {
 
 // ── Main component ───────────────────────────────────────────────
 export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
+  const isMobile = useIsMobile();
   const STREET_ORDER = ["PREFLOP", "FLOP", "TURN", "RIVER"] as const;
   const STREET_NAME: Record<string, string> = { PREFLOP:"Preflop", FLOP:"Flop", TURN:"Turn", RIVER:"River" };
 
@@ -182,7 +196,7 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
   const hero = "Hero";
   const others = players.filter(p=>p!==hero).sort((a,b)=>(tablePositionOrder[info[a]?.pos??a]??99)-(tablePositionOrder[info[b]?.pos??b]??99));
   const CX=50, CY=50;
-  const R = 36;
+  const R = isMobile ? 36 : 38;
   const seats: Record<string, {x:number;y:number}> = {};
   const H_ANGLE = 90;
   if (players.includes(hero)) {
@@ -302,8 +316,8 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
         {/* Board cards */}
         {boardCards.length > 0 && (
           <div style={{ position:"absolute", inset:0, zIndex:10, display:"flex", alignItems:"center", justifyContent:"center", paddingBottom:"8%", pointerEvents:"none" }}>
-            <div style={{ display:"flex", gap:3 }}>
-              {boardCards.map((c,i) => <Card key={`${c}-${i}`} card={c} size="sm" />)}
+            <div style={{ display:"flex", gap: isMobile ? 3 : 5 }}>
+              {boardCards.map((c,i) => <Card key={`${c}-${i}`} card={c} size={isMobile ? "sm" : "md"} />)}
             </div>
           </div>
         )}
@@ -344,7 +358,7 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
                 )}
                 {/* Avatar — clean dark circle with position text */}
                 <div style={{
-                width:30, height:30, borderRadius:"50%",
+                width: isMobile ? 30 : 34, height: isMobile ? 30 : 34, borderRadius:"50%",
                 background: isHero
                   ? "radial-gradient(circle at 40% 35%, rgba(201,168,76,.14), rgba(201,168,76,.06))"
                   : "radial-gradient(circle at 40% 35%, #192118, #0f1510)",
@@ -382,7 +396,7 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
 
               {pi.cards.length > 0 && (
                 <div style={{ display:"flex", gap:2, marginBottom: isHero ? 2 : 0 }}>
-                  {pi.cards.map((c,i) => <Card key={i} card={c} size="xs" />)}
+                  {pi.cards.map((c,i) => <Card key={i} card={c} size={isMobile ? "xs" : "sm"} />)}
                 </div>
               )}
               <span style={{
