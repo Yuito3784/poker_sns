@@ -3,15 +3,12 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:300
 
 /**
  * アップロード画像のURLを返す。
- * 本番では nginx の /uploads/ ブロックを直接使い、レートリミット対象外 + キャッシュヘッダー付きで配信。
- * 開発では API_BASE 経由（別ポートのバックエンドから配信）。
+ * 画像は常にバックエンド（API_BASE）から配信される。
+ * 本番: nginx が /api/uploads/ → backend /uploads/ にプロキシ
+ * 開発: API_BASE が直接バックエンドを指す
  */
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 export function uploadsUrl(path: string): string {
   if (path.startsWith("http")) return path;
-  // SITE_URL が設定されていれば本番（nginx /uploads/ 直接）
-  if (SITE_URL) return `${SITE_URL}${path}`;
-  // 開発環境: API_BASE 経由
   return `${API_BASE}${path}`;
 }
 

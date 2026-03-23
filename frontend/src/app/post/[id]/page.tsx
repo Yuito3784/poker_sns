@@ -44,14 +44,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         publishedTime: post.createdAt,
         authors: [post.author.name],
         ...(post.imageUrl && {
-          images: [{ url: `${SITE_URL}${post.imageUrl}`, width: 1200, height: 630, alt: description }],
+          images: [{ url: `${API_BASE}${post.imageUrl}`, width: 1200, height: 630, alt: description }],
         }),
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        ...(post.imageUrl && { images: [`${SITE_URL}${post.imageUrl}`] }),
+        ...(post.imageUrl && { images: [`${API_BASE}${post.imageUrl}`] }),
       },
     };
   } catch {
@@ -86,7 +86,7 @@ async function PostJsonLd({ id }: { id: string }) {
         name: "Poker SNS",
         url: SITE_URL,
       },
-      ...(post.imageUrl && { image: `${SITE_URL}${post.imageUrl}` }),
+      ...(post.imageUrl && { image: `${API_BASE}${post.imageUrl}` }),
       interactionStatistic: [
         {
           "@type": "InteractionCounter",
