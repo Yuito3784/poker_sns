@@ -1,6 +1,6 @@
 "use client";
 
-import { API_BASE } from "../../lib/api";
+import { uploadsUrl } from "../../lib/api";
 import DefaultAvatar from "./DefaultAvatar";
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
@@ -29,7 +29,7 @@ export default function Avatar({
 }) {
   const sizeClass = sizeMap[size];
   if (avatarUrl) {
-    const src = avatarUrl.startsWith("http") ? avatarUrl : `${API_BASE}${avatarUrl}`;
+    const src = uploadsUrl(avatarUrl);
     return (
       <img
         src={src}

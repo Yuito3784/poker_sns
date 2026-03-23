@@ -70,7 +70,7 @@ async function ProfileJsonLd({ username }: { username: string }) {
       name: user.name,
       url: `${SITE_URL}/profile/${user.username}`,
       description: user.bio || undefined,
-      ...(user.avatarUrl && { image: `${API_BASE}${user.avatarUrl}` }),
+      ...(user.avatarUrl && { image: `${SITE_URL}${user.avatarUrl}` }),
       interactionStatistic: [
         {
           "@type": "InteractionCounter",
