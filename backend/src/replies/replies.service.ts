@@ -15,32 +15,38 @@ export class RepliesService {
   ) {}
 
   async create(userId: string, postId: string, dto: CreateReplyDto) {
-    const post = await this.prisma.post.findUnique({
-      where: { id: postId },
-      select: { authorId: true },
+    // トランザクション内で投稿の存在確認と返信作成を行い、競合を防ぐ
+    const { reply, postAuthorId } = await this.prisma.$transaction(async (tx) => {
+      const post = await tx.post.findUnique({
+        where: { id: postId },
+        select: { authorId: true },
+      });
+
+      if (!post) {
+        throw new NotFoundException('Post not found');
+      }
+
+      const created = await tx.reply.create({
+        data: {
+          postId,
+          authorId: userId,
+          content: dto.content,
+        },
+        include: {
+          author: authorSelect,
+        },
+      });
+
+      return { reply: created, postAuthorId: post.authorId };
     });
 
-    if (!post) {
-      throw new NotFoundException('Post not found');
-    }
-
-    const reply = await this.prisma.reply.create({
-      data: {
-        postId,
-        authorId: userId,
-        content: dto.content,
-      },
-      include: {
-        author: authorSelect,
-      },
-    });
-
-    await this.notificationsService.createNotification(
-      post.authorId,
+    // 通知はトランザクション外で非同期実行（失敗しても返信は成立）
+    this.notificationsService.createNotification(
+      postAuthorId,
       userId,
       'REPLY',
       postId,
-    );
+    ).catch(() => { /* 通知失敗は無視 */ });
 
     return reply;
   }

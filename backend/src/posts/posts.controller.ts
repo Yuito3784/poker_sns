@@ -68,6 +68,7 @@ export class PostsController {
 
   @Get('hashtag/:tag')
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
   getByHashtag(
     @GetUser() user: { userId: string } | undefined,
     @Param('tag') tag: string,

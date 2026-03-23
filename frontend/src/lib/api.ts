@@ -101,6 +101,13 @@ export async function fetchWithAuth(
 
   // 401が返った場合のフォールバック（事前チェックを通り抜けたケース）
   if (res.status === 401 && localStorage.getItem("refreshToken")) {
+    // 既に直前でリフレッシュ済みなら再試行しない（無限ループ防止）
+    const currentToken = localStorage.getItem("token");
+    if (currentToken && currentToken !== token) {
+      // 別のリクエストが既にリフレッシュ済み → 新しいトークンで再試行
+      headers.set("Authorization", `Bearer ${currentToken}`);
+      return fetch(url, { ...options, headers });
+    }
     const newToken = await getRefreshedToken();
     if (newToken) {
       headers.set("Authorization", `Bearer ${newToken}`);

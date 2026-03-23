@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreatePokerHandDto } from './dto/create-poker-hand.dto';
@@ -32,17 +32,18 @@ export class PostsService {
   }
 
   async create(userId: string, dto: CreatePostDto) {
-    const charLimit = await this.getCharLimit(userId);
+    // 1回のクエリで premium チェックと charLimit を同時に判定
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { subscriptionStatus: true },
+    });
+    const isPremium = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'canceled';
+    const charLimit = isPremium ? PREMIUM_CHAR_LIMIT : FREE_CHAR_LIMIT;
     if (dto.content.length > charLimit) {
       throw new BadRequestException(`投稿は${charLimit}文字以内で入力してください`);
     }
 
     if (dto.isPremiumOnly) {
-      // Only active subscribers can create premium-only posts (canceled = grace period, no new premium content)
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { subscriptionStatus: true },
-      });
       if (user?.subscriptionStatus !== 'active') {
         throw new ForbiddenException('プレミアム限定投稿はアクティブなプレミアム会員のみ作成できます');
       }
@@ -72,14 +73,29 @@ export class PostsService {
         },
       },
     });
+
+    // 通知・ハッシュタグ処理を並列実行（レスポンスをブロックしない）
+    const backgroundTasks: Promise<void>[] = [];
+
     if (dto.parentPostId) {
-      const parent = await this.prisma.post.findUnique({ where: { id: dto.parentPostId }, select: { authorId: true } });
-      if (parent && parent.authorId !== userId) {
-        await this.notificationsService.createNotification(parent.authorId, userId, 'REPOST', dto.parentPostId);
-      }
+      backgroundTasks.push(
+        this.prisma.post.findUnique({ where: { id: dto.parentPostId }, select: { authorId: true } })
+          .then((parent) => {
+            if (parent && parent.authorId !== userId) {
+              return this.notificationsService.createNotification(parent.authorId, userId, 'REPOST', dto.parentPostId!) as Promise<unknown> as Promise<void>;
+            }
+          }),
+      );
     }
-    await this.createMentionNotifications(userId, dto.content, post.id);
-    await this.extractAndLinkHashtags(post.id, dto.content);
+    backgroundTasks.push(this.createMentionNotifications(userId, dto.content, post.id));
+    backgroundTasks.push(this.extractAndLinkHashtags(post.id, dto.content));
+
+    // 全バックグラウンドタスクを並列実行
+    Promise.all(backgroundTasks).catch((err) => {
+      const logger = new Logger('PostsService');
+      logger.warn(`Background task failed for post ${post.id}: ${err instanceof Error ? err.message : String(err)}`);
+    });
+
     return post;
   }
 
@@ -94,11 +110,11 @@ export class PostsService {
       select: { id: true },
     });
 
-    for (const user of users) {
-      if (user.id !== authorId) {
-        await this.notificationsService.createNotification(user.id, authorId, 'MENTION', postId);
-      }
-    }
+    await Promise.all(
+      users
+        .filter((user) => user.id !== authorId)
+        .map((user) => this.notificationsService.createNotification(user.id, authorId, 'MENTION', postId)),
+    );
   }
 
   async createPokerHand(userId: string, dto: CreatePokerHandDto) {
@@ -151,8 +167,14 @@ export class PostsService {
         },
       },
     });
-    await this.createMentionNotifications(userId, dto.content || '', post.id);
-    await this.extractAndLinkHashtags(post.id, dto.content || '');
+    // 通知・ハッシュタグ処理を並列実行（レスポンスをブロックしない）
+    Promise.all([
+      this.createMentionNotifications(userId, dto.content || '', post.id),
+      this.extractAndLinkHashtags(post.id, dto.content || ''),
+    ]).catch((err) => {
+      const logger = new Logger('PostsService');
+      logger.warn(`Background task failed for poker hand post ${post.id}: ${err instanceof Error ? err.message : String(err)}`);
+    });
     return post;
   }
 
@@ -162,7 +184,7 @@ export class PostsService {
     const tags = [...new Set(matches.map((m) => m[1].toLowerCase()))];
     if (tags.length === 0) return;
 
-    for (const tagName of tags) {
+    await Promise.all(tags.map(async (tagName) => {
       const hashtag = await this.prisma.hashtag.upsert({
         where: { name: tagName },
         update: {},
@@ -171,7 +193,7 @@ export class PostsService {
       await this.prisma.postHashtag.create({
         data: { postId, hashtagId: hashtag.id },
       }).catch(() => { /* ignore duplicate */ });
-    }
+    }));
   }
 
   async getByHashtag(tag: string, userId: string | null, take = 20, skip = 0) {
