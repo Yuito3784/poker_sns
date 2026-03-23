@@ -440,7 +440,7 @@ export default function LandingClient() {
                 </div>
               </div>
               <a
-                href="mailto:contact@pokersns.jp"
+                href="mailto:support@pokersns.com"
                 className="inline-flex items-center gap-2 rounded-xl bg-[#c9a84c] px-8 py-3.5 text-sm font-semibold text-[#0d1009] transition-all hover:bg-[#d4b965]"
               >
                 パートナー申請はこちら
@@ -497,8 +497,9 @@ export default function LandingClient() {
             <div className="flex flex-wrap justify-center gap-6 text-sm text-[#6b7a66]">
               <Link href="/terms" className="transition-colors hover:text-[#9a8e7a]">利用規約</Link>
               <Link href="/privacy" className="transition-colors hover:text-[#9a8e7a]">プライバシーポリシー</Link>
+              <Link href="/tokushoho" className="transition-colors hover:text-[#9a8e7a]">特定商取引法に基づく表記</Link>
               <Link href="/partners" className="transition-colors hover:text-[#9a8e7a]">パートナー</Link>
-              <a href="mailto:contact@pokersns.jp" className="transition-colors hover:text-[#9a8e7a]">お問い合わせ</a>
+              <a href="mailto:support@pokersns.com" className="transition-colors hover:text-[#9a8e7a]">お問い合わせ</a>
             </div>
           </div>
           <div className="border-t border-[#1f2a1e] pt-6 text-center text-xs text-[#6b7a66]">
