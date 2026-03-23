@@ -9,8 +9,8 @@ import AffiliateCard from "./AffiliateCard";
 import MobileBottomNav from "./MobileBottomNav";
 import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { useToast } from "../../contexts/ToastContext";
-import type { Notification } from "../../lib/types";
 import type { AffiliatePartner } from "../../lib/types";
 
 const SIDEBAR_EXCLUDE_PATHS = ["/lp", "/forgot-password", "/reset-password", "/verify-email", "/tokushoho"];
@@ -27,29 +27,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const currentUser = auth?.user ?? null;
   const token = auth?.token ?? null;
   const { showToast } = useToast();
+  const { unreadCount } = useNotifications();
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [rightSidebarSearch, setRightSidebarSearch] = useState("");
   const [featuredPartners, setFeaturedPartners] = useState<AffiliatePartner[]>([]);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
   const showShell = isInitialized && currentUser && shouldShowSidebars(pathname ?? "");
-
-  useEffect(() => {
-    if (!token || !currentUser) return;
-    const fetchNotifications = async () => {
-      try {
-        const res = await fetchWithAuth(`${API_BASE}/notifications`);
-        if (res.ok) {
-          const data = await res.json();
-          setNotifications(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        /* ignore */
-      }
-    };
-    fetchNotifications();
-  }, [token, currentUser]);
 
   useEffect(() => {
     if (!currentUser) return;

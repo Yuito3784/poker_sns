@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { API_BASE, fetchWithAuth } from "../../lib/api";
 import { formatRelativeTime } from "../../lib/utils";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { useToast } from "../../contexts/ToastContext";
 import type { Notification } from "../../lib/types";
 
@@ -12,9 +12,7 @@ export default function NotificationsPage() {
   const router = useRouter();
   const { auth, isInitialized } = useAuth();
   const { showToast } = useToast();
-  const token = auth?.token ?? null;
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   useEffect(() => {
     if (isInitialized && !auth) {
@@ -22,38 +20,9 @@ export default function NotificationsPage() {
     }
   }, [isInitialized, auth, router]);
 
-  useEffect(() => {
-    if (!token) return;
-    fetchNotifications();
-  }, [token]);
-
-  const fetchNotifications = async () => {
-    if (!token) return;
-    try {
-      const res = await fetchWithAuth(`${API_BASE}/notifications`);
-      if (res.status === 401) {
-        router.push("/");
-        return;
-      }
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data);
-      }
-    } catch {
-      /* ignore */
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleClick = async (notif: Notification) => {
-    if (!notif.isRead && token) {
-      try {
-        await fetchWithAuth(`${API_BASE}/notifications/${notif.id}/read`, { method: "PATCH" });
-        setNotifications((prev) => prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n)));
-      } catch {
-        /* ignore */
-      }
+    if (!notif.isRead) {
+      await markAsRead(notif.id);
     }
     if ((notif.type === "LIKE" || notif.type === "REPLY" || notif.type === "MENTION" || notif.type === "REPOST") && notif.postId) {
       router.push(`/post/${notif.postId}`);
@@ -63,17 +32,13 @@ export default function NotificationsPage() {
   };
 
   const handleMarkAllRead = async () => {
-    if (!token) return;
     try {
-      await fetchWithAuth(`${API_BASE}/notifications/read-all`, { method: "PATCH" });
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      await markAllAsRead();
       showToast("すべて既読にしました");
     } catch {
       showToast("既読処理に失敗しました", "error");
     }
   };
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <div className="min-h-screen pb-14" style={{ background: "#0d1009", color: "#ddd6c8" }}>
@@ -95,11 +60,7 @@ export default function NotificationsPage() {
           {unreadCount === 0 && <div className="w-20" />}
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <p className="text-sm" style={{ color: "#6b7a66" }}>読み込み中...</p>
-          </div>
-        ) : notifications.length === 0 ? (
+        {notifications.length === 0 ? (
           <div className="px-4 py-16 text-center">
             <svg className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="#2a3828" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
             <p className="mt-3 text-sm" style={{ color: "#9a8e7a" }}>通知はまだありません</p>
