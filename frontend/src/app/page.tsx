@@ -1302,13 +1302,13 @@ function HomeContent() {
                           const posLabel = posKey === "UTG1" ? "UTG+1" : posKey === "UTG2" ? "UTG+2" : posKey === "MP1" ? "MP+1" : posKey === "MP2" ? "MP+2" : posKey;
                           const aCfg = A_CLR[action.actionType] ?? A_CLR.CALL;
                           return (
-                            <div key={actionIndex} className="flex items-center gap-2">
+                            <div key={actionIndex} className="flex items-center gap-2 min-w-0">
                               {/* Position badge */}
                               <div className="flex-none rounded-md px-2 py-1.5 text-center text-[11px] font-bold whitespace-nowrap" style={{ minWidth: 50, background: isHeroAction ? "rgba(201,168,76,.1)" : "rgba(42,56,40,.4)", color: isHeroAction ? "#c9a84c" : "#6b7a66", border: `1px solid ${isHeroAction ? "rgba(201,168,76,.22)" : "#1f2a1e"}` }}>
                                 {posLabel}
                               </div>
                               {/* Action type select */}
-                              <div className="relative flex-1">
+                              <div className="relative" style={{ flex: (action.actionType === "BET" || action.actionType === "RAISE" || action.actionType === "ALL_IN") ? "0 0 auto" : "1 1 0%", minWidth: (action.actionType === "BET" || action.actionType === "RAISE" || action.actionType === "ALL_IN") ? 80 : undefined }}>
                                 <select
                                   className="w-full appearance-none rounded-lg pl-2.5 pr-7 py-1.5 text-xs font-semibold outline-none"
                                   style={{ background: aCfg.bg, color: aCfg.fg, border: `1px solid ${aCfg.bd}` }}
@@ -1355,14 +1355,14 @@ function HomeContent() {
                               </div>
                               {/* Amount */}
                               {(action.actionType === "BET" || action.actionType === "RAISE" || action.actionType === "CALL" || action.actionType === "ALL_IN") && (
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                   {action.actionType === "CALL" ? (
                                     <div className="rounded-lg px-2.5 py-1.5 text-xs font-semibold" style={{ background: "rgba(201,168,76,.08)", border: "1px solid rgba(201,168,76,.18)", color: "#7a6030" }}>
                                       {action.amount || "計算中..."}
                                     </div>
                                   ) : (
                                     <div className="flex items-center gap-1">
-                                      <input type="text" className="flex-1 min-w-0 rounded-lg px-2.5 py-1.5 text-xs outline-none" style={{ background: "#0d1009", border: "1px solid #1f2a1e", color: "#c9a84c" }} placeholder={action.actionType === "RAISE" ? "レイズ先" : "ベット額"} value={action.amount?.replace("bb", "") || ""} onChange={(e) => {
+                                      <input type="text" className="flex-1 min-w-0 rounded-lg px-2.5 py-1.5 text-xs outline-none" style={{ background: "#0d1009", border: "1px solid #1f2a1e", color: "#c9a84c" }} placeholder={action.actionType === "RAISE" ? "レイズ額" : "ベット額"} value={action.amount?.replace("bb", "") || ""} onChange={(e) => {
                                         const value = e.target.value.replace(/[^0-9.]/g, "");
                                         const newActions = pokerStreets[index].actions.map((a, ai) => ai === actionIndex ? { ...a, amount: value ? `${value}bb` : "" } : { ...a });
                                         const newStreets = pokerStreets.map((st, i) => i === index ? { ...st, actions: newActions } : st);
@@ -1403,9 +1403,28 @@ function HomeContent() {
               <div className="relative">
                 <select className="w-full appearance-none rounded-lg pl-3 pr-8 py-2 text-sm outline-none focus:ring-1 focus:ring-teal-500/20" style={{ background: "#131f11", border: "1px solid #253823", color: "#e8f0e6" }} value={pokerResult} onChange={(e) => setPokerResult(e.target.value)}>
                   <option value="">選択してください（任意）</option>
-                  <optgroup label="勝利"><option value="Won 10bb">Won 10bb</option><option value="Won 20bb">Won 20bb</option><option value="Won 50bb">Won 50bb</option><option value="Won 100bb">Won 100bb</option><option value="Won 200bb">Won 200bb</option><option value="Won 500bb">Won 500bb</option></optgroup>
-                  <optgroup label="敗北"><option value="Lost 10bb">Lost 10bb</option><option value="Lost 20bb">Lost 20bb</option><option value="Lost 50bb">Lost 50bb</option><option value="Lost 100bb">Lost 100bb</option><option value="Lost 200bb">Lost 200bb</option><option value="Lost 500bb">Lost 500bb</option></optgroup>
-                  <optgroup label="その他"><option value="Split pot">Split pot</option><option value="All-in">All-in</option></optgroup>
+                  {(() => {
+                    const lastStreetIdx = pokerStreets.reduce((last, st, i) => st.actions.length > 0 ? i : last, -1);
+                    const potStr = lastStreetIdx >= 0 ? calculatePotSize(lastStreetIdx) : "";
+                    const potVal = potStr ? parseFloat(potStr.replace("bb", "")) : 0;
+                    if (potVal > 0) {
+                      const potLabel = potVal % 1 === 0 ? `${potVal.toFixed(0)}bb` : `${potVal.toFixed(1)}bb`;
+                      return (
+                        <>
+                          <option value={`Won ${potLabel}`}>Won {potLabel}（ポット獲得）</option>
+                          <option value={`Lost ${potLabel}`}>Lost {potLabel}（ポット失う）</option>
+                          <option value="Split pot">Split pot（チョップ）</option>
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <option value="Won">Won</option>
+                        <option value="Lost">Lost</option>
+                        <option value="Split pot">Split pot（チョップ）</option>
+                      </>
+                    );
+                  })()}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center"><svg className="h-3 w-3" style={{ color: "#4a6b46" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg></div>
               </div>
