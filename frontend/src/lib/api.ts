@@ -1,6 +1,17 @@
 // デフォルトは docker-compose のバックエンドポートに合わせる（.env.local で上書き可）
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+/**
+ * アップロード画像のURLを返す。
+ * 画像は常にバックエンド（API_BASE）から配信される。
+ * 本番: nginx が /api/uploads/ → backend /uploads/ にプロキシ
+ * 開発: API_BASE が直接バックエンドを指す
+ */
+export function uploadsUrl(path: string): string {
+  if (path.startsWith("http")) return path;
+  return `${API_BASE}${path}`;
+}
+
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
@@ -101,6 +112,13 @@ export async function fetchWithAuth(
 
   // 401が返った場合のフォールバック（事前チェックを通り抜けたケース）
   if (res.status === 401 && localStorage.getItem("refreshToken")) {
+    // 既に直前でリフレッシュ済みなら再試行しない（無限ループ防止）
+    const currentToken = localStorage.getItem("token");
+    if (currentToken && currentToken !== token) {
+      // 別のリクエストが既にリフレッシュ済み → 新しいトークンで再試行
+      headers.set("Authorization", `Bearer ${currentToken}`);
+      return fetch(url, { ...options, headers });
+    }
     const newToken = await getRefreshedToken();
     if (newToken) {
       headers.set("Authorization", `Bearer ${newToken}`);

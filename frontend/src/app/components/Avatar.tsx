@@ -1,6 +1,6 @@
 "use client";
 
-import { API_BASE } from "../../lib/api";
+import { uploadsUrl } from "../../lib/api";
 import DefaultAvatar from "./DefaultAvatar";
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
@@ -29,11 +29,12 @@ export default function Avatar({
 }) {
   const sizeClass = sizeMap[size];
   if (avatarUrl) {
-    const src = avatarUrl.startsWith("http") ? avatarUrl : `${API_BASE}${avatarUrl}`;
+    const src = uploadsUrl(avatarUrl);
     return (
       <img
         src={src}
         alt={name}
+        loading="lazy"
         className={`${sizeClass} flex-shrink-0 rounded-full object-cover ${className}`}
         style={{ border: "1.5px solid rgba(201,168,76,0.2)", ...style }}
       />

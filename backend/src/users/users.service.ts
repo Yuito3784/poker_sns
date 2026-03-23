@@ -204,10 +204,11 @@ export class UsersService {
       select: { avatarUrl: true },
     });
 
-    // Delete old avatar file if it exists
-    if (user?.avatarUrl) {
+    // Delete old avatar file if it exists (with path traversal protection)
+    if (user?.avatarUrl && user.avatarUrl.startsWith('/uploads/avatars/')) {
       const oldPath = join(process.cwd(), user.avatarUrl);
-      if (existsSync(oldPath)) {
+      const uploadsDir = join(process.cwd(), 'uploads', 'avatars');
+      if (oldPath.startsWith(uploadsDir) && existsSync(oldPath)) {
         try {
           unlinkSync(oldPath);
         } catch {

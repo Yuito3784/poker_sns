@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { readdirSync, unlinkSync, statSync } from 'fs';
+import { join } from 'path';
 import { PrismaService } from '../prisma.service';
 import { WebhookNotifierService } from './webhook-notifier.service';
 
@@ -215,5 +217,50 @@ export class TaskAuditService {
     }
 
     return results;
+  }
+
+  /**
+   * 孤児画像のクリーンアップ（毎時実行）。
+   * uploads/posts 内のファイルで、DBに参照されていないものを削除する。
+   * アップロード後1時間以上経過したファイルのみ対象（投稿中のファイルを保護）。
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async cleanupOrphanedImages(): Promise<void> {
+    const uploadsDir = join(process.cwd(), 'uploads', 'posts');
+    try {
+      const files = readdirSync(uploadsDir);
+      if (files.length === 0) return;
+
+      const oneHourAgo = Date.now() - 60 * 60 * 1000;
+
+      // DBに存在する全画像URLを取得
+      const posts = await this.prisma.post.findMany({
+        where: { imageUrl: { not: null } },
+        select: { imageUrl: true },
+      });
+      const usedFilenames = new Set(
+        posts.map((p) => p.imageUrl!.replace('/uploads/posts/', '')),
+      );
+
+      let cleaned = 0;
+      for (const file of files) {
+        if (usedFilenames.has(file)) continue;
+        const filePath = join(uploadsDir, file);
+        try {
+          const stat = statSync(filePath);
+          if (stat.mtimeMs < oneHourAgo) {
+            unlinkSync(filePath);
+            cleaned++;
+          }
+        } catch {
+          // ファイルが既に削除されている場合は無視
+        }
+      }
+      if (cleaned > 0) {
+        this.logger.log(`Cleaned ${cleaned} orphaned image(s) from uploads/posts`);
+      }
+    } catch {
+      // uploads ディレクトリが存在しない場合は無視
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { Subject } from 'rxjs';
 import { PrismaService } from '../prisma.service';
@@ -15,13 +15,26 @@ interface SseTicket {
 }
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnModuleDestroy {
   private readonly notificationSubject = new Subject<NotificationEvent>();
   private readonly sseTickets = new Map<string, SseTicket>();
+  private readonly cleanupInterval: ReturnType<typeof setInterval>;
 
   readonly notifications$ = this.notificationSubject.asObservable();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {
+    // 10分ごとに期限切れチケットをクリーンアップ
+    this.cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      for (const [key, ticket] of this.sseTickets) {
+        if (ticket.expiresAt < now) this.sseTickets.delete(key);
+      }
+    }, 10 * 60 * 1000);
+  }
+
+  onModuleDestroy() {
+    clearInterval(this.cleanupInterval);
+  }
 
   /** Issue a short-lived, single-use ticket for SSE connection (30s TTL) */
   issueSseTicket(userId: string): string {

@@ -7,6 +7,9 @@ export class RegisterDto {
   @IsString()
   @MinLength(8, { message: 'パスワードは8文字以上で入力してください' })
   @MaxLength(100)
+  @Matches(/^(?=.*[a-zA-Z])(?=.*\d).+$/, {
+    message: 'パスワードには英字と数字の両方を含めてください',
+  })
   password: string;
 
   @IsString()

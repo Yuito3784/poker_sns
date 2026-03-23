@@ -10,13 +10,13 @@ export default function TokushohoPage() {
   const operatorName = process.env.NEXT_PUBLIC_TOKUSHOHO_OPERATOR_NAME ?? "大原 唯人";
   const address =
     process.env.NEXT_PUBLIC_TOKUSHOHO_ADDRESS ??
-    "（Stripe の審査通過のため、事業者住所を記載してください）";
+    "〒107-0062 東京都港区南青山3丁目1番36号青山丸竹ビル6F";
   const phone =
     process.env.NEXT_PUBLIC_TOKUSHOHO_PHONE ??
-    "（Stripe の審査通過のため、サポート用の電話番号を記載してください）";
+    "050-1724-9110";
   const contactHours = process.env.NEXT_PUBLIC_TOKUSHOHO_CONTACT_HOURS ?? "平日 10:00〜18:00";
   const supportEmail = process.env.NEXT_PUBLIC_TOKUSHOHO_SUPPORT_EMAIL ?? "support@pokersns.com";
-  const salesUrl = process.env.NEXT_PUBLIC_TOKUSHOHO_SALES_URL ?? "https://poker-sns.vercel.app/lp";
+  const salesUrl = process.env.NEXT_PUBLIC_TOKUSHOHO_SALES_URL ?? "https://www.pokersns.com/lp";
 
   return (
     <div className="min-h-screen bg-[#0d1009] text-[#ddd6c8]">
@@ -125,7 +125,7 @@ export default function TokushohoPage() {
         </div>
 
         <p className="mt-12 text-xs text-[#4a5245]">
-          最終更新日: 2026年3月16日
+          最終更新日: 2026年3月23日
         </p>
       </div>
     </div>

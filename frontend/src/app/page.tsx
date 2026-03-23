@@ -74,6 +74,7 @@ function HomeContent() {
   const timelineTabRef = useRef<"all" | "premium">("all");
   const [isPremiumOnlyPost, setIsPremiumOnlyPost] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Poker hand form state
   const [pokerTableType, setPokerTableType] = useState<"CASH" | "MTT" | "SNG" | "ZOOM">("CASH");
@@ -907,7 +908,7 @@ function HomeContent() {
 
   const handleCreatePost = async (e: FormEvent) => {
     e.preventDefault();
-    if (!token) return;
+    if (!token || isSubmitting) return;
     const hasPokerHand = showPokerForm && pokerBlinds && pokerTableSize && pokerHeroStack;
     if (hasPokerHand && imageFile) {
       setError("画像とハンドは同時に投稿できません。どちらか一方を選んでください。");
@@ -915,6 +916,7 @@ function HomeContent() {
     }
     if (!content.trim() && !hasPokerHand && !imageFile) return;
     setError(null);
+    setIsSubmitting(true);
 
     if (hasPokerHand) {
       const streetsWithActions = pokerStreets.filter((s, idx) => {
@@ -922,7 +924,7 @@ function HomeContent() {
         return (s.actions.length > 0 || (s.boardCards && s.boardCards.trim())) && (canEditStreet(idx) || areAllPlayersAllIn(idx - 1));
       });
       const validationError = validatePokerHand();
-      if (validationError) { setError(validationError); return; }
+      if (validationError) { setError(validationError); setIsSubmitting(false); return; }
       try {
         const streetOrder = ["PREFLOP", "FLOP", "TURN", "RIVER"] as const;
         const res = await fetchWithAuth(`${API_BASE}/posts/poker-hand`, {
@@ -952,20 +954,26 @@ function HomeContent() {
             }),
           }),
         });
-  
+
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           throw new Error(userMessageFromApiBody(data, "投稿に失敗しました"));
         }
+        const newPost: Post = await res.json();
+        // 楽観的にリストの先頭に追加（タイムライン再取得を待たない）
+        setPosts((prev) => [{ ...newPost, isLiked: false, isReposted: false, isBookmarked: false, isFollowingAuthor: false, _count: { likes: 0, replies: 0, reposts: 0 } }, ...prev]);
         setContent("");
         resetPokerForm();
         setIsPremiumOnlyPost(false);
         setShowComposeModal(false);
         showToast("投稿しました");
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
-        await fetchTimeline(undefined, false, timelineTab === "premium");
+        // バックグラウンドでタイムラインを更新（UIはブロックしない）
+        fetchTimeline(undefined, false, timelineTab === "premium");
       } catch (err: unknown) {
         setError(formatClientSideError(err, "エラーが発生しました"));
+      } finally {
+        setIsSubmitting(false);
       }
     } else {
       try {
@@ -986,11 +994,14 @@ function HomeContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content, ...(imageUrl && { imageUrl }), ...(quotePostId && { parentPostId: quotePostId }), ...(isPremiumOnlyPost && { isPremiumOnly: true }) }),
         });
-  
+
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           throw new Error(userMessageFromApiBody(data, "投稿に失敗しました"));
         }
+        const newPost: Post = await res.json();
+        // 楽観的にリストの先頭に追加（タイムライン再取得を待たない）
+        setPosts((prev) => [{ ...newPost, isLiked: false, isReposted: false, isBookmarked: false, isFollowingAuthor: false, _count: { likes: 0, replies: 0, reposts: 0 } }, ...prev]);
         setContent("");
         setImageFile(null);
         setImagePreview(null);
@@ -998,11 +1009,14 @@ function HomeContent() {
         setShowComposeModal(false);
         showToast("投稿しました");
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
-        await fetchTimeline(undefined, false, timelineTab === "premium");
+        // バックグラウンドでタイムラインを更新（UIはブロックしない）
+        fetchTimeline(undefined, false, timelineTab === "premium");
       } catch (err: unknown) {
         const message = formatClientSideError(err, "エラーが発生しました");
         setError(message);
         showToast(message, "error");
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -1476,9 +1490,9 @@ function HomeContent() {
                 type="submit"
                 className="whitespace-nowrap rounded px-5 py-2 text-sm font-semibold transition-colors disabled:opacity-40"
                 style={{ background: "#c9a84c", color: "#0d1009" }}
-                disabled={!canSubmit || content.length > charLimit}
+                disabled={!canSubmit || content.length > charLimit || isSubmitting}
               >
-                投稿する
+                {isSubmitting ? "投稿中..." : "投稿する"}
               </button>
             </div>
           </div>

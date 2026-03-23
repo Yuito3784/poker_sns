@@ -6,7 +6,7 @@ import Avatar from "../../components/Avatar";
 import PokerHandDisplay from "../../components/PokerHandDisplay";
 import PremiumBadge from "../../components/PremiumBadge";
 import YouTubeEmbed from "../../components/YouTubeEmbed";
-import { API_BASE, fetchWithAuth } from "../../../lib/api";
+import { API_BASE, fetchWithAuth, uploadsUrl } from "../../../lib/api";
 import { formatRelativeTime } from "../../../lib/utils";
 import { extractYouTubeId } from "../../../lib/youtube";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -316,8 +316,9 @@ export default function PostDetailClient() {
           {post.imageUrl && (
             <div className="mt-3">
               <img
-                src={`${API_BASE}${post.imageUrl}`}
-                alt="投稿画像"
+                src={uploadsUrl(post.imageUrl)}
+                alt={post.content ? `${post.author.name}の投稿画像` : "投稿画像"}
+                loading="lazy"
                 className="max-h-96 rounded-xl border border-[#1f2a1e] object-cover"
                 onError={(e) => {
                   const target = e.currentTarget;

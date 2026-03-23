@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class LoginDto {
   @IsEmail({}, { message: '有効なメールアドレスを入力してください' })
@@ -6,5 +6,6 @@ export class LoginDto {
 
   @IsString()
   @MinLength(1, { message: 'パスワードを入力してください' })
+  @MaxLength(128)
   password: string;
 }
