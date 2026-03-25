@@ -17,10 +17,10 @@ const rankRows: string[][] = [
   ["7", "6", "5", "4", "3", "2"],
 ];
 const suits = [
-  { value: "s", symbol: "♠", color: "#6a7a68", bg: "rgba(106,122,104,.1)",  name: "Spades"   },
-  { value: "h", symbol: "♥", color: "#b84040", bg: "rgba(184,64,64,.1)",    name: "Hearts"   },
-  { value: "d", symbol: "♦", color: "#3d6ba0", bg: "rgba(61,107,160,.1)",   name: "Diamonds" },
-  { value: "c", symbol: "♣", color: "#3a8060", bg: "rgba(58,128,96,.1)",    name: "Clubs"    },
+  { value: "s", symbol: "♠", color: "#8a8e92", cardBg: "#6b7178", bg: "rgba(106,122,104,.1)",  name: "Spades"   },
+  { value: "h", symbol: "♥", color: "#d47040", cardBg: "#c4613a", bg: "rgba(184,64,64,.1)",    name: "Hearts"   },
+  { value: "d", symbol: "♦", color: "#4a7bb5", cardBg: "#4272a8", bg: "rgba(61,107,160,.1)",   name: "Diamonds" },
+  { value: "c", symbol: "♣", color: "#4a9b6e", cardBg: "#3e8c5e", bg: "rgba(58,128,96,.1)",    name: "Clubs"    },
 ];
 
 function MiniCard({ card }: { card: string }) {
@@ -30,17 +30,16 @@ function MiniCard({ card }: { card: string }) {
   return (
     <div style={{
       width: 34, height: 48,
-      background: "#f5f2ec",
+      background: suit.cardBg,
       borderRadius: 5,
-      border: `1.5px solid ${suit.color}28`,
-      boxShadow: "0 2px 6px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.95)",
-      position: "relative",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      color: suit.color, fontWeight: 800, userSelect: "none", flexShrink: 0,
+      border: "none",
+      boxShadow: "0 2px 6px rgba(0,0,0,.45)",
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      gap: 1,
+      color: "#fff", fontWeight: 800, userSelect: "none", flexShrink: 0,
     }}>
-      <div style={{ position:"absolute", top:2, left:3, fontSize:9, lineHeight:1.05 }}>{rank}</div>
-      <span style={{ fontSize:18, lineHeight:1 }}>{suit.symbol}</span>
-      <div style={{ position:"absolute", bottom:2, right:3, fontSize:9, lineHeight:1.05, transform:"rotate(180deg)" }}>{rank}</div>
+      <span style={{ fontSize: 16, lineHeight: 1, fontWeight: 800 }}>{rank}</span>
+      <span style={{ fontSize: 16, lineHeight: 1 }}>{suit.symbol}</span>
     </div>
   );
 }
@@ -257,14 +256,14 @@ export default function CardSelector({
                                 fontWeight: 800, fontSize: 11,
                                 transition: "all .1s",
                                 cursor: isDis ? "not-allowed" : "pointer",
-                                color: isDis ? "#2a3828" : isSel ? "#0d1009" : suit.color,
-                                background: isDis ? "#0d1009" : isSel ? suit.color : "rgba(255,255,255,.025)",
+                                color: isDis ? "#2a3828" : isSel ? "#fff" : suit.color,
+                                background: isDis ? "#0d1009" : isSel ? suit.cardBg : "rgba(255,255,255,.025)",
                                 border: isDis
                                   ? "1.5px solid #1f2a1e"
                                   : isSel
-                                  ? `1.5px solid ${suit.color}`
+                                  ? `1.5px solid ${suit.cardBg}`
                                   : "1.5px solid #1f2a1e",
-                                boxShadow: isSel ? `0 2px 6px ${suit.color}30` : "none",
+                                boxShadow: isSel ? `0 2px 6px ${suit.cardBg}30` : "none",
                                 transform: isSel ? "scale(1.04)" : "scale(1)",
                               }}
                             >
