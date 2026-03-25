@@ -19,7 +19,6 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends libssl3 ca-c
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
 RUN npm ci --omit=dev
-# Prisma CLI を 5.x で入れておく（migrate deploy 用。devDependency なので ci --omit=dev では入らない）
 RUN npm install prisma@5.22.0 --no-save --ignore-scripts
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -30,6 +29,5 @@ COPY --from=builder /app/scripts ./scripts
 RUN mkdir -p uploads/avatars uploads/posts
 
 EXPOSE 3001
-# 起動前に未適用のマイグレーションを適用（DB更新のたびに手動で打たなくてよい）
-# Prisma 5.x を明示（npx が 7.x を取らないように。7 は schema の url を廃止している）
-CMD ["sh", "-c", "npx prisma@5.22.0 migrate deploy && node dist/src/main.js"]
+# API起動を最優先し、migrateは必要時に手動実行する
+CMD ["node", "dist/src/main.js"]
