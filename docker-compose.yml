@@ -66,6 +66,14 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
       TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:-}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
+      X_AUTOPOST_CLIENT_ID: ${X_AUTOPOST_CLIENT_ID:-}
+      X_AUTOPOST_CLIENT_SECRET: ${X_AUTOPOST_CLIENT_SECRET:-}
+      X_OAUTH1_CONSUMER_KEY: ${X_OAUTH1_CONSUMER_KEY:-}
+      X_OAUTH1_CONSUMER_SECRET: ${X_OAUTH1_CONSUMER_SECRET:-}
+      X_OAUTH1_ACCESS_TOKEN: ${X_OAUTH1_ACCESS_TOKEN:-}
+      X_OAUTH1_ACCESS_SECRET: ${X_OAUTH1_ACCESS_SECRET:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - uploads:/app/uploads
     ports:
@@ -78,6 +86,8 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost}
+    environment:
+      INTERNAL_API_URL: http://backend:3001
     restart: unless-stopped
     depends_on:
       - backend
