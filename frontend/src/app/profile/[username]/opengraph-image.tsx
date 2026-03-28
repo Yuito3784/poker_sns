@@ -5,7 +5,7 @@ export const alt = "Poker SNS - プロフィール";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_BASE = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 async function loadFont() {
   const res = await fetch(
