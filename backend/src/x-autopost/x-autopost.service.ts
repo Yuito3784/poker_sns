@@ -75,11 +75,11 @@ export class XAutopostService {
       expiresAt: Date.now() + 10 * 60 * 1000,
     });
 
-    const apiUrl = process.env.API_URL || 'http://localhost:3001';
+    const callbackBase = process.env.X_AUTOPOST_CALLBACK_BASE || process.env.API_URL || 'http://localhost:3001';
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: this.clientId,
-      redirect_uri: `${apiUrl}/x-autopost/auth/callback`,
+      redirect_uri: `${callbackBase}/x-autopost/auth/callback`,
       scope: 'tweet.read tweet.write users.read offline.access',
       state,
       code_challenge: codeChallenge,
@@ -97,7 +97,7 @@ export class XAutopostService {
     }
     this.pkceStore.delete(state);
 
-    const apiUrl = process.env.API_URL || 'http://localhost:3001';
+    const callbackBase = process.env.X_AUTOPOST_CALLBACK_BASE || process.env.API_URL || 'http://localhost:3001';
     const credentials = Buffer.from(
       `${this.clientId}:${this.clientSecret}`,
     ).toString('base64');
@@ -111,7 +111,7 @@ export class XAutopostService {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: `${apiUrl}/x-autopost/auth/callback`,
+        redirect_uri: `${callbackBase}/x-autopost/auth/callback`,
         code_verifier: stored.codeVerifier,
       }).toString(),
     });
