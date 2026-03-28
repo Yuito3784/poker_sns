@@ -294,7 +294,7 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
       </div>
 
       {/* ── Table ── */}
-      <div style={{ position:"relative", width:"100%", aspectRatio:"8/5", overflow:"hidden" }}>
+      <div style={{ position:"relative", width:"100%", aspectRatio:"8/5.5", overflow:"visible" }}>
         {/* Rail */}
         <div style={{
           position:"absolute", top:"8%", left:"10%", width:"80%", height:"84%",
@@ -399,16 +399,29 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
               </div>
 
               {pi.cards.length > 0 && (
-                <div style={{ display:"flex", gap:2, marginBottom: isHero ? 2 : 0 }}>
+                <div style={{ display:"flex", gap:2, marginBottom: isHero ? 2 : 0, position:"relative" }}>
                   {pi.cards.map((c,i) => <Card key={i} card={c} size={isMobile ? "xs" : "sm"} />)}
+                  {isHero && (
+                    <span style={{
+                      position:"absolute", left:"100%", top:"50%", transform:"translateY(-50%)",
+                      marginLeft:5,
+                      fontSize:8, fontWeight:700, color:"#c9a84c",
+                      background:"rgba(0,0,0,.6)", padding:"2px 6px", borderRadius:3, letterSpacing:.3,
+                      whiteSpace:"nowrap",
+                    }}>
+                      100bb
+                    </span>
+                  )}
                 </div>
               )}
-              <span style={{
-                fontSize:7, color: isHero ? "rgba(201,168,76,.55)" : "rgba(255,255,255,.22)",
-                background:"rgba(0,0,0,.38)", padding:"1px 5px", borderRadius:3, letterSpacing:.2,
-              }}>
-                100bb
-              </span>
+              {!isHero && (
+                <span style={{
+                  fontSize:7, fontWeight:600, color:"rgba(221,214,200,.55)",
+                  background:"rgba(0,0,0,.5)", padding:"1px 5px", borderRadius:3, letterSpacing:.2,
+                }}>
+                  100bb
+                </span>
+              )}
             </div>
           );
         })}
