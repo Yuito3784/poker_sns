@@ -676,3 +676,16 @@ model CreatorPayout {
 
   @@index([creatorId, status])
 }
+
+// --- X Auto-Post ---
+
+model XAutoPostToken {
+  id           String   @id @default(uuid())
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  xUserId      String?
+  xUsername     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

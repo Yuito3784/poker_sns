@@ -1,32 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Playfair_Display, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Providers from "./components/Providers";
 import AppShell from "./components/AppShell";
 import GoogleAnalytics from "./components/GoogleAnalytics";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  weight: ["400", "600", "700"],
-  subsets: ["latin"],
-});
-
-const notoSansJP = Noto_Sans_JP({
-  variable: "--font-noto-sans-jp",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -63,6 +40,12 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+          rel="stylesheet"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -84,9 +67,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${notoSansJP.variable} antialiased`}
-      >
+      <body className="antialiased">
         <GoogleAnalytics />
         <ErrorBoundary>
           <Providers><AppShell>{children}</AppShell></Providers>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useRef, useCallback, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "./Avatar";
 import PokerHandDisplay from "./PokerHandDisplay";
@@ -12,6 +12,7 @@ import { analytics } from "../../lib/analytics";
 import { useToast } from "../../contexts/ToastContext";
 import { extractYouTubeId } from "../../lib/youtube";
 import type { Post, User } from "../../lib/types";
+import { isPremium } from "../../lib/subscription";
 
 function renderContentWithHashtags(content: string): ReactNode[] {
   const parts = content.split(/(#[a-zA-Z0-9_\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]+)/g);
@@ -74,6 +75,29 @@ export default function PostItem({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const handRef = useRef<HTMLDivElement>(null);
+  const userIsPremium = isPremium(currentUser?.subscriptionStatus);
+
+  const handleDownloadHand = useCallback(async () => {
+    if (!handRef.current || !userIsPremium) return;
+    setDownloading(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(handRef.current, {
+        backgroundColor: "#0b1209",
+        pixelRatio: 2,
+      });
+      const link = document.createElement("a");
+      link.download = `poker-hand-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch {
+      // silently fail
+    } finally {
+      setDownloading(false);
+    }
+  }, [userIsPremium]);
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on interactive elements
@@ -215,7 +239,7 @@ export default function PostItem({
                   {renderContentWithHashtags(post.content)}
                 </p>
               )}
-              {post.pokerHand && <PokerHandDisplay hand={post.pokerHand} />}
+              {post.pokerHand && <div ref={handRef} style={{ paddingBottom: 8 }}><PokerHandDisplay hand={post.pokerHand} /></div>}
             </>
           ) : (
             <p className="whitespace-pre-wrap text-[15px] leading-relaxed" style={{ color: "#ddd6c8" }}>
@@ -429,6 +453,36 @@ export default function PostItem({
             </>
           )}
         </div>
+
+        {/* Download hand image (Pro + poker hand only) */}
+        {post.isPokerHand && post.pokerHand && (
+          userIsPremium ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDownloadHand(); }}
+              disabled={downloading}
+              className="group rounded px-2 py-1.5 transition-colors hover:text-[#c9a84c]"
+              style={{ color: "#6b7a66", opacity: downloading ? 0.5 : 1 }}
+              aria-label="画像をダウンロード"
+              title="画像をダウンロード"
+            >
+              <svg className="h-[17px] w-[17px] transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+            </button>
+          ) : (
+            <a
+              href="/settings#subscription"
+              onClick={(e) => e.stopPropagation()}
+              className="group rounded px-2 py-1.5 transition-colors"
+              style={{ color: "#4a5245" }}
+              title="Proプランで画像ダウンロード"
+            >
+              <svg className="h-[17px] w-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </a>
+          )
+        )}
       </div>
 
       {/* Reply form */}

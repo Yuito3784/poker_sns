@@ -53,6 +53,12 @@ function SettingsContent() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // X Autopost (admin only)
+  const [xStatus, setXStatus] = useState<{ connected: boolean; username: string | null; configured: boolean } | null>(null);
+  const [xLoading, setXLoading] = useState(false);
+  const [xMsg, setXMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     if (isInitialized && !auth) {
       router.push("/");
@@ -128,6 +134,64 @@ function SettingsContent() {
       if (pollTimer) clearInterval(pollTimer);
     };
   }, [searchParams]);
+
+  // X Autopost status check (admin only — 403 means not admin)
+  useEffect(() => {
+    if (!token) return;
+    const xAutopost = searchParams.get("x_autopost");
+    if (xAutopost === "connected") {
+      const username = searchParams.get("username");
+      setXMsg({ type: "success", text: `X連携完了: @${username || ""}` });
+    } else if (xAutopost === "error") {
+      setXMsg({ type: "error", text: searchParams.get("message") || "X連携に失敗しました" });
+    }
+    fetchWithAuth(`${API_BASE}/x-autopost/status`)
+      .then(async (res) => {
+        if (res.status === 403) return; // not admin
+        if (res.ok) {
+          setIsAdmin(true);
+          setXStatus(await res.json());
+        }
+      })
+      .catch(() => {});
+  }, [token]);
+
+  const handleXConnect = async () => {
+    setXLoading(true);
+    setXMsg(null);
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/x-autopost/auth`);
+      if (!res.ok) { setXMsg({ type: "error", text: await parseApiError(res) }); return; }
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch { setXMsg({ type: "error", text: "接続に失敗しました" }); }
+    finally { setXLoading(false); }
+  };
+
+  const handleXDisconnect = async () => {
+    setXLoading(true);
+    setXMsg(null);
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/x-autopost/disconnect`, { method: "DELETE" });
+      if (!res.ok) { setXMsg({ type: "error", text: await parseApiError(res) }); return; }
+      setXStatus({ connected: false, username: null, configured: xStatus?.configured ?? false });
+      setXMsg({ type: "success", text: "X連携を解除しました" });
+    } catch { setXMsg({ type: "error", text: "接続に失敗しました" }); }
+    finally { setXLoading(false); }
+  };
+
+  const handleXPostNow = async () => {
+    setXLoading(true);
+    setXMsg(null);
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/x-autopost/post-now`, { method: "POST" });
+      if (!res.ok) { setXMsg({ type: "error", text: await parseApiError(res) }); return; }
+      const data = await res.json();
+      const imgLabel = data.hasImage ? " (画像付き)" : " (テキストのみ)";
+      setXMsg({ type: "success", text: `投稿完了${imgLabel}: ${data.text?.slice(0, 80)}...` });
+    } catch { setXMsg({ type: "error", text: "投稿に失敗しました。ネットワーク接続を確認してください" }); }
+    finally { setXLoading(false); }
+  };
 
   const fetchSubStatus = async (): Promise<SubStatus | null> => {
     setSubFetchError(null);
@@ -456,6 +520,72 @@ function SettingsContent() {
             </div>
           ) : null}
         </div>
+
+        {/* X Autopost (admin only) */}
+        {isAdmin && (
+          <div className="px-4 py-6" style={{ borderBottom: "1px solid #1f2a1e" }}>
+            <div className="mb-5 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "#192118" }}>
+                <svg className="h-4 w-4" style={{ color: "#c9a84c" }} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+              </div>
+              <h2 className="text-sm font-semibold" style={{ color: "#ddd6c8" }}>X 自動投稿</h2>
+            </div>
+            {xMsg && (
+              <div className="mb-4 rounded-lg px-3 py-2 text-sm" style={{
+                background: xMsg.type === "success" ? "rgba(76,175,80,0.1)" : "rgba(201,168,76,0.1)",
+                border: `1px solid ${xMsg.type === "success" ? "rgba(76,175,80,0.3)" : "rgba(201,168,76,0.3)"}`,
+                color: xMsg.type === "success" ? "#81c784" : "#c9a84c",
+              }}>
+                {xMsg.text}
+              </div>
+            )}
+            {!xStatus?.configured ? (
+              <p className="text-sm" style={{ color: "#6b7a66" }}>
+                X自動投稿が未設定です。環境変数 X_AUTOPOST_CLIENT_ID / X_AUTOPOST_CLIENT_SECRET を設定してください。
+              </p>
+            ) : xStatus.connected ? (
+              <div>
+                <div className="mb-4 flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: "rgba(76,175,80,0.08)", border: "1px solid rgba(76,175,80,0.25)" }}>
+                  <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ background: "rgba(76,175,80,0.2)", color: "#81c784" }}>接続中</span>
+                  <span className="text-sm" style={{ color: "#81c784" }}>@{xStatus.username}</span>
+                </div>
+                <p className="mb-4 text-xs" style={{ color: "#6b7a66" }}>毎日 21:00 (JST) にAI生成ツイートが自動投稿されます</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleXPostNow}
+                    disabled={xLoading}
+                    className="rounded px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                    style={{ background: "#c9a84c", color: "#0d1009" }}
+                  >
+                    {xLoading ? "投稿中..." : "今すぐ投稿"}
+                  </button>
+                  <button
+                    onClick={handleXDisconnect}
+                    disabled={xLoading}
+                    className="rounded px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                    style={{ border: "1px solid rgba(224,80,80,0.3)", color: "#e05050" }}
+                  >
+                    連携解除
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="mb-4 text-sm" style={{ color: "#9a8e7a" }}>
+                  Xアカウントを連携すると、毎日自動でプロモーションツイートが投稿されます。
+                </p>
+                <button
+                  onClick={handleXConnect}
+                  disabled={xLoading}
+                  className="rounded px-5 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
+                  style={{ background: "#c9a84c", color: "#0d1009" }}
+                >
+                  {xLoading ? "接続中..." : "Xアカウントを連携"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Security & Privacy */}
         <div className="px-4 py-6" style={{ borderBottom: "1px solid #1f2a1e" }}>

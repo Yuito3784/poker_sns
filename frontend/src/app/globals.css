@@ -2,6 +2,10 @@
 
 /* The Felt Table — Dark Luxury Poker Design System */
 :root {
+  --font-noto-sans-jp: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  --font-geist-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-playfair: Georgia, "Times New Roman", serif;
   --background: #0d1009;
   --foreground: #ddd6c8;
   --muted: #9a8e7a;

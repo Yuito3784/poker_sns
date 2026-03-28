@@ -609,6 +609,10 @@ function HomeContent() {
 
   const handleAuthSuccess = (newToken: string, user: User) => {
     setAuth(newToken, user);
+    const returnTo = searchParams.get("returnTo");
+    if (returnTo && returnTo.startsWith("/")) {
+      router.push(returnTo);
+    }
   };
 
   // OAuth コールバック処理 (?oauthSession=xxx)

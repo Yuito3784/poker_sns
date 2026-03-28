@@ -14,12 +14,16 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
 
-# Prisma の debian-openssl-3.0.x エンジンが libssl.so.3 を必要とするためインストール
-RUN apt-get update -y && apt-get install -y --no-install-recommends libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
+# Prisma + Chromium (puppeteer用)
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    libssl3 ca-certificates \
+    chromium fonts-noto-cjk \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
 RUN npm ci --omit=dev
-# Prisma CLI を 5.x で入れておく（migrate deploy 用。devDependency なので ci --omit=dev では入らない）
 RUN npm install prisma@5.22.0 --no-save --ignore-scripts
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -30,6 +34,5 @@ COPY --from=builder /app/scripts ./scripts
 RUN mkdir -p uploads/avatars uploads/posts
 
 EXPOSE 3001
-# 起動前に未適用のマイグレーションを適用（DB更新のたびに手動で打たなくてよい）
-# Prisma 5.x を明示（npx が 7.x を取らないように。7 は schema の url を廃止している）
-CMD ["sh", "-c", "npx prisma@5.22.0 migrate deploy && node dist/src/main.js"]
+# API起動を最優先し、migrateは必要時に手動実行する
+CMD ["node", "dist/src/main.js"]

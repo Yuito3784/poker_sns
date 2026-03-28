@@ -43,11 +43,11 @@ export type PokerHand = {
   streets: PokerStreet[];
 };
 
-const SUIT: Record<string, { sym: string; color: string }> = {
-  s: { sym: "♠", color: "#6a7a68" },
-  h: { sym: "♥", color: "#b84040" },
-  d: { sym: "♦", color: "#3d6ba0" },
-  c: { sym: "♣", color: "#3a8060" },
+const SUIT: Record<string, { sym: string; color: string; bg: string }> = {
+  s: { sym: "♠", color: "#8a8e92", bg: "#6b7178" },
+  h: { sym: "♥", color: "#d47040", bg: "#c4613a" },
+  d: { sym: "♦", color: "#4a7bb5", bg: "#4272a8" },
+  c: { sym: "♣", color: "#4a9b6e", bg: "#3e8c5e" },
 };
 
 const ACTION: Record<string, { label: string; bg: string; fg: string; bd: string }> = {
@@ -73,33 +73,37 @@ function formatResultLabel(result: string | null | undefined): { text: string; t
 function Card({ card, size = "md" }: { card: string; size?: "xs" | "sm" | "md" | "lg" }) {
   const suit = card.slice(-1);
   const rank = card.slice(0, -1);
-  const cfg = SUIT[suit] ?? { sym: "?", color: "#888" };
+  const cfg = SUIT[suit] ?? { sym: "?", color: "#888", bg: "#666" };
   const d = {
-    xs: { w: 20, h: 28, pip: 7,  ctr: 12 },
-    sm: { w: 26, h: 36, pip: 8,  ctr: 15 },
-    md: { w: 36, h: 50, pip: 10, ctr: 21 },
-    lg: { w: 48, h: 66, pip: 12, ctr: 27 },
+    xs: { w: 20, h: 28, rank: 10, sym: 10, gap: 0 },
+    sm: { w: 26, h: 36, rank: 12, sym: 13, gap: 0 },
+    md: { w: 36, h: 50, rank: 16, sym: 18, gap: 1 },
+    lg: { w: 48, h: 66, rank: 20, sym: 24, gap: 2 },
   }[size];
   return (
     <div style={{
-      width: d.w, height: d.h, background: "#f5f2ec",
-      borderRadius: 4, border: `1.5px solid ${cfg.color}28`,
-      boxShadow: "0 2px 8px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.9)",
-      position: "relative", display: "flex", alignItems: "center",
-      justifyContent: "center", color: cfg.color, userSelect: "none", flexShrink: 0,
+      width: d.w, height: d.h, background: cfg.bg,
+      borderRadius: 5, border: "none",
+      boxShadow: "0 2px 8px rgba(0,0,0,.45)",
+      display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", gap: d.gap,
+      color: "#fff", userSelect: "none", flexShrink: 0,
     }}>
-      <div style={{ position:"absolute", top:1.5, left:2.5, fontSize: d.pip, lineHeight:1.05, fontWeight:800 }}>{rank}</div>
-      <span style={{ fontSize: d.ctr, lineHeight: 1, fontWeight: 700 }}>{cfg.sym}</span>
-      <div style={{ position:"absolute", bottom:1.5, right:2.5, fontSize: d.pip, lineHeight:1.05, fontWeight:800, transform:"rotate(180deg)" }}>{rank}</div>
+      <span style={{ fontSize: d.rank, lineHeight: 1, fontWeight: 800 }}>{rank}</span>
+      <span style={{ fontSize: d.sym, lineHeight: 1 }}>{cfg.sym}</span>
     </div>
   );
 }
 
 // ── Suit-colored inline text card ────────────────────────────────
 function Pip({ card, bright = false }: { card: string; bright?: boolean }) {
-  const cfg = SUIT[card.slice(-1)] ?? { sym: "?", color: "#888" };
+  const cfg = SUIT[card.slice(-1)] ?? { sym: "?", color: "#888", bg: "#666" };
   return (
-    <span style={{ fontSize: 9, fontWeight: 800, color: bright ? "#c9a84c" : cfg.color, letterSpacing: -0.2 }}>
+    <span style={{
+      fontSize: 9, fontWeight: 800, letterSpacing: -0.2,
+      color: "#fff", background: bright ? "rgba(201,168,76,.8)" : cfg.bg,
+      padding: "1px 4px", borderRadius: 3,
+    }}>
       {card.slice(0, -1)}{cfg.sym}
     </span>
   );
@@ -290,7 +294,7 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
       </div>
 
       {/* ── Table ── */}
-      <div style={{ position:"relative", width:"100%", aspectRatio:"8/5", overflow:"hidden" }}>
+      <div style={{ position:"relative", width:"100%", aspectRatio:"8/5.5", overflow:"visible" }}>
         {/* Rail */}
         <div style={{
           position:"absolute", top:"8%", left:"10%", width:"80%", height:"84%",
@@ -395,16 +399,29 @@ export default function PokerHandDisplay({ hand }: { hand: PokerHand }) {
               </div>
 
               {pi.cards.length > 0 && (
-                <div style={{ display:"flex", gap:2, marginBottom: isHero ? 2 : 0 }}>
+                <div style={{ display:"flex", gap:2, marginBottom: isHero ? 2 : 0, position:"relative" }}>
                   {pi.cards.map((c,i) => <Card key={i} card={c} size={isMobile ? "xs" : "sm"} />)}
+                  {isHero && (
+                    <span style={{
+                      position:"absolute", left:"100%", top:"50%", transform:"translateY(-50%)",
+                      marginLeft:5,
+                      fontSize:8, fontWeight:700, color:"#c9a84c",
+                      background:"rgba(0,0,0,.6)", padding:"2px 6px", borderRadius:3, letterSpacing:.3,
+                      whiteSpace:"nowrap",
+                    }}>
+                      100bb
+                    </span>
+                  )}
                 </div>
               )}
-              <span style={{
-                fontSize:7, color: isHero ? "rgba(201,168,76,.55)" : "rgba(255,255,255,.22)",
-                background:"rgba(0,0,0,.38)", padding:"1px 5px", borderRadius:3, letterSpacing:.2,
-              }}>
-                100bb
-              </span>
+              {!isHero && (
+                <span style={{
+                  fontSize:7, fontWeight:600, color:"rgba(221,214,200,.55)",
+                  background:"rgba(0,0,0,.5)", padding:"1px 5px", borderRadius:3, letterSpacing:.2,
+                }}>
+                  100bb
+                </span>
+              )}
             </div>
           );
         })}
