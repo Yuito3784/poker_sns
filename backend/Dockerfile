@@ -14,8 +14,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
 
-# Prisma の debian-openssl-3.0.x エンジンが libssl.so.3 を必要とするためインストール
-RUN apt-get update -y && apt-get install -y --no-install-recommends libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
+# Prisma + Chromium (puppeteer用)
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    libssl3 ca-certificates \
+    chromium fonts-noto-cjk \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
 RUN npm ci --omit=dev
