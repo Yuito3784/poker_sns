@@ -31,6 +31,11 @@ Thumbs.db
 !.cursor/skills/
 !.cursor/skills/**
 
+# ローカル専用（エージェント / スキル同期。リポジトリには含めない）
+.agents/
+skills/
+skills-lock.json
+
 # Uploads (user-generated content)
 backend/uploads/avatars/*
 backend/uploads/posts/*
