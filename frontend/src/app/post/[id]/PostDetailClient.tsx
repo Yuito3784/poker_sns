@@ -52,26 +52,38 @@ export default function PostDetailClient() {
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!isInitialized || !postId) return;
+    if (!isInitialized) return;
+    if (!auth) {
+      router.replace(`/?returnTo=/post/${postId}`);
+      return;
+    }
+    if (!postId) return;
     fetchPost();
     fetchReplies();
-  }, [isInitialized, postId]);
+  }, [isInitialized, auth, postId]);
 
   const fetchPost = async () => {
     try {
       const fetchFn = auth ? fetchWithAuth : fetch;
       const res = await fetchFn(`${API_BASE}/posts/${postId}`);
       if (res.status === 403) {
-        setError("この投稿はプレミアム会員限定です");
+        setError("premium");
         return;
       }
-      if (!res.ok) throw new Error("投稿の取得に失敗しました");
+      if (res.status === 404) {
+        setError("notfound");
+        return;
+      }
+      if (!res.ok) {
+        setError("server");
+        return;
+      }
       setPost(await res.json());
     } catch (err: unknown) {
       if (err instanceof TypeError && err.message === "Failed to fetch") {
-        setError("サーバーに接続できません。ネットワーク接続を確認してください。");
+        setError("network");
       } else {
-        setError(err instanceof Error ? err.message : "エラーが発生しました");
+        setError("unknown");
       }
     } finally {
       setLoading(false);
@@ -211,25 +223,73 @@ export default function PostDetailClient() {
   }
 
   if (!post) {
+    const errorConfig: Record<string, { icon: string; title: string; desc: string; showRetry?: boolean; showPlan?: boolean }> = {
+      premium: {
+        icon: "lock",
+        title: "プレミアム会員限定の投稿です",
+        desc: "プレミアムプランに加入すると閲覧できます",
+        showPlan: true,
+      },
+      notfound: {
+        icon: "missing",
+        title: "投稿が見つかりません",
+        desc: "この投稿は削除されたか、URLが間違っている可能性があります",
+      },
+      network: {
+        icon: "wifi",
+        title: "接続できません",
+        desc: "ネットワーク接続を確認してからもう一度お試しください",
+        showRetry: true,
+      },
+      server: {
+        icon: "alert",
+        title: "読み込みに失敗しました",
+        desc: "サーバーで問題が発生しました。しばらくしてからお試しください",
+        showRetry: true,
+      },
+      unknown: {
+        icon: "alert",
+        title: "エラーが発生しました",
+        desc: "しばらくしてからもう一度お試しください",
+        showRetry: true,
+      },
+    };
+    const cfg = errorConfig[error || "unknown"] || errorConfig.unknown;
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0d1009]">
-        <div className="text-center">
-          {error === "この投稿はプレミアム会員限定です" ? (
-            <>
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#c9a84c" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
-              <p className="mt-3 text-sm text-[#c9a84c]">{error}</p>
-              <p className="mt-1 text-xs text-[#6b7a66]">プレミアムプランに加入すると閲覧できます</p>
-              <div className="mt-4 flex justify-center gap-3">
-                <button onClick={() => router.push("/settings")} className="rounded-full px-5 py-2 text-xs font-semibold" style={{ background: "#c9a84c", color: "#0d1009" }}>プランを確認</button>
-                <button onClick={() => router.push("/")} className="rounded-full border border-[#2a3828] px-5 py-2 text-xs text-[#9a8e7a]">ホームに戻る</button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-red-400">{error || "投稿が見つかりません"}</p>
-              <button onClick={() => router.push("/")} className="mt-4 text-sm text-[#c9a84c] hover:underline">ホームに戻る</button>
-            </>
+        <div className="mx-4 max-w-sm text-center">
+          {cfg.icon === "lock" && (
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#c9a84c" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
           )}
+          {cfg.icon === "missing" && (
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#6b7a66" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9.75m0 0l2.25 2.25M9.75 15l2.25-2.25M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+          )}
+          {cfg.icon === "wifi" && (
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#6b7a66" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" /></svg>
+          )}
+          {cfg.icon === "alert" && (
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="#6b7a66" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+          )}
+          <h2 className="mt-4 text-lg font-semibold" style={{ color: error === "premium" ? "#c9a84c" : "#ddd6c8" }}>
+            {cfg.title}
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: "#6b7a66" }}>{cfg.desc}</p>
+          <div className="mt-5 flex justify-center gap-3">
+            {cfg.showPlan && (
+              <button onClick={() => router.push("/settings")} className="rounded-full px-5 py-2 text-xs font-semibold" style={{ background: "#c9a84c", color: "#0d1009" }}>
+                プランを確認
+              </button>
+            )}
+            {cfg.showRetry && (
+              <button onClick={() => { setLoading(true); setError(null); fetchPost(); fetchReplies(); }} className="rounded-full px-5 py-2 text-xs font-semibold" style={{ background: "#c9a84c", color: "#0d1009" }}>
+                再試行
+              </button>
+            )}
+            <button onClick={() => router.push("/")} className="rounded-full border border-[#2a3828] px-5 py-2 text-xs" style={{ color: "#9a8e7a" }}>
+              ホームに戻る
+            </button>
+          </div>
         </div>
       </div>
     );
