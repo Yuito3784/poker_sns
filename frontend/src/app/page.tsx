@@ -68,8 +68,8 @@ function HomeContent() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [ads, setAds] = useState<Ad[]>([]);
-  const [timelineTab, setTimelineTab] = useState<"all" | "premium">("all");
-  const timelineTabRef = useRef<"all" | "premium">("all");
+  const [timelineTab, setTimelineTab] = useState<"recommend" | "following" | "premium">("recommend");
+  const timelineTabRef = useRef<"recommend" | "following" | "premium">("recommend");
   const [isPremiumOnlyPost, setIsPremiumOnlyPost] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -239,7 +239,7 @@ function HomeContent() {
 
   useEffect(() => {
     if (!token) return;
-    fetchTimeline(undefined, false, timelineTab === "premium");
+    fetchTimeline(undefined, false, timelineTab === "premium", timelineTab === "recommend");
   }, [token]);
 
   // プリフロップ初期セットアップ
@@ -688,7 +688,7 @@ function HomeContent() {
     }
   };
 
-  const fetchTimeline = async (cursor?: string, append = false, premiumOnly = false) => {
+  const fetchTimeline = async (cursor?: string, append = false, premiumOnly = false, recommend = false) => {
     if (!token) return;
     if (append) setLoadingMore(true);
     else setLoadingPosts(true);
@@ -697,6 +697,7 @@ function HomeContent() {
       const params = new URLSearchParams({ limit: "15" });
       if (cursor) params.set("cursor", cursor);
       if (premiumOnly) params.set("premiumOnly", "true");
+      if (recommend) params.set("feed", "recommend");
       const url = `${API_BASE}/posts/timeline?${params.toString()}`;
       const res = await fetchWithAuth(url);
 
@@ -748,7 +749,7 @@ function HomeContent() {
         if (entries[0].isIntersecting && timelineHasMoreRef.current && timelineCursorRef.current && !loadingMoreRef.current) {
           loadingMoreRef.current = true;
           setLoadingMore(true);
-          fetchTimeline(timelineCursorRef.current, true, timelineTabRef.current === "premium");
+          fetchTimeline(timelineCursorRef.current, true, timelineTabRef.current === "premium", timelineTabRef.current === "recommend");
         }
       },
       { rootMargin: "200px" },
@@ -838,7 +839,7 @@ function HomeContent() {
     setShowPokerForm(false);
   };
 
-  const handleTabChange = (tab: "all" | "premium") => {
+  const handleTabChange = (tab: "recommend" | "following" | "premium") => {
     if (tab === timelineTab) return;
     setTimelineTab(tab);
     timelineTabRef.current = tab;
@@ -847,7 +848,7 @@ function HomeContent() {
     timelineCursorRef.current = null;
     setTimelineHasMore(false);
     timelineHasMoreRef.current = false;
-    fetchTimeline(undefined, false, tab === "premium");
+    fetchTimeline(undefined, false, tab === "premium", tab === "recommend");
   };
 
   const handleCreatePost = async (e: FormEvent) => {
@@ -913,7 +914,7 @@ function HomeContent() {
         showToast("投稿しました");
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
         // バックグラウンドでタイムラインを更新（UIはブロックしない）
-        fetchTimeline(undefined, false, timelineTab === "premium");
+        fetchTimeline(undefined, false, timelineTab === "premium", timelineTab === "recommend");
       } catch (err: unknown) {
         setError(formatClientSideError(err, "エラーが発生しました"));
       } finally {
@@ -954,7 +955,7 @@ function HomeContent() {
         showToast("投稿しました");
         if (quotePostId && typeof window !== "undefined") window.history.replaceState({}, "", "/");
         // バックグラウンドでタイムラインを更新（UIはブロックしない）
-        fetchTimeline(undefined, false, timelineTab === "premium");
+        fetchTimeline(undefined, false, timelineTab === "premium", timelineTab === "recommend");
       } catch (err: unknown) {
         const message = formatClientSideError(err, "エラーが発生しました");
         setError(message);
@@ -1706,12 +1707,22 @@ function HomeContent() {
           {/* Timeline tabs */}
           <div className="mx-3 mt-3 flex border-b" style={{ borderColor: "#1f2a1e" }}>
             <button
-              onClick={() => handleTabChange("all")}
+              onClick={() => handleTabChange("recommend")}
               className="relative px-4 py-2.5 text-sm font-medium transition-colors"
-              style={{ color: timelineTab === "all" ? "#ddd6c8" : "#6b7a66" }}
+              style={{ color: timelineTab === "recommend" ? "#ddd6c8" : "#6b7a66" }}
             >
-              すべて
-              {timelineTab === "all" && (
+              おすすめ
+              {timelineTab === "recommend" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
+              )}
+            </button>
+            <button
+              onClick={() => handleTabChange("following")}
+              className="relative px-4 py-2.5 text-sm font-medium transition-colors"
+              style={{ color: timelineTab === "following" ? "#ddd6c8" : "#6b7a66" }}
+            >
+              フォロー中
+              {timelineTab === "following" && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "#c9a84c" }} />
               )}
             </button>

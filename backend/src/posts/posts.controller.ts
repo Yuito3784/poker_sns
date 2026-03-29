@@ -53,9 +53,10 @@ export class PostsController {
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: string,
     @Query('premiumOnly') premiumOnly?: string,
+    @Query('feed') feed?: string,
   ) {
     const take = Math.min(parseInt(limit || '20', 10) || 20, 50);
-    return this.postsService.getTimelineForUser(user.userId, cursor, take, premiumOnly === 'true');
+    return this.postsService.getTimelineForUser(user.userId, cursor, take, premiumOnly === 'true', feed === 'recommend' ? 'recommend' : 'following');
   }
 
   @Get('sitemap-data')
