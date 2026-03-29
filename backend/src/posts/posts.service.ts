@@ -437,7 +437,7 @@ export class PostsService {
     return [...ids];
   }
 
-  async getTimelineForUser(userId: string, cursor?: string, take = 20, premiumOnly = false) {
+  async getTimelineForUser(userId: string, cursor?: string, take = 20, premiumOnly = false, feed: 'following' | 'recommend' = 'following') {
     if (premiumOnly) {
       const premium = await this.isPremiumUser(userId);
       if (!premium) {
@@ -455,8 +455,12 @@ export class PostsService {
     ]);
 
     const excludedSet = new Set(excludedIds);
-    const ids = [userId, ...following.map((f: { followingId: string }) => f.followingId)].filter((id) => !excludedSet.has(id));
     const followingIds = new Set(following.map((f: { followingId: string }) => f.followingId));
+
+    // "recommend" = all posts (except blocked/muted), "following" = followed users + self
+    const authorFilter = feed === 'recommend'
+      ? (excludedSet.size > 0 ? { authorId: { notIn: [...excludedSet] } } : {})
+      : { authorId: { in: [userId, ...following.map((f: { followingId: string }) => f.followingId)].filter((id) => !excludedSet.has(id)) } };
 
     const cursorObj = cursor
       ? { id: cursor }
@@ -473,7 +477,7 @@ export class PostsService {
       skip: cursor ? 1 : 0,
       cursor: cursorObj,
       where: {
-        authorId: { in: ids },
+        ...authorFilter,
         ...premiumFilter,
       },
       orderBy: { createdAt: 'desc' },
