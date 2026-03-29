@@ -21,8 +21,8 @@ export default function HandRenderClient({ hand }: { hand: PokerHand }) {
       id={ready ? "hand-ready" : "hand-loading"}
       style={{
         background: "#0b1209",
-        padding: "16px",
-        width: "800px",
+        padding: "16px 20px 20px",
+        width: "600px",
       }}
     >
       <PokerHandDisplay hand={hand} />

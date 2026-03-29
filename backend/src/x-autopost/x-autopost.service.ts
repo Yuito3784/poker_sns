@@ -46,7 +46,9 @@ export class XAutopostService {
 
     // OAuth 1.0a (media upload requires this)
     this.oauth1ConsumerKey = (process.env.X_OAUTH1_CONSUMER_KEY || '').trim();
-    this.oauth1ConsumerSecret = (process.env.X_OAUTH1_CONSUMER_SECRET || '').trim();
+    this.oauth1ConsumerSecret = (
+      process.env.X_OAUTH1_CONSUMER_SECRET || ''
+    ).trim();
     this.oauth1AccessToken = (process.env.X_OAUTH1_ACCESS_TOKEN || '').trim();
     this.oauth1AccessSecret = (process.env.X_OAUTH1_ACCESS_SECRET || '').trim();
 
@@ -75,7 +77,10 @@ export class XAutopostService {
       expiresAt: Date.now() + 10 * 60 * 1000,
     });
 
-    const callbackBase = process.env.X_AUTOPOST_CALLBACK_BASE || process.env.API_URL || 'http://localhost:3001';
+    const callbackBase =
+      process.env.X_AUTOPOST_CALLBACK_BASE ||
+      process.env.API_URL ||
+      'http://localhost:3001';
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: this.clientId,
@@ -97,7 +102,10 @@ export class XAutopostService {
     }
     this.pkceStore.delete(state);
 
-    const callbackBase = process.env.X_AUTOPOST_CALLBACK_BASE || process.env.API_URL || 'http://localhost:3001';
+    const callbackBase =
+      process.env.X_AUTOPOST_CALLBACK_BASE ||
+      process.env.API_URL ||
+      'http://localhost:3001';
     const credentials = Buffer.from(
       `${this.clientId}:${this.clientSecret}`,
     ).toString('base64');
@@ -116,7 +124,8 @@ export class XAutopostService {
       }).toString(),
     });
 
-    if (!tokenRes.ok) throw new Error(`Token exchange failed: ${await tokenRes.text()}`);
+    if (!tokenRes.ok)
+      throw new Error(`Token exchange failed: ${await tokenRes.text()}`);
     const tokenData = (await tokenRes.json()) as XTokenData;
 
     // ユーザー情報取得
@@ -140,7 +149,10 @@ export class XAutopostService {
     if (!this.encryptionKey) throw new Error('TOKEN_ENCRYPTION_KEY not set');
     const iv = randomBytes(12);
     const cipher = createCipheriv('aes-256-gcm', this.encryptionKey, iv);
-    const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+    const encrypted = Buffer.concat([
+      cipher.update(text, 'utf8'),
+      cipher.final(),
+    ]);
     const tag = cipher.getAuthTag();
     return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`;
   }
@@ -154,7 +166,10 @@ export class XAutopostService {
       Buffer.from(ivHex, 'hex'),
     );
     decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
-    return decipher.update(Buffer.from(encHex, 'hex')) + decipher.final('utf8');
+    return (
+      decipher.update(Buffer.from(encHex, 'hex'), undefined, 'utf8') +
+      decipher.final('utf8')
+    );
   }
 
   private async storeTokens(
@@ -171,7 +186,10 @@ export class XAutopostService {
 
     const existing = await this.prisma.xAutoPostToken.findFirst();
     if (existing) {
-      await this.prisma.xAutoPostToken.update({ where: { id: existing.id }, data });
+      await this.prisma.xAutoPostToken.update({
+        where: { id: existing.id },
+        data,
+      });
     } else {
       await this.prisma.xAutoPostToken.create({ data });
     }
@@ -211,10 +229,7 @@ export class XAutopostService {
 
   // ─── ツイート投稿 ───
 
-  private async postTweet(
-    text: string,
-    mediaIds?: string[],
-  ): Promise<string> {
+  private async postTweet(text: string, mediaIds?: string[]): Promise<string> {
     const accessToken = await this.getAccessToken();
 
     const body: Record<string, unknown> = { text };
@@ -258,8 +273,7 @@ export class XAutopostService {
     const paramString = Object.keys(allParams)
       .sort()
       .map(
-        (k) =>
-          `${encodeURIComponent(k)}=${encodeURIComponent(allParams[k])}`,
+        (k) => `${encodeURIComponent(k)}=${encodeURIComponent(allParams[k])}`,
       )
       .join('&');
 
@@ -289,10 +303,7 @@ export class XAutopostService {
   }
 
   private async uploadMedia(imageBuffer: Buffer): Promise<string> {
-    if (
-      !this.oauth1ConsumerKey ||
-      !this.oauth1AccessToken
-    ) {
+    if (!this.oauth1ConsumerKey || !this.oauth1AccessToken) {
       throw new Error('OAuth 1.0a credentials not configured for media upload');
     }
 
@@ -319,9 +330,7 @@ export class XAutopostService {
 
     if (!res.ok) {
       const errorBody = await res.text();
-      this.logger.error(
-        `Media upload failed (${res.status}): ${errorBody}`,
-      );
+      this.logger.error(`Media upload failed (${res.status}): ${errorBody}`);
       throw new Error(`Media upload failed: ${errorBody}`);
     }
     const data = (await res.json()) as { media_id_string: string };
@@ -386,7 +395,11 @@ export class XAutopostService {
       });
 
       const page = await browser.newPage();
-      await page.setViewport({ width: 850, height: 900 });
+      await page.setViewport({
+        width: 660,
+        height: 1200,
+        deviceScaleFactor: 2,
+      });
 
       const frontendUrl =
         process.env.INTERNAL_FRONTEND_URL || 'http://frontend:3000';
@@ -554,7 +567,11 @@ X (Twitter) に投稿する1ツイートを日本語で作成してください�
 
   // ─── 手動投稿 ───
 
-  async manualPost(): Promise<{ tweetId: string; text: string; hasImage: boolean }> {
+  async manualPost(): Promise<{
+    tweetId: string;
+    text: string;
+    hasImage: boolean;
+  }> {
     if (!this.isReady() || !this.anthropicKey) {
       throw new Error('X autopost not configured');
     }
@@ -605,6 +622,13 @@ X (Twitter) に投稿する1ツイートを日本語で作成してください�
 
   @Cron('0 12 * * *')
   async dailyAutoPost(): Promise<void> {
+    // 本番環境のみで自動投稿
+    if (process.env.X_AUTOPOST_CRON_ENABLED !== 'true') {
+      this.logger.debug(
+        'X autopost cron disabled (set X_AUTOPOST_CRON_ENABLED=true to enable)',
+      );
+      return;
+    }
     if (!this.isReady() || !this.anthropicKey) {
       this.logger.debug('X autopost not configured, skipping');
       return;

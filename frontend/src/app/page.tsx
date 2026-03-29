@@ -1272,7 +1272,7 @@ function HomeContent() {
                                     }
                                     const isAggressive = newActionType === "BET" || newActionType === "RAISE" || newActionType === "ALL_IN";
                                     if (isAggressive) newActions = newActions.slice(0, actionIndex + 1);
-                                    let newStreets = pokerStreets.map((st, i) => i === index ? { ...st, actions: newActions } : st);
+                                    const newStreets = pokerStreets.map((st, i) => i === index ? { ...st, actions: newActions } : st);
                                     let updatedStreets = updateCallAmounts(index, newStreets);
                                     if (isAggressive) {
                                       for (let safety = 0; safety < 10; safety++) {
