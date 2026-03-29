@@ -66,7 +66,7 @@ export default function PostItem({
   onToggleFollow,
   onReply,
   onDelete,
-  showFollowButton = true,
+  showFollowButton = false,
 }: Props) {
   const router = useRouter();
   const { showToast } = useToast();
