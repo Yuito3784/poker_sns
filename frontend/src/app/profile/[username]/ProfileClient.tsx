@@ -619,11 +619,11 @@ export default function ProfileClient() {
                   )}
                 </div>
                 {currentUser && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     {currentUserId === profile.id ? (
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/5"
+                        className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/5"
                         style={{ border: "1px solid #2a3828", color: "#ddd6c8" }}
                       >
                         編集
@@ -632,7 +632,7 @@ export default function ProfileClient() {
                       !isBlocked && (
                         <button
                           onClick={handleToggleFollow}
-                          className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+                          className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
                           style={
                             isFollowing
                               ? { border: "1px solid #2a3828", color: "#9a8e7a", background: "transparent" }
@@ -828,7 +828,7 @@ export default function ProfileClient() {
                       onToggleFollow={handleToggleFollowFromPost}
                       onReply={handleReplyToPost}
                       onDelete={handleDeletePost}
-                      showFollowButton={currentUserId !== profile.id}
+                      showFollowButton={false}
                     />
                   </div>
                 ))}
