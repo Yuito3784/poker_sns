@@ -1,4 +1,12 @@
-import { Controller, Delete, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
@@ -32,10 +40,14 @@ export class XAutopostController {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     try {
       const username = await this.xAutopost.handleOAuthCallback(code, state);
-      res.redirect(`${frontendUrl}/settings?x_autopost=connected&username=${username}`);
+      res.redirect(
+        `${frontendUrl}/settings?x_autopost=connected&username=${username}`,
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
-      res.redirect(`${frontendUrl}/settings?x_autopost=error&message=${encodeURIComponent(msg)}`);
+      res.redirect(
+        `${frontendUrl}/settings?x_autopost=error&message=${encodeURIComponent(msg)}`,
+      );
     }
   }
 
