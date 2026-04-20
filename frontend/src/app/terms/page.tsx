@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "利用規約 - Poker SNS",
+  title: "利用規約 - PokerTALK",
 };
 
 export default function TermsPage() {
@@ -18,14 +18,14 @@ export default function TermsPage() {
         <div className="space-y-6 text-sm leading-relaxed text-[#9a8e7a]">
           <section>
             <h2 className="mb-2 text-base font-semibold text-[#ddd6c8]">第1条（適用）</h2>
-            <p>本規約は、Poker SNS（以下「本サービス」といいます）の利用に関する条件を、本サービスを運営する運営者（以下「運営者」といいます）とユーザーとの間で定めるものです。ユーザーは本規約に同意の上、本サービスを利用するものとします。</p>
+            <p>本規約は、PokerTALK（以下「本サービス」といいます）の利用に関する条件を、本サービスを運営する運営者（以下「運営者」といいます）とユーザーとの間で定めるものです。ユーザーは本規約に同意の上、本サービスを利用するものとします。</p>
           </section>
 
           <section>
             <h2 className="mb-2 text-base font-semibold text-[#ddd6c8]">第2条（定義）</h2>
             <ul className="mt-2 list-inside list-disc space-y-1 text-[#7a7260]">
               <li>「ユーザー」とは、本規約に同意の上、本サービスのアカウントを登録した個人をいいます。</li>
-              <li>「プレミアム会員」とは、有料プラン（Poker SNS プレミアム）に加入したユーザーをいいます。</li>
+              <li>「プレミアム会員」とは、有料プラン（PokerTALK プレミアム）に加入したユーザーをいいます。</li>
               <li>「コンテンツ」とは、ユーザーが本サービスに投稿したテキスト、画像、ポーカーハンド情報その他のデータをいいます。</li>
             </ul>
           </section>
@@ -150,7 +150,7 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-2 text-base font-semibold text-[#ddd6c8]">第15条（お問い合わせ）</h2>
             <p>本規約に関するお問い合わせは、下記メールアドレスまでご連絡ください。</p>
-            <p className="mt-1 text-[#7a7260]">メールアドレス: support@pokersns.com</p>
+            <p className="mt-1 text-[#7a7260]">メールアドレス: support@pokertalk.jp</p>
           </section>
         </div>
 

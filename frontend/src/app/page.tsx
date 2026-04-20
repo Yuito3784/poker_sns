@@ -1505,7 +1505,7 @@ function HomeContent() {
               className="font-[family-name:var(--font-playfair)] text-4xl font-bold tracking-tight sm:text-5xl"
               style={{ color: "#ddd6c8" }}
             >
-              Poker SNS
+              PokerTALK
             </h1>
             <p className="mt-4 text-base leading-relaxed sm:text-xl" style={{ color: "#6b7a66" }}>
               ポーカーハンドを共有して、
@@ -1631,7 +1631,7 @@ function HomeContent() {
             <a href="/privacy" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>プライバシーポリシー</a>
             <a href="/tokushoho" className="transition-colors hover:underline" style={{ color: "#6b7a66" }}>特定商取引法に基づく表記</a>
           </div>
-          <p className="mt-2 text-[11px]" style={{ color: "#2a3828" }}>© 2026 Poker SNS</p>
+          <p className="mt-2 text-[11px]" style={{ color: "#2a3828" }}>© 2026 PokerTALK</p>
         </div>
       </div>
     );

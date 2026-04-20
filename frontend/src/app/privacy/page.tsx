@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "プライバシーポリシー - Poker SNS",
+  title: "プライバシーポリシー - PokerTALK",
 };
 
 export default function PrivacyPage() {
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
         </Link>
         <h1 className="mb-8 text-2xl font-bold tracking-tight text-[#ddd6c8]">プライバシーポリシー</h1>
 
-        <p className="mb-6 text-[#9a8e7a]">Poker SNS（以下「本サービス」）は、ユーザーの個人情報の保護を重要と考え、個人情報の保護に関する法律（個人情報保護法）を遵守し、以下のとおりプライバシーポリシーを定めます。</p>
+        <p className="mb-6 text-[#9a8e7a]">PokerTALK（以下「本サービス」）は、ユーザーの個人情報の保護を重要と考え、個人情報の保護に関する法律（個人情報保護法）を遵守し、以下のとおりプライバシーポリシーを定めます。</p>
 
         <div className="space-y-6 text-sm leading-relaxed text-[#9a8e7a]">
           <section>
@@ -115,7 +115,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-2 text-base font-semibold text-[#ddd6c8]">10. お問い合わせ</h2>
             <p>個人情報の取り扱いに関するお問い合わせは、下記メールアドレスまでご連絡ください。</p>
-            <p className="mt-1 text-[#7a7260]">メールアドレス: support@pokersns.com</p>
+            <p className="mt-1 text-[#7a7260]">メールアドレス: support@pokertalk.jp</p>
           </section>
         </div>
 

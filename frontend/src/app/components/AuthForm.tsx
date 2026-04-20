@@ -209,10 +209,10 @@ export default function AuthForm({ onAuthSuccess }: Props) {
           className="font-[family-name:var(--font-playfair)] text-xl font-bold tracking-tight"
           style={{ color: "#ddd6c8" }}
         >
-          Poker SNS
+          PokerTALK
         </h1>
         <p className="mt-0.5 text-xs" style={{ color: "#6b7a66" }}>
-          ポーカーハンドを共有しよう
+          テーブルの外でも、ポーカーを語ろう
         </p>
       </div>
 

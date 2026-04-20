@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     if (!res.ok) {
       return {
-        title: "投稿 - Poker SNS",
+        title: "投稿 - PokerTALK",
         description: "ポーカーハンドを共有・議論できるSNS",
       };
     }
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = post.content
       ? post.content.slice(0, 140) + (post.content.length > 140 ? "..." : "")
       : "ポーカーハンドを共有・議論できるSNS";
-    const title = `${post.author.name}(@${post.author.username})の投稿 - Poker SNS`;
+    const title = `${post.author.name}(@${post.author.username})の投稿 - PokerTALK`;
 
     return {
       title,
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         type: "article",
         url: `${SITE_URL}/post/${id}`,
-        siteName: "Poker SNS",
+        siteName: "PokerTALK",
         publishedTime: post.createdAt,
         authors: [post.author.name],
         ...(post.imageUrl && {
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   } catch {
     return {
-      title: "投稿 - Poker SNS",
+      title: "投稿 - PokerTALK",
       description: "ポーカーハンドを共有・議論できるSNS",
     };
   }
@@ -73,7 +73,7 @@ async function PostJsonLd({ id }: { id: string }) {
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "Article",
-      headline: post.content?.slice(0, 110) || "Poker SNS 投稿",
+      headline: post.content?.slice(0, 110) || "PokerTALK 投稿",
       author: {
         "@type": "Person",
         name: post.author.name,
@@ -83,7 +83,7 @@ async function PostJsonLd({ id }: { id: string }) {
       url: `${SITE_URL}/post/${id}`,
       publisher: {
         "@type": "Organization",
-        name: "Poker SNS",
+        name: "PokerTALK",
         url: SITE_URL,
       },
       ...(post.imageUrl && { image: `${API_BASE}${post.imageUrl}` }),

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0a0d08; font-family: 'Noto Sans JP', sans-serif; }
+
+    /* Grain overlay */
+    .grain { position: absolute; inset: 0; opacity: 0.03; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* TikTok safe zone */
+    .safe { position: absolute; top: 150px; bottom: 250px; left: 60px; right: 60px; }
+
+    .glow-gold { text-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 40px rgba(201,168,76,0.2); }
+
+    .time-badge {
+      display: inline-block;
+      background: #c9a84c;
+      color: #0a0d08;
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      font-size: 32px;
+      padding: 8px 24px;
+      border-radius: 10px;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .timeline-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .timeline-text {
+      font-size: 38px;
+      font-weight: 700;
+      color: #ddd6c8;
+      line-height: 1.4;
+      padding-top: 4px;
+    }
+
+    .timeline-line {
+      position: absolute;
+      left: 120px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: rgba(201,168,76,0.15);
+    }
+
+    .progress-bar { position: absolute; bottom: 260px; left: 60px; right: 60px; height: 4px;
+      background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #c9a84c; border-radius: 2px; width: 0%; }
+
+    .watermark { position: absolute; bottom: 270px; right: 60px; font-size: 20px;
+      font-weight: 700; color: rgba(201,168,76,0.3); font-family: 'Inter', sans-serif;
+      letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="v2-reel-03" data-start="0" data-duration="13" data-width="1080" data-height="1920">
+
+    <!-- BG -->
+    <div id="bg" class="clip" data-start="0" data-duration="13" data-track-index="0"
+      style="position:absolute;inset:0;">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.04) 0%, transparent 50%);"></div>
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 70%, rgba(192,57,43,0.02) 0%, transparent 40%);"></div>
+    </div>
+
+    <!-- Grain -->
+    <div id="grain-layer" class="clip" data-start="0" data-duration="13" data-track-index="1"
+      style="position:absolute;inset:0;"><div class="grain"></div></div>
+
+    <!-- SCENE 1: HOOK (0-3s) -->
+    <div id="scene1" class="clip" data-start="0" data-duration="3" data-track-index="2"
+      style="position:absolute;inset:0;">
+      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="s1-clock" style="font-size:80px;margin-bottom:24px;">&#128336;</div>
+        <div id="s1-hook" style="text-align:center;">
+          <p style="font-size:64px;font-weight:900;color:#ddd6c8;line-height:1.3;" class="glow-gold">
+            ポーカープレイヤーの<br/><span style="color:#c9a84c;">"普通"</span> の1日
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENE 2: Timeline (3-11s) -->
+    <div id="scene2" class="clip" data-start="3" data-duration="8" data-track-index="3"
+      style="position:absolute;inset:0;">
+      <div class="safe" style="display:flex;flex-direction:column;justify-content:center;gap:36px;position:relative;">
+        <div class="timeline-line" id="tl-line"></div>
+
+        <div class="timeline-entry" id="entry1">
+          <span class="time-badge">14:00</span>
+          <span class="timeline-text">起床。ポーカーの夢を見てた</span>
+        </div>
+        <div class="timeline-entry" id="entry2">
+          <span class="time-badge">16:00</span>
+          <span class="timeline-text">レンジ表を眺めながらコーヒー</span>
+        </div>
+        <div class="timeline-entry" id="entry3">
+          <span class="time-badge">19:00</span>
+          <span class="timeline-text">アミューズメント到着。<br/>今日こそプラス</span>
+        </div>
+        <div class="timeline-entry" id="entry4">
+          <span class="time-badge">23:00</span>
+          <span class="timeline-text" style="color:#c0392b;">-3買い。<span style="color:#9a8e7a;">でも学びはあった</span></span>
+        </div>
+        <div class="timeline-entry" id="entry5">
+          <span class="time-badge">01:00</span>
+          <span class="timeline-text">帰り道にハンド振り返り <span style="color:#c9a84c;font-size:34px;">← これ</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENE 3: CTA (11-13s) -->
+    <div id="scene3" class="clip" data-start="11" data-duration="2" data-track-index="4"
+      style="position:absolute;inset:0;">
+      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="s3-cta" style="text-align:center;">
+          <p style="font-size:40px;color:#6b7a66;line-height:1.4;">振り返りを投稿する場所</p>
+          <p style="font-size:80px;font-weight:900;color:#c9a84c;margin-top:16px;letter-spacing:2px;font-family:'Inter',sans-serif;" class="glow-gold">PokerTALK</p>
+          <p style="font-size:28px;color:#6b7a66;margin-top:16px;">↓ プロフのリンクから</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div id="progress" class="clip" data-start="0" data-duration="13" data-track-index="5"
+      style="position:absolute;inset:0;pointer-events:none;">
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    </div>
+
+    <!-- Watermark -->
+    <div id="wm" class="clip" data-start="0" data-duration="13" data-track-index="6"
+      style="position:absolute;inset:0;pointer-events:none;">
+      <div class="watermark">PokerTALK</div>
+    </div>
+
+    <!-- Flash transitions -->
+    <div id="flash1" class="clip" data-start="2.8" data-duration="0.4" data-track-index="7"
+      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
+    <div id="flash2" class="clip" data-start="10.8" data-duration="0.4" data-track-index="8"
+      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
+
+  </div>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    /* --- SCENE 1: Hook (0-3s) --- */
+    tl.from("#s1-clock", { opacity: 0, scale: 0, rotation: -180, duration: 0.6, ease: "back.out(2)" }, 0.2);
+    // Rotate clock continuously
+    tl.to("#s1-clock", { rotation: 360, duration: 2.5, ease: "none" }, 0.2);
+    tl.from("#s1-hook", { opacity: 0, y: 40, duration: 0.6, ease: "power4.out" }, 0.6);
+    tl.from("#s1-hook span", { scale: 1.3, duration: 0.4, ease: "back.out(2)" }, 1.0);
+
+    // Flash 1
+    tl.to("#flash1", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 2.9);
+    tl.to("#flash1", { opacity: 0, duration: 0.2, ease: "power2.out" }, 3.0);
+
+    /* --- SCENE 2: Timeline entries staggered (3-11s) --- */
+    // Grow the timeline line
+    tl.from("#tl-line", { scaleY: 0, transformOrigin: "top", duration: 6, ease: "power1.out" }, 3.2);
+
+    // Entry 1: 14:00
+    tl.from("#entry1", { opacity: 0, x: -60, duration: 0.5, ease: "power4.out" }, 3.3);
+    // Entry 2: 16:00
+    tl.from("#entry2", { opacity: 0, x: -60, duration: 0.5, ease: "power4.out" }, 4.6);
+    // Entry 3: 19:00
+    tl.from("#entry3", { opacity: 0, x: -60, duration: 0.5, ease: "power4.out" }, 5.9);
+    // Entry 4: 23:00
+    tl.from("#entry4", { opacity: 0, x: -60, duration: 0.5, ease: "power4.out" }, 7.2);
+    // Entry 5: 01:00
+    tl.from("#entry5", { opacity: 0, x: -60, duration: 0.5, ease: "power4.out" }, 8.5);
+    // Highlight "← これ"
+    tl.to("#entry5 .timeline-text span", { scale: 1.1, textShadow: "0 0 20px rgba(201,168,76,0.5)", duration: 0.4, yoyo: true, repeat: 2, ease: "power1.inOut" }, 9.2);
+
+    // Flash 2
+    tl.to("#flash2", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 10.9);
+    tl.to("#flash2", { opacity: 0, duration: 0.2, ease: "power2.out" }, 11.0);
+
+    /* --- SCENE 3: CTA (11-13s) --- */
+    tl.from("#s3-cta p:nth-child(1)", { opacity: 0, y: 20, duration: 0.3, ease: "power3.out" }, 11.1);
+    tl.from("#s3-cta p:nth-child(2)", { opacity: 0, scale: 0.7, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 11.3);
+    tl.from("#s3-cta p:nth-child(3)", { opacity: 0, duration: 0.3 }, 11.8);
+
+    // Progress bar
+    tl.to("#prog-fill", { width: "100%", duration: 13, ease: "none" }, 0);
+
+    window.__timelines["v2-reel-03"] = tl;
+  </script>
+</body>
+</html>

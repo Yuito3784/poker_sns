@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Poker SNS - プロフィール";
+export const alt = "PokerTALK - プロフィール";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -48,7 +48,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
           }}
         >
           <span style={{ color: "#c9a84c", fontSize: "64px", marginRight: "16px" }}>&#9824;</span>
-          <span style={{ fontSize: "48px", color: "#ddd6c8", fontWeight: 700 }}>Poker SNS</span>
+          <span style={{ fontSize: "48px", color: "#ddd6c8", fontWeight: 700 }}>PokerTALK</span>
         </div>
       ),
       { ...size, fonts },
@@ -107,7 +107,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
           }}
         >
           <span style={{ fontSize: "24px", color: "#c9a84c" }}>&#9824;</span>
-          <span style={{ fontSize: "18px", fontWeight: 700, color: "#c9a84c" }}>Poker SNS</span>
+          <span style={{ fontSize: "18px", fontWeight: 700, color: "#c9a84c" }}>PokerTALK</span>
         </div>
 
         {/* Avatar */}

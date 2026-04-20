@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0a0d08; font-family: 'Noto Sans JP', sans-serif; }
+
+    .grain { position: absolute; inset: 0; opacity: 0.03; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .safe { position: absolute; top: 150px; bottom: 250px; left: 60px; right: 60px; }
+
+    .glow-gold { text-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 40px rgba(201,168,76,0.2); }
+
+    .progress-bar { position: absolute; bottom: 260px; left: 60px; right: 60px; height: 4px;
+      background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #c9a84c; border-radius: 2px; width: 0%; }
+
+    .watermark { position: absolute; bottom: 270px; right: 60px; font-size: 20px;
+      font-weight: 700; color: rgba(201,168,76,0.3); font-family: 'Inter', sans-serif;
+      letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="v2-reel-05" data-start="0" data-duration="11" data-width="1080" data-height="1920">
+
+    <!-- BG -->
+    <div id="bg" class="clip" data-start="0" data-duration="11" data-track-index="0"
+      style="position:absolute;inset:0;">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%, rgba(201,168,76,0.04) 0%, transparent 50%);"></div>
+    </div>
+
+    <!-- Grain -->
+    <div id="grain-layer" class="clip" data-start="0" data-duration="11" data-track-index="1"
+      style="position:absolute;inset:0;"><div class="grain"></div></div>
+
+    <!-- SCENE 1: HOOK (0-3s) — Pure black → text slam -->
+    <div id="scene1" class="clip" data-start="0" data-duration="3" data-track-index="2"
+      style="position:absolute;inset:0;">
+      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="s1-main" style="text-align:center;">
+          <p style="font-size:72px;font-weight:900;color:#fff;line-height:1.3;">3日前のハンド、<br/>まだ考えてる。</p>
+        </div>
+        <div id="s1-sub" style="margin-top:32px;text-align:center;">
+          <p style="font-size:36px;color:#9a8e7a;">（病気）</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENE 2: Typewriter thoughts (3-5.5s) -->
+    <div id="scene2" class="clip" data-start="3" data-duration="2.5" data-track-index="3"
+      style="position:absolute;inset:0;">
+      <div class="safe" style="display:flex;flex-direction:column;justify-content:center;gap:48px;">
+        <div id="s2-line1" style="text-align:center;">
+          <p style="font-size:40px;color:#ddd6c8;line-height:1.5;">布団の中で<br/><span style="color:#c9a84c;">'あそこでチェックレイズしてれば…'</span></p>
+        </div>
+        <div id="s2-line2" style="text-align:center;">
+          <p style="font-size:40px;color:#ddd6c8;line-height:1.5;">シャワー中に<br/><span style="color:#c9a84c;">'あのベットサイズは…'</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENE 3: Work thought + emoji (5.5-7.5s) -->
+    <div id="scene3" class="clip" data-start="5.5" data-duration="2" data-track-index="4"
+      style="position:absolute;inset:0;">
+      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="s3-text" style="text-align:center;">
+          <p style="font-size:40px;color:#ddd6c8;line-height:1.5;">仕事中に<br/><span style="color:#c9a84c;">'ポットオッズ計算してる自分…'</span></p>
+        </div>
+        <div id="s3-emoji" style="margin-top:40px;">
+          <p style="font-size:100px;">😂</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENE 4: Resolution (7.5-9.5s) -->
+    <div id="scene4" class="clip" data-start="7.5" data-duration="2" data-track-index="5"
+      style="position:absolute;inset:0;">
+      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="s4-problem" style="text-align:center;">
+          <p style="font-size:56px;font-weight:700;color:#ddd6c8;line-height:1.4;">一人で考えても<br/>答え出ない。</p>
+        </div>
+        <div id="s4-solution" style="margin-top:48px;text-align:center;">
+          <p style="font-size:68px;font-weight:900;color:#c9a84c;" class="glow-gold">語ればいい。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENE 5: CTA (9.5-11s) -->
+    <div id="scene5" class="clip" data-start="9.5" data-duration="1.5" data-track-index="6"
+      style="position:absolute;inset:0;">
+      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="s5-cta" style="text-align:center;">
+          <p style="font-size:80px;font-weight:900;color:#c9a84c;letter-spacing:2px;font-family:'Inter',sans-serif;" class="glow-gold">PokerTALK</p>
+          <p style="font-size:32px;color:#6b7a66;margin-top:16px;">セッション後に語る場所</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div id="progress" class="clip" data-start="0" data-duration="11" data-track-index="7"
+      style="position:absolute;inset:0;pointer-events:none;">
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    </div>
+
+    <!-- Watermark -->
+    <div id="wm" class="clip" data-start="0" data-duration="11" data-track-index="8"
+      style="position:absolute;inset:0;pointer-events:none;">
+      <div class="watermark">PokerTALK</div>
+    </div>
+
+    <!-- Flash transitions -->
+    <div id="flash1" class="clip" data-start="2.8" data-duration="0.4" data-track-index="9"
+      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
+    <div id="flash2" class="clip" data-start="5.3" data-duration="0.4" data-track-index="10"
+      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
+    <div id="flash3" class="clip" data-start="7.3" data-duration="0.4" data-track-index="11"
+      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
+    <div id="flash4" class="clip" data-start="9.3" data-duration="0.4" data-track-index="12"
+      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
+
+  </div>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // SCENE 1: Hook (0-3s) — slam in from scale
+    tl.from("#s1-main", { opacity: 0, scale: 1.4, duration: 0.4, ease: "power4.out" }, 0.3);
+    tl.from("#s1-sub", { opacity: 0, duration: 0.5, ease: "power2.out" }, 1.2);
+    // Pulse the sub text
+    tl.to("#s1-sub", { scale: 1.1, duration: 0.3, yoyo: true, repeat: 1, ease: "power1.inOut" }, 1.8);
+
+    // Flash 1
+    tl.to("#flash1", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 2.9);
+    tl.to("#flash1", { opacity: 0, duration: 0.2, ease: "power2.out" }, 3.0);
+
+    // SCENE 2: Typewriter stagger (3-5.5s)
+    tl.from("#s2-line1", { opacity: 0, x: -40, duration: 0.5, ease: "power4.out" }, 3.1);
+    tl.from("#s2-line2", { opacity: 0, x: 40, duration: 0.5, ease: "power4.out" }, 3.8);
+
+    // Flash 2
+    tl.to("#flash2", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 5.4);
+    tl.to("#flash2", { opacity: 0, duration: 0.2, ease: "power2.out" }, 5.5);
+
+    // SCENE 3: Work + emoji (5.5-7.5s)
+    tl.from("#s3-text", { opacity: 0, y: 30, duration: 0.5, ease: "power3.out" }, 5.6);
+    tl.from("#s3-emoji", { opacity: 0, scale: 0, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 6.2);
+    // Bounce emoji
+    tl.to("#s3-emoji", { y: -20, duration: 0.3, yoyo: true, repeat: 2, ease: "power2.inOut" }, 6.7);
+
+    // Flash 3
+    tl.to("#flash3", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 7.4);
+    tl.to("#flash3", { opacity: 0, duration: 0.2, ease: "power2.out" }, 7.5);
+
+    // SCENE 4: Resolution (7.5-9.5s)
+    tl.from("#s4-problem", { opacity: 0, y: 20, duration: 0.5, ease: "power3.out" }, 7.6);
+    tl.from("#s4-solution", { opacity: 0, scale: 0.7, duration: 0.6, ease: "back.out(2)" }, 8.4);
+    // Glow pulse on solution
+    tl.to("#s4-solution p", { textShadow: "0 0 40px rgba(201,168,76,0.6), 0 0 80px rgba(201,168,76,0.3)", duration: 0.5, yoyo: true, repeat: 1 }, 8.8);
+
+    // Flash 4
+    tl.to("#flash4", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 9.4);
+    tl.to("#flash4", { opacity: 0, duration: 0.2, ease: "power2.out" }, 9.5);
+
+    // SCENE 5: CTA (9.5-11s)
+    tl.from("#s5-cta p:first-child", { opacity: 0, scale: 0.7, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 9.6);
+    tl.from("#s5-cta p:last-child", { opacity: 0, y: 20, duration: 0.4, ease: "power3.out" }, 10.1);
+
+    // Progress bar
+    tl.to("#prog-fill", { width: "100%", duration: 11, ease: "none" }, 0);
+
+    window.__timelines["v2-reel-05"] = tl;
+  </script>
+</body>
+</html>

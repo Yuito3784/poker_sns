@@ -10,8 +10,8 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tag } = await params;
   const decodedTag = decodeURIComponent(tag);
-  const title = `#${decodedTag} - Poker SNS`;
-  const description = `#${decodedTag} のポーカー関連投稿一覧 | Poker SNS - ポーカーハンドを共有・議論できるSNS`;
+  const title = `#${decodedTag} - PokerTALK`;
+  const description = `#${decodedTag} のポーカー関連投稿一覧 | PokerTALK - ポーカーハンドを共有・議論できるSNS`;
 
   return {
     title,
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "website",
       url: `${SITE_URL}/hashtag/${encodeURIComponent(decodedTag)}`,
-      siteName: "Poker SNS",
+      siteName: "PokerTALK",
     },
     twitter: {
       card: "summary_large_image",

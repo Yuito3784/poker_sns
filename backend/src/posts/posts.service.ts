@@ -710,6 +710,15 @@ export class PostsService {
         author: { select: { name: true, username: true, avatarUrl: true } },
         createdAt: true,
         _count: { select: { likes: true, replies: true, reposts: true } },
+        pokerHand: {
+          select: {
+            heroHand: true,
+            heroPosition: true,
+            tableType: true,
+            blinds: true,
+            result: true,
+          },
+        },
       },
     });
     if (!post) throw new NotFoundException('Post not found');
@@ -719,9 +728,62 @@ export class PostsService {
         ...rest,
         content: 'この投稿はプレミアム会員限定です',
         imageUrl: null,
+        pokerHand: null,
       };
     }
     return rest;
+  }
+
+  async vote(userId: string, postId: string, vote: 'GOOD' | 'BAD') {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isPokerHand: true },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    const existing = await this.prisma.handVote.findUnique({
+      where: { userId_postId: { userId, postId } },
+    });
+
+    if (existing) {
+      if (existing.vote === vote) {
+        // Same vote → remove (toggle off)
+        await this.prisma.handVote.delete({
+          where: { id: existing.id },
+        });
+        return { voted: null };
+      }
+      // Different vote → update
+      await this.prisma.handVote.update({
+        where: { id: existing.id },
+        data: { vote },
+      });
+      return { voted: vote };
+    }
+
+    await this.prisma.handVote.create({
+      data: { userId, postId, vote },
+    });
+    return { voted: vote };
+  }
+
+  async getVotes(postId: string, currentUserId: string | null) {
+    const [good, bad, myVote] = await Promise.all([
+      this.prisma.handVote.count({ where: { postId, vote: 'GOOD' } }),
+      this.prisma.handVote.count({ where: { postId, vote: 'BAD' } }),
+      currentUserId
+        ? this.prisma.handVote.findUnique({
+            where: { userId_postId: { userId: currentUserId, postId } },
+            select: { vote: true },
+          })
+        : null,
+    ]);
+    return {
+      good,
+      bad,
+      total: good + bad,
+      myVote: myVote?.vote ?? null,
+    };
   }
 
   async getSitemapData() {

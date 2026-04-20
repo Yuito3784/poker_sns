@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #0d1009; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="v2-reel-10" data-start="0" data-duration="12" data-width="1080" data-height="1920">
+
+      <!-- Reel 05: 3 Things -->
+      <div class="clip" data-start="0" data-duration="12" data-track-index="0"
+           data-composition-id="v2-reel-10"
+           data-composition-src="compositions/v2-reel-10.html"
+           style="position:absolute;inset:0;">
+      </div>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

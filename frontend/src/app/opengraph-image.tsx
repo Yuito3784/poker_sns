@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Poker SNS - ポーカーハンドを共有して、もっと上手くなる";
+export const alt = "PokerTALK - テーブルの外でも、ポーカーを語ろう";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -77,7 +77,7 @@ export default async function Image() {
               letterSpacing: "-3px",
             }}
           >
-            Poker SNS
+            PokerTALK
           </span>
         </div>
 
@@ -92,12 +92,12 @@ export default async function Image() {
             margin: "0 0 40px",
           }}
         >
-          ポーカーハンドを共有して、もっと上手くなる
+          テーブルの外でも、ポーカーを語ろう
         </p>
 
         {/* Feature chips */}
         <div style={{ display: "flex", gap: "16px" }}>
-          {["ハンドを記録", "仲間と議論", "戦略を磨く"].map((feat, i) => (
+          {["ハンドを語る", "仲間と議論", "セッションを記録"].map((feat, i) => (
             <div
               key={feat}
               style={{

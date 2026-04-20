@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Poker SNS",
-    short_name: "PokerSNS",
-    description: "ポーカーハンドを共有・議論できるSNS。プレイを振り返り、戦略を磨こう。",
+    name: "PokerTALK",
+    short_name: "PokerTALK",
+    description: "セッション帰りに今日のハンドを語る。ライブポーカープレイヤーのためのSNS。",
     start_url: "/",
     display: "standalone",
     background_color: "#0d1009",

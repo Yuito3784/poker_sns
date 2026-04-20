@@ -78,7 +78,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 className="hidden font-[family-name:var(--font-playfair)] text-lg font-semibold tracking-tight lg:inline"
                 style={{ color: "#ddd6c8" }}
               >
-                Poker SNS
+                PokerTALK
               </span>
             </div>
             <nav className="space-y-0.5">
@@ -171,7 +171,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="text-[10px]" style={{ color: "#2a3828" }}>·</span>
                 <a href="/tokushoho" className="text-[10px] transition-colors hover:underline" style={{ color: "#2a3828" }}>特定商取引法</a>
               </div>
-              <p className="mt-0.5 px-2 text-[9px]" style={{ color: "#1f2a1e" }}>© 2026 Poker SNS</p>
+              <p className="mt-0.5 px-2 text-[9px]" style={{ color: "#1f2a1e" }}>© 2026 PokerTALK</p>
             </div>
           </div>
         </aside>

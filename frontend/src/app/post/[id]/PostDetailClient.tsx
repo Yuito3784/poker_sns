@@ -50,6 +50,8 @@ export default function PostDetailClient() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [voteData, setVoteData] = useState<{ good: number; bad: number; myVote: string | null } | null>(null);
+  const [voteLoading, setVoteLoading] = useState(false);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -61,6 +63,43 @@ export default function PostDetailClient() {
     fetchPost();
     fetchReplies();
   }, [isInitialized, auth, postId]);
+
+  useEffect(() => {
+    if (!postId) return;
+    const fetchFn = auth ? fetchWithAuth : fetch;
+    fetchFn(`${API_BASE}/posts/${postId}/votes`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setVoteData(data); })
+      .catch(() => {});
+  }, [postId, auth]);
+
+  const handleVote = async (vote: "GOOD" | "BAD") => {
+    if (!currentUser || voteLoading) return;
+    setVoteLoading(true);
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/posts/${postId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vote }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setVoteData((prev) => {
+          if (!prev) return prev;
+          const wasGood = prev.myVote === "GOOD";
+          const wasBad = prev.myVote === "BAD";
+          let good = prev.good;
+          let bad = prev.bad;
+          if (wasGood) good--;
+          if (wasBad) bad--;
+          if (result.voted === "GOOD") good++;
+          if (result.voted === "BAD") bad++;
+          return { good, bad, myVote: result.voted };
+        });
+      }
+    } catch {}
+    setVoteLoading(false);
+  };
 
   const fetchPost = async () => {
     try {
@@ -363,6 +402,44 @@ export default function PostDetailClient() {
                 <p className="mb-3 whitespace-pre-wrap text-[15px] leading-relaxed">{renderContentWithHashtags(post.content)}</p>
               )}
               {post.pokerHand && <PokerHandDisplay hand={post.pokerHand} />}
+              {/* Hand review vote */}
+              {voteData && (
+                <div className="mt-3 rounded-lg p-3" style={{ background: "#0d1009", border: "1px solid #1f2a1e" }}>
+                  <p className="mb-2 text-xs font-medium" style={{ color: "#6b7a66" }}>このプレイどう思う？</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleVote("GOOD")}
+                      disabled={voteLoading || !currentUser}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
+                      style={{
+                        background: voteData.myVote === "GOOD" ? "rgba(76,175,80,0.15)" : "rgba(76,175,80,0.05)",
+                        border: `1px solid ${voteData.myVote === "GOOD" ? "rgba(76,175,80,0.5)" : "#1f2a1e"}`,
+                        color: voteData.myVote === "GOOD" ? "#4CAF50" : "#6b7a66",
+                      }}
+                    >
+                      <span>👍</span> ナイスプレイ {voteData.good > 0 && <span className="tabular-nums">({voteData.good})</span>}
+                    </button>
+                    <button
+                      onClick={() => handleVote("BAD")}
+                      disabled={voteLoading || !currentUser}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
+                      style={{
+                        background: voteData.myVote === "BAD" ? "rgba(244,67,54,0.15)" : "rgba(244,67,54,0.05)",
+                        border: `1px solid ${voteData.myVote === "BAD" ? "rgba(244,67,54,0.5)" : "#1f2a1e"}`,
+                        color: voteData.myVote === "BAD" ? "#f44336" : "#6b7a66",
+                      }}
+                    >
+                      <span>👎</span> うーん… {voteData.bad > 0 && <span className="tabular-nums">({voteData.bad})</span>}
+                    </button>
+                  </div>
+                  {(voteData.good + voteData.bad) > 0 && (
+                    <div className="mt-2 flex h-1.5 overflow-hidden rounded-full" style={{ background: "#1f2a1e" }}>
+                      <div className="rounded-l-full transition-all duration-300" style={{ width: `${(voteData.good / (voteData.good + voteData.bad)) * 100}%`, background: "#4CAF50" }} />
+                      <div className="rounded-r-full transition-all duration-300" style={{ width: `${(voteData.bad / (voteData.good + voteData.bad)) * 100}%`, background: "#f44336" }} />
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{renderContentWithHashtags(post.content)}</p>
@@ -492,8 +569,8 @@ export default function PostDetailClient() {
                     <div className="my-1 border-t border-[#1f2a1e]" />
                     <a
                       href={(() => {
-                        const url = typeof window !== "undefined" ? `${window.location.origin}/post/${postId}?utm_source=pokersns&utm_medium=share&utm_campaign=post_share` : "";
-                        const text = post.isPokerHand ? "ポーカーハンド" : (post.content?.slice(0, 30) ?? "");
+                        const url = typeof window !== "undefined" ? `${window.location.origin}/post/${postId}?utm_source=pokertalk&utm_medium=share&utm_campaign=post_share` : "";
+                        const text = post.isPokerHand ? "このプレイどう思う？🃏 #PokerTALK" : `${post.content?.slice(0, 50) ?? ""} #PokerTALK`;
                         return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
                       })()}
                       target="_blank"
@@ -508,7 +585,7 @@ export default function PostDetailClient() {
                     </a>
                     <a
                       href={(() => {
-                        const url = typeof window !== "undefined" ? `${window.location.origin}/post/${postId}?utm_source=pokersns&utm_medium=share&utm_campaign=post_share` : "";
+                        const url = typeof window !== "undefined" ? `${window.location.origin}/post/${postId}?utm_source=pokertalk&utm_medium=share&utm_campaign=post_share` : "";
                         return `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}`;
                       })()}
                       target="_blank"

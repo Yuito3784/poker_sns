@@ -51,3 +51,7 @@ npm-debug.log*
 
 # Docker volumes (local data)
 postgres-data/
+
+# Hyperframes rendered output (large MP4 files)
+pokertalk-reels/output/
+pokertalk-reels/.hyperframes/

@@ -18,16 +18,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     if (!res.ok) {
       return {
-        title: `@${username} - Poker SNS`,
+        title: `@${username} - PokerTALK`,
         description: "ポーカーハンドを共有・議論できるSNS",
       };
     }
 
     const user = await res.json();
-    const title = `${user.name}(@${user.username}) - Poker SNS`;
+    const title = `${user.name}(@${user.username}) - PokerTALK`;
     const description = user.bio
       ? user.bio.slice(0, 140) + (user.bio.length > 140 ? "..." : "")
-      : `${user.name}のプロフィール - ${user._count?.posts ?? 0}件の投稿 | Poker SNS`;
+      : `${user.name}のプロフィール - ${user._count?.posts ?? 0}件の投稿 | PokerTALK`;
 
     return {
       title,
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         type: "profile",
         url: `${SITE_URL}/profile/${username}`,
-        siteName: "Poker SNS",
+        siteName: "PokerTALK",
       },
       twitter: {
         card: "summary_large_image",
@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   } catch {
     return {
-      title: `@${username} - Poker SNS`,
+      title: `@${username} - PokerTALK`,
       description: "ポーカーハンドを共有・議論できるSNS",
     };
   }

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Poker SNS - 投稿";
+export const alt = "PokerTALK - 投稿";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -16,6 +16,43 @@ async function loadFont() {
   if (!match) return null;
   const fontRes = await fetch(match[1]);
   return fontRes.arrayBuffer();
+}
+
+/* ── Card suit helpers ─────────────────────────────── */
+function suitSymbol(s: string): string {
+  switch (s.toLowerCase()) {
+    case "s": return "\u2660";
+    case "h": return "\u2665";
+    case "d": return "\u2666";
+    case "c": return "\u2663";
+    default: return s;
+  }
+}
+
+function suitColor(s: string): string {
+  return s.toLowerCase() === "h" || s.toLowerCase() === "d" ? "#c0392b" : "#ddd6c8";
+}
+
+function parseHeroHand(hand: string): { rank: string; suit: string }[] {
+  // Formats: "AhKs", "Ah Ks", "AA", "AKs", "72o"
+  if (!hand) return [];
+  const trimmed = hand.trim();
+
+  // Format: "AhKs" or "Ah Ks" (4+ chars with suit letters)
+  const cardPattern = /([2-9TJQKA])([shdc])/gi;
+  const matches = [...trimmed.matchAll(cardPattern)];
+  if (matches.length >= 2) {
+    return matches.slice(0, 2).map((m) => ({ rank: m[1].toUpperCase(), suit: m[2].toLowerCase() }));
+  }
+
+  // Shorthand: "AA", "AKs", "72o"
+  if (trimmed.length >= 2) {
+    return [
+      { rank: trimmed[0].toUpperCase(), suit: "s" },
+      { rank: trimmed[1].toUpperCase(), suit: "h" },
+    ];
+  }
+  return [];
 }
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
@@ -33,6 +70,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     : [];
   const fontFamily = fontData ? "NotoSansJP, sans-serif" : "sans-serif";
 
+  /* ── Fallback ──────────────────────────────────── */
   if (!postData) {
     return new ImageResponse(
       (
@@ -48,7 +86,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           }}
         >
           <span style={{ color: "#c9a84c", fontSize: "64px", marginRight: "16px" }}>&#9824;</span>
-          <span style={{ fontSize: "48px", color: "#ddd6c8", fontWeight: 700 }}>Poker SNS</span>
+          <span style={{ fontSize: "48px", color: "#ddd6c8", fontWeight: 700 }}>PokerTALK</span>
         </div>
       ),
       { ...size, fonts },
@@ -59,6 +97,8 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     ? postData.content.slice(0, 120) + (postData.content.length > 120 ? "..." : "")
     : "";
   const initial = (postData.author.name || postData.author.username || "?")[0].toUpperCase();
+  const isPokerHand = postData.isPokerHand && postData.pokerHand;
+  const heroCards = isPokerHand ? parseHeroHand(postData.pokerHand.heroHand || "") : [];
 
   return new ImageResponse(
     (
@@ -100,7 +140,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
             alignItems: "center",
             justifyContent: "space-between",
             width: "100%",
-            marginBottom: "28px",
+            marginBottom: "24px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -141,26 +181,111 @@ export default async function Image({ params }: { params: Promise<{ id: string }
                 letterSpacing: "-0.5px",
               }}
             >
-              Poker SNS
+              PokerTALK
             </span>
           </div>
         </div>
 
-        {/* Content */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "flex-start",
-            fontSize: "28px",
-            lineHeight: 1.5,
-            color: "#ddd6c8",
-            maxHeight: "180px",
-            overflow: "hidden",
-          }}
-        >
-          {contentText}
-        </div>
+        {/* ── Poker hand visual ─────────────────────── */}
+        {isPokerHand ? (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Cards + info row */}
+            <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+              {/* Hero cards */}
+              {heroCards.length === 2 && (
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {heroCards.map((card, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: "72px",
+                        height: "100px",
+                        borderRadius: "10px",
+                        border: "2px solid #c9a84c40",
+                        background: "linear-gradient(135deg, #1a2318, #131a14)",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "2px",
+                      }}
+                    >
+                      <span style={{ fontSize: "32px", fontWeight: 700, color: suitColor(card.suit) }}>
+                        {card.rank}
+                      </span>
+                      <span style={{ fontSize: "24px", color: suitColor(card.suit) }}>
+                        {suitSymbol(card.suit)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Hand info */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  {[
+                    postData.pokerHand.heroPosition,
+                    postData.pokerHand.tableType,
+                    postData.pokerHand.blinds,
+                  ]
+                    .filter(Boolean)
+                    .map((tag: string) => (
+                      <div
+                        key={tag}
+                        style={{
+                          padding: "4px 12px",
+                          borderRadius: "6px",
+                          background: "rgba(201,168,76,0.12)",
+                          border: "1px solid rgba(201,168,76,0.3)",
+                          color: "#c9a84c",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          display: "flex",
+                        }}
+                      >
+                        {tag}
+                      </div>
+                    ))}
+                </div>
+                {postData.pokerHand.result && (
+                  <span style={{ fontSize: "18px", fontWeight: 700, color: "#ddd6c8" }}>
+                    {postData.pokerHand.result}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Content text */}
+            <div
+              style={{
+                fontSize: "24px",
+                lineHeight: 1.5,
+                color: "#9a8e7a",
+                maxHeight: "120px",
+                overflow: "hidden",
+              }}
+            >
+              {contentText}
+            </div>
+          </div>
+        ) : (
+          /* ── Normal post content ──────────────────── */
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "flex-start",
+              fontSize: "28px",
+              lineHeight: 1.5,
+              color: "#ddd6c8",
+              maxHeight: "180px",
+              overflow: "hidden",
+            }}
+          >
+            {contentText}
+          </div>
+        )}
 
         {/* Divider */}
         <div

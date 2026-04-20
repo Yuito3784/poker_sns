@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useRef, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "./Avatar";
 import PokerHandDisplay from "./PokerHandDisplay";
 import PremiumBadge from "./PremiumBadge";
 import YouTubeEmbed from "./YouTubeEmbed";
 import { formatRelativeTime } from "../../lib/utils";
-import { API_BASE, uploadsUrl } from "../../lib/api";
+import { API_BASE, fetchWithAuth, uploadsUrl } from "../../lib/api";
 import { analytics } from "../../lib/analytics";
 import { useToast } from "../../contexts/ToastContext";
 import { extractYouTubeId } from "../../lib/youtube";
@@ -105,6 +105,52 @@ export default function PostItem({
     if (target.closest("button, a, textarea, input")) return;
     router.push(`/post/${post.id}`);
   };
+
+  // Hand vote state
+  const [voteData, setVoteData] = useState<{ good: number; bad: number; myVote: string | null } | null>(null);
+  const [voteLoading, setVoteLoading] = useState(false);
+
+  useEffect(() => {
+    if (post.isPokerHand) {
+      fetch(`${API_BASE}/posts/${post.id}/votes`, {
+        credentials: "include",
+        headers: currentUser ? { Authorization: `Bearer ${localStorage.getItem("token") || ""}` } : {},
+      })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data) setVoteData(data); })
+        .catch(() => {});
+    }
+  }, [post.id, post.isPokerHand, currentUser]);
+
+  const handleVote = useCallback(async (vote: "GOOD" | "BAD") => {
+    if (!currentUser || voteLoading) return;
+    setVoteLoading(true);
+    try {
+      const res = await fetchWithAuth(`${API_BASE}/posts/${post.id}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vote }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setVoteData((prev) => {
+          if (!prev) return prev;
+          const wasGood = prev.myVote === "GOOD";
+          const wasBad = prev.myVote === "BAD";
+          let good = prev.good;
+          let bad = prev.bad;
+          // Remove old vote
+          if (wasGood) good--;
+          if (wasBad) bad--;
+          // Add new vote (if not toggling off)
+          if (result.voted === "GOOD") good++;
+          if (result.voted === "BAD") bad++;
+          return { good, bad, myVote: result.voted };
+        });
+      }
+    } catch {}
+    setVoteLoading(false);
+  }, [currentUser, post.id, voteLoading]);
 
   return (
     <li
@@ -240,6 +286,65 @@ export default function PostItem({
                 </p>
               )}
               {post.pokerHand && <div ref={handRef} style={{ paddingBottom: 8 }}><PokerHandDisplay hand={post.pokerHand} /></div>}
+              {/* Hand review vote */}
+              {voteData && (
+                <div
+                  className="mt-3 rounded-lg p-3"
+                  style={{ background: "#0d1009", border: "1px solid #1f2a1e" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <p className="mb-2 text-xs font-medium" style={{ color: "#6b7a66" }}>
+                    このプレイどう思う？
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleVote("GOOD")}
+                      disabled={voteLoading || !currentUser}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-2 text-xs font-semibold transition-all disabled:opacity-50"
+                      style={{
+                        background: voteData.myVote === "GOOD" ? "rgba(76,175,80,0.15)" : "rgba(76,175,80,0.05)",
+                        border: `1px solid ${voteData.myVote === "GOOD" ? "rgba(76,175,80,0.5)" : "#1f2a1e"}`,
+                        color: voteData.myVote === "GOOD" ? "#4CAF50" : "#6b7a66",
+                      }}
+                    >
+                      <span>👍</span> ナイスプレイ
+                      {voteData.good > 0 && <span className="tabular-nums">({voteData.good})</span>}
+                    </button>
+                    <button
+                      onClick={() => handleVote("BAD")}
+                      disabled={voteLoading || !currentUser}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-md py-2 text-xs font-semibold transition-all disabled:opacity-50"
+                      style={{
+                        background: voteData.myVote === "BAD" ? "rgba(244,67,54,0.15)" : "rgba(244,67,54,0.05)",
+                        border: `1px solid ${voteData.myVote === "BAD" ? "rgba(244,67,54,0.5)" : "#1f2a1e"}`,
+                        color: voteData.myVote === "BAD" ? "#f44336" : "#6b7a66",
+                      }}
+                    >
+                      <span>👎</span> うーん…
+                      {voteData.bad > 0 && <span className="tabular-nums">({voteData.bad})</span>}
+                    </button>
+                  </div>
+                  {/* Vote result bar */}
+                  {(voteData.good + voteData.bad) > 0 && (
+                    <div className="mt-2 flex h-1.5 overflow-hidden rounded-full" style={{ background: "#1f2a1e" }}>
+                      <div
+                        className="rounded-l-full transition-all duration-300"
+                        style={{
+                          width: `${(voteData.good / (voteData.good + voteData.bad)) * 100}%`,
+                          background: "#4CAF50",
+                        }}
+                      />
+                      <div
+                        className="rounded-r-full transition-all duration-300"
+                        style={{
+                          width: `${(voteData.bad / (voteData.good + voteData.bad)) * 100}%`,
+                          background: "#f44336",
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <p className="whitespace-pre-wrap text-[15px] leading-relaxed" style={{ color: "#ddd6c8" }}>
@@ -410,9 +515,11 @@ export default function PostItem({
                 <a
                   href={(() => {
                     const url = typeof window !== "undefined"
-                      ? `${window.location.origin}/post/${post.id}?utm_source=pokersns&utm_medium=share&utm_campaign=post_share`
+                      ? `${window.location.origin}/post/${post.id}?utm_source=pokertalk&utm_medium=share&utm_campaign=post_share`
                       : "";
-                    const text = post.isPokerHand ? "ポーカーハンド" : (post.content?.slice(0, 30) ?? "");
+                    const text = post.isPokerHand
+                      ? `このプレイどう思う？🃏 #PokerTALK`
+                      : `${post.content?.slice(0, 50) ?? ""} #PokerTALK`;
                     return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
                   })()}
                   target="_blank"
@@ -432,7 +539,7 @@ export default function PostItem({
                 <a
                   href={(() => {
                     const url = typeof window !== "undefined"
-                      ? `${window.location.origin}/post/${post.id}?utm_source=pokersns&utm_medium=share&utm_campaign=post_share`
+                      ? `${window.location.origin}/post/${post.id}?utm_source=pokertalk&utm_medium=share&utm_campaign=post_share`
                       : "";
                     return `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}`;
                   })()}

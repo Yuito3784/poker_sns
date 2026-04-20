@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Poker SNS - 日本初のポーカー特化SNS";
+export const alt = "PokerTALK - テーブルの外でも、ポーカーを語ろう";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -73,7 +73,7 @@ export default async function Image() {
             display: "flex",
           }}
         >
-          日本初のポーカー特化SNS
+          ポーカーを語る、プレイヤーの場所
         </div>
 
         {/* Logo */}
@@ -94,7 +94,7 @@ export default async function Image() {
               letterSpacing: "-3px",
             }}
           >
-            Poker SNS
+            PokerTALK
           </span>
         </div>
 
@@ -109,12 +109,12 @@ export default async function Image() {
             margin: "0 0 36px",
           }}
         >
-          ハンドレビュー・GTO戦略の議論・プレイヤーコミュニティで上達を加速
+          セッション帰りに今日のハンドを語る。ライブポーカープレイヤーのためのSNS
         </p>
 
         {/* Feature chips */}
         <div style={{ display: "flex", gap: "16px", marginBottom: "32px" }}>
-          {["ハンドを共有", "戦略を議論", "仲間と繋がる"].map((feat, i) => (
+          {["ハンドを語る", "仲間と議論", "セッションを記録"].map((feat, i) => (
             <div
               key={feat}
               style={{

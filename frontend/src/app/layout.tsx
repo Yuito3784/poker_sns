@@ -13,22 +13,22 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Poker SNS - ポーカーハンドを共有しよう",
-    template: "%s | Poker SNS",
+    default: "PokerTALK - テーブルの外でも、ポーカーを語ろう",
+    template: "%s | PokerTALK",
   },
-  description: "ポーカーハンドを共有・議論できるSNS。プレイを振り返り、戦略を磨こう。",
+  description: "セッション帰りに今日のハンドを語る。ライブポーカープレイヤーのためのSNS。",
   metadataBase: new URL(SITE_URL),
   openGraph: {
     type: "website",
     locale: "ja_JP",
-    siteName: "Poker SNS",
-    title: "Poker SNS - ポーカーハンドを共有しよう",
-    description: "ポーカーハンドを共有・議論できるSNS。プレイを振り返り、戦略を磨こう。",
+    siteName: "PokerTALK",
+    title: "PokerTALK - テーブルの外でも、ポーカーを語ろう",
+    description: "セッション帰りに今日のハンドを語る。ライブポーカープレイヤーのためのSNS。",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Poker SNS - ポーカーハンドを共有しよう",
-    description: "ポーカーハンドを共有・議論できるSNS。プレイを振り返り、戦略を磨こう。",
+    title: "PokerTALK - テーブルの外でも、ポーカーを語ろう",
+    description: "セッション帰りに今日のハンドを語る。ライブポーカープレイヤーのためのSNS。",
   },
 };
 
@@ -52,9 +52,9 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              name: "Poker SNS",
+              name: "PokerTALK",
               url: SITE_URL,
-              description: "ポーカーハンドを共有・議論できるSNS。プレイを振り返り、戦略を磨こう。",
+              description: "セッション帰りに今日のハンドを語る。ライブポーカープレイヤーのためのSNS。",
               potentialAction: {
                 "@type": "SearchAction",
                 target: {

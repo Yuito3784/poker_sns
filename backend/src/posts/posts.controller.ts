@@ -200,6 +200,25 @@ export class PostsController {
   ) {
     return this.postsService.toggleLike(user.userId, postId);
   }
+
+  @HttpPost(':id/vote')
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
+  vote(
+    @GetUser() user: { userId: string },
+    @Param('id') postId: string,
+    @Body('vote') vote: 'GOOD' | 'BAD',
+  ) {
+    return this.postsService.vote(user.userId, postId, vote);
+  }
+
+  @Get(':id/votes')
+  @Public()
+  getVotes(
+    @GetUser() user: { userId: string } | undefined,
+    @Param('id') postId: string,
+  ) {
+    return this.postsService.getVotes(postId, user?.userId ?? null);
+  }
 }
 
 

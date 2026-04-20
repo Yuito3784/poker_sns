@@ -112,7 +112,7 @@ export default function LandingClient() {
               <Suit suit="♠" className="text-lg" />
             </div>
             <span className="font-display text-lg font-semibold tracking-wide text-[#ddd6c8]">
-              Poker SNS
+              PokerTALK
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -152,23 +152,23 @@ export default function LandingClient() {
         <div className="relative mb-8 inline-flex items-center gap-2 rounded-full border border-[#c9a84c]/30 bg-[#c9a84c]/10 px-4 py-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c]" />
           <span className="text-xs font-medium tracking-widest text-[#c9a84c] uppercase">
-            日本初・ポーカー特化SNS
+            ポーカーを語る、プレイヤーの場所
           </span>
         </div>
 
         {/* Headline */}
         <h1 className="relative mb-6 max-w-3xl text-center font-display text-5xl font-bold leading-[1.12] tracking-tight text-[#ddd6c8] sm:text-6xl lg:text-7xl">
-          ポーカーを、
+          テーブルの外でも、
           <br />
           <span className="bg-gradient-to-r from-[#c9a84c] via-[#e0c068] to-[#c9a84c] bg-clip-text text-transparent">
-            もっと深く。
+            ポーカーを語ろう。
           </span>
         </h1>
 
         <p className="relative mb-10 max-w-xl text-center text-lg leading-relaxed text-[#9a8e7a]">
-          ハンドを共有し、戦略を議論し、上達を加速する。
+          セッション帰りに、今日のハンドを投稿する。
           <br className="hidden sm:block" />
-          ポーカープレイヤーのための専用コミュニティ。
+          ライブポーカープレイヤーのためのSNS。
         </p>
 
         {/* CTA */}
@@ -203,8 +203,8 @@ export default function LandingClient() {
         <FadeSection>
           <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-12 gap-y-4 px-6">
             {[
-              { val: "ポーカーハンド", label: "専用投稿フォーマット" },
-              { val: "リアルタイム", label: "フィード更新" },
+              { val: "ハンド共有", label: "セッションを記録・投稿" },
+              { val: "リアルタイム", label: "プレイヤーの声が流れる" },
               { val: "Premium", label: "広告フリー・文字数拡張" },
               { val: "100%", label: "日本語対応" },
             ].map(({ val, label }) => (
@@ -223,9 +223,9 @@ export default function LandingClient() {
           <FadeSection className="mb-16 text-center">
             <p className="mb-3 text-xs font-medium uppercase tracking-widest text-[#c9a84c]">Features</p>
             <h2 className="font-display text-4xl font-bold text-[#ddd6c8] sm:text-5xl">
-              ポーカーに特化した、<br className="hidden sm:block" />すべての機能。
+              語るために、<br className="hidden sm:block" />作られた場所。
             </h2>
-            <p className="mt-4 text-[#9a8e7a]">一般SNSでは得られない、ポーカー専用の体験を。</p>
+            <p className="mt-4 text-[#9a8e7a]">一般SNSでは���わらない、ポーカーの熱量をここで。</p>
           </FadeSection>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -237,8 +237,8 @@ export default function LandingClient() {
                     <path d="M7 8h8M7 12h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                   </svg>
                 ),
-                title: "ポーカーハンド投稿",
-                body: "ホールカード、ボードカード、アクションシーケンスを専用フォームで構造化投稿。読みやすいハンドレビューが誰でも簡単に。",
+                title: "ハンドを語る",
+                body: "ホールカード、ボード、アクションを専用フォームで投稿。あのハンドの興奮を、そのまま共有できる���",
               },
               {
                 icon: (
@@ -247,8 +247,8 @@ export default function LandingClient() {
                     <path d="M11 7v4l3 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                   </svg>
                 ),
-                title: "リアルタイムタイムライン",
-                body: "フォロー中のプレイヤーの最新ハンドや投稿が即座に流れる。無限スクロールで快適なブラウジング。",
+                title: "プレイヤーの声が流れる",
+                body: "フォロー中のプレイヤーのハンドや投稿がリアルタイムで流れる。セッション後のタイムラインが一番アツい。",
               },
               {
                 icon: (
@@ -256,8 +256,8 @@ export default function LandingClient() {
                     <path d="M3 6h16M3 11h10M3 16h13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                   </svg>
                 ),
-                title: "戦略的ディスカッション",
-                body: "いいね・リプライ・リポストでハンドを深掘り。ハッシュタグで話題のトレンドに参加しよう。",
+                title: "議論が盛り上がる",
+                body: "いいね・リプライ・リポストでハンドを深掘り。「自分ならこう打つ」が飛び交う場所。",
               },
               {
                 icon: (
@@ -266,7 +266,7 @@ export default function LandingClient() {
                   </svg>
                 ),
                 title: "Premiumメンバーシップ",
-                body: "広告非表示、投稿文字数1000文字、バッジ表示。本気のプレイヤーのための上位プラン。",
+                body: "広告非表示、投稿文字数1,000文��、バッジ表示。もっと語りたいプレイヤーのための上位プラン。",
               },
               {
                 icon: (
@@ -276,8 +276,8 @@ export default function LandingClient() {
                     <path d="M19 12v4M17 14h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                   </svg>
                 ),
-                title: "フォロー & コミュニティ",
-                body: "プレイヤーをフォローして成長を追う。ブックマーク、ブロック、ミュートで快適な環境をカスタマイズ。",
+                title: "仲間とつながる",
+                body: "気になるプレイヤーをフォロー。ブックマーク、ブロック、ミュートで自分だけの卓を作ろう。",
               },
               {
                 icon: (
@@ -312,17 +312,17 @@ export default function LandingClient() {
               {
                 num: "01",
                 title: "アカウント作成",
-                body: "メールアドレスで30秒登録。プロフィールを設定してプレイヤーとして参加しよう。",
+                body: "メールアドレスで30秒登録。プロフィールを設定してテーブルに着こう。",
               },
               {
                 num: "02",
                 title: "ハンドを投稿",
-                body: "専用フォームでポジション、スタック、アクションを入力。美しくフォーマットされたハンドを投稿。",
+                body: "今日打ったハンドを専用フォームで投稿。ポジション、アクション、結果をそのまま記録。",
               },
               {
                 num: "03",
-                title: "コミュニティで上達",
-                body: "他のプレイヤーのレビューを受け、ディスカッションで戦略を磨き、ゲームを次のレベルへ。",
+                title: "語って、強くなる",
+                body: "リプライで意見が飛び交い、議論が深まる。語るほどにゲームが変わる。",
               },
             ].map((s, i) => (
               <FadeSection key={s.num} delay={i * 120}>
@@ -348,7 +348,7 @@ export default function LandingClient() {
                   上位1%の<br />プレイヤーへ
                 </h2>
                 <p className="mb-8 text-sm leading-relaxed text-[#9a8e7a]">
-                  本気で強くなりたいプレイヤーのためのプレミアムプランで、制限なくコミュニティを活用しよう。
+                  もっと語りたい。もっと深く知りたい。そんなプレイヤーのためのプレミアムプラン。
                 </p>
                 <ul className="mb-10 space-y-3.5">
                   <Benefit>広告完全非表示</Benefit>
@@ -440,7 +440,7 @@ export default function LandingClient() {
                 </div>
               </div>
               <a
-                href="mailto:support@pokersns.com"
+                href="mailto:contact@pokertalk.jp"
                 className="inline-flex items-center gap-2 rounded-xl bg-[#c9a84c] px-8 py-3.5 text-sm font-semibold text-[#0d1009] transition-all hover:bg-[#d4b965]"
               >
                 パートナー申請はこちら
@@ -464,11 +464,11 @@ export default function LandingClient() {
               <Suit suit="♣" className="text-3xl opacity-30" />
             </div>
             <h2 className="mb-6 font-display text-4xl font-bold text-[#ddd6c8] sm:text-5xl">
-              あなたのポーカーライフを、<br className="hidden sm:block" />
-              次のステージへ。
+              今日のセッション、<br className="hidden sm:block" />
+              誰かに語りたくない？
             </h2>
             <p className="mb-10 text-[#9a8e7a]">
-              今すぐ無料で参加。ハンドを共有し、議論し、強くなろう。
+              今すぐ無料で参加。あのハンドを投稿しよう。
             </p>
             <Link
               href="/"
@@ -492,18 +492,18 @@ export default function LandingClient() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#2a3828] bg-[#131a14]">
                 <Suit suit="♠" className="text-base" />
               </div>
-              <span className="font-display text-base font-semibold text-[#ddd6c8]">Poker SNS</span>
+              <span className="font-display text-base font-semibold text-[#ddd6c8]">PokerTALK</span>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-[#6b7a66]">
               <Link href="/terms" className="transition-colors hover:text-[#9a8e7a]">利用規約</Link>
               <Link href="/privacy" className="transition-colors hover:text-[#9a8e7a]">プライバシーポリシー</Link>
               <Link href="/tokushoho" className="transition-colors hover:text-[#9a8e7a]">特定商取引法に基づく表記</Link>
               <Link href="/partners" className="transition-colors hover:text-[#9a8e7a]">パートナー</Link>
-              <a href="mailto:support@pokersns.com" className="transition-colors hover:text-[#9a8e7a]">お問い合わせ</a>
+              <a href="mailto:contact@pokertalk.jp" className="transition-colors hover:text-[#9a8e7a]">お問い合わせ</a>
             </div>
           </div>
           <div className="border-t border-[#1f2a1e] pt-6 text-center text-xs text-[#6b7a66]">
-            &copy; {new Date().getFullYear()} Poker SNS. All rights reserved.
+            &copy; {new Date().getFullYear()} PokerTALK. All rights reserved.
           </div>
         </div>
       </footer>

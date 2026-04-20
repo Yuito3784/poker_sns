@@ -78,6 +78,7 @@ model User {
   coachBookings         CoachBooking[] @relation("CoachBookings")
   creatorEarnings       CreatorEarning[] @relation("CreatorEarnings")
   creatorPayouts        CreatorPayout[]  @relation("CreatorPayouts")
+  handVotes             HandVote[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -171,6 +172,7 @@ model Post {
   aiAnalysis    AiAnalysis?
   tips          Tip[]
   paidContent   PaidContent?
+  handVotes     HandVote[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -260,6 +262,24 @@ model PokerAction {
   updatedAt   DateTime   @updatedAt
 
   @@index([streetId, order])
+}
+
+model HandVote {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  vote      VoteType
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+enum VoteType {
+  GOOD  // このプレイあり
+  BAD   // このプレイなし
 }
 
 model Follow {

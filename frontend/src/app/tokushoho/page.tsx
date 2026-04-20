@@ -2,11 +2,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "特定商取引法に基づく表記 - Poker SNS",
+  title: "特定商取引法に基づく表記 - PokerTALK",
 };
 
 export default function TokushohoPage() {
-  const businessName = process.env.NEXT_PUBLIC_TOKUSHOHO_BUSINESS_NAME ?? "Poker SNS";
+  const businessName = process.env.NEXT_PUBLIC_TOKUSHOHO_BUSINESS_NAME ?? "PokerTALK";
   const operatorName = process.env.NEXT_PUBLIC_TOKUSHOHO_OPERATOR_NAME ?? "大原 唯人";
   const address =
     process.env.NEXT_PUBLIC_TOKUSHOHO_ADDRESS ??
@@ -15,8 +15,8 @@ export default function TokushohoPage() {
     process.env.NEXT_PUBLIC_TOKUSHOHO_PHONE ??
     "050-1724-9110";
   const contactHours = process.env.NEXT_PUBLIC_TOKUSHOHO_CONTACT_HOURS ?? "平日 10:00〜18:00";
-  const supportEmail = process.env.NEXT_PUBLIC_TOKUSHOHO_SUPPORT_EMAIL ?? "support@pokersns.com";
-  const salesUrl = process.env.NEXT_PUBLIC_TOKUSHOHO_SALES_URL ?? "https://www.pokersns.com/lp";
+  const supportEmail = process.env.NEXT_PUBLIC_TOKUSHOHO_SUPPORT_EMAIL ?? "support@pokertalk.jp";
+  const salesUrl = process.env.NEXT_PUBLIC_TOKUSHOHO_SALES_URL ?? "https://pokertalk.jp/lp";
 
   return (
     <div className="min-h-screen bg-[#0d1009] text-[#ddd6c8]">
@@ -98,7 +98,7 @@ export default function TokushohoPage() {
               style={{ background: "#131a14", border: "1px solid #1f2a1e" }}
             >
               <h3 className="mb-1 font-semibold text-[#ddd6c8]">
-                Poker SNS プレミアム（月額980円・税込）
+                PokerTALK プレミアム（月額980円・税込）
               </h3>
               <p className="mb-2">
                 月額サブスクリプションサービスです。以下の機能が利用可能になります。

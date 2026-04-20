@@ -4,24 +4,24 @@ import Link from "next/link";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
-  title: "Poker SNS について | プレイヤーのEVをデザインするSNS",
+  title: "PokerTALK について | プレイヤーのEVをデザインするSNS",
   description:
-    "Poker SNS は、ただハンドを投稿して終わりではなく、自分のポジションとEVを主体的にデザインしていくプレイヤーのためのSNSです。ポーカーとキャリアの両方で「テーブルを立てる側」に近づくための場所を目指しています。",
+    "PokerTALK は、ただハンドを投稿して終わりではなく、自分のポジションとEVを主体的にデザインしていくプレイヤーのためのSNSです。ポーカーとキャリアの両方で「テーブルを立てる側」に近づくための場所を目指しています。",
   alternates: {
     canonical: `${SITE_URL}/about`,
   },
   openGraph: {
-    title: "Poker SNS について | プレイヤーのEVをデザインするSNS",
+    title: "PokerTALK について | プレイヤーのEVをデザインするSNS",
     description:
-      "「呼ばれる側」で終わらず、自分でチャンスを作る側へ。ポーカープレイヤーのためのSNS Poker SNS のコンセプト紹介。",
+      "「呼ばれる側」で終わらず、自分でチャンスを作る側へ。ポーカープレイヤーのためのSNS PokerTALK のコンセプト紹介。",
     type: "website",
     url: `${SITE_URL}/about`,
-    siteName: "Poker SNS",
+    siteName: "PokerTALK",
     locale: "ja_JP",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Poker SNS について | プレイヤーのEVをデザインするSNS",
+    title: "PokerTALK について | プレイヤーのEVをデザインするSNS",
     description:
       "ポジション・情報・コミュニティ。3つの観点から、プレイヤーとしてのEVを自分で組み立てていくためのSNSです。",
   },
@@ -43,7 +43,7 @@ export default function AboutPage() {
             「EV設計」のためのSNS。
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-[#a79a86] sm:text-base">
-            Poker SNS は、「強いハンドを引くかどうか」ではなく、
+            PokerTALK は、「強いハンドを引くかどうか」ではなく、
             どんなポジションでどんな選択を積み重ねるかにフォーカスしたSNSです。
             単なるプレイ記録ではなく、プレイヤーとしての立ち位置そのものをデザインしていくための場所を目指しています。
           </p>
@@ -67,7 +67,7 @@ export default function AboutPage() {
               その違いが長期的なEVに大きく効いてきます。
             </p>
             <p className="text-sm leading-relaxed text-[#c0b4a0]">
-              Poker SNS は、「実力」だけでなく「ポジション」と「情報」と「つながり」をセットで育てていくためのツールでありたいと考えています。
+              PokerTALK は、「実力」だけでなく「ポジション」と「情報」と「つながり」をセットで育てていくためのツールでありたいと考えています。
             </p>
           </div>
           <div className="space-y-3 rounded-2xl border border-[#2a3828] bg-[#0d1009] p-5 text-sm text-[#b0a48f]">
@@ -77,7 +77,7 @@ export default function AboutPage() {
             <ul className="space-y-2 text-xs leading-relaxed">
               <li>・なぜ「ただ打つだけ」だとEVに上限ができやすいのか</li>
               <li>・ポーカーの世界でいう「ポジション」と「テーブルを立てる側」</li>
-              <li>・Poker SNS が支えたい3つのテーマ（思考・発信・コミュニティ）</li>
+              <li>・PokerTALK が支えたい3つのテーマ（思考・発信・コミュニティ）</li>
               <li>・このSNSをどう使うとEV設計に効いてくるのか</li>
             </ul>
           </div>
@@ -86,7 +86,7 @@ export default function AboutPage() {
         {/* 3 principles */}
         <section className="space-y-6">
           <h2 className="font-display text-2xl font-semibold text-[#f5efe2] sm:text-3xl">
-            Poker SNS が大事にしている3つの視点
+            PokerTALK が大事にしている3つの視点
           </h2>
           <div className="grid gap-6 sm:grid-cols-3">
             <div className="space-y-2 rounded-2xl border border-[#1f2a1e] bg-[#131a14] p-6 text-xs leading-relaxed text-[#b0a48f]">
@@ -131,7 +131,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* How Poker SNS maps to this */}
+        {/* How PokerTALK maps to this */}
         <section className="space-y-6 rounded-3xl border border-[#1f2a1e] bg-[#080a08] p-8 sm:p-10">
           <h2 className="font-display text-2xl font-semibold text-[#f5efe2] sm:text-3xl">
             この考え方が、機能設計にどう反映されているか
@@ -209,14 +209,14 @@ export default function AboutPage() {
             自分の足で立って、自分のゲームの条件を自分で決めにいく。
             その感覚を育てるうえで、
             ハンドを共有し、議論し、発信し続けるためのベースキャンプとして、
-            Poker SNS が使われたらうれしいなと思っています。
+            PokerTALK が使われたらうれしいなと思っています。
           </p>
           <div className="pt-4">
             <Link
               href="/lp"
               className="inline-flex items-center gap-2 rounded-xl bg-[#c9a84c] px-6 py-3 text-sm font-semibold text-[#0d1009] shadow-[0_4px_18px_rgba(201,168,76,0.25)] transition-colors hover:bg-[#d4b965]"
             >
-              Poker SNS の機能を見る
+              PokerTALK の機能を見る
               <svg
                 width="14"
                 height="14"
