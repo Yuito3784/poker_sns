@@ -479,7 +479,7 @@ export default function LandingClient() {
                 <path d="M3 9h12M9 3.5l5.5 5.5L9 14.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
-            <p className="mt-4 text-xs text-[#6b7a66]">クレジットカード不要 · 登録30秒</p>
+            <p className="mt-4 text-xs text-[#6b7a66]">クレジットカード不要 · 登録30秒 · 完全無料</p>
           </div>
         </FadeSection>
       </section>
