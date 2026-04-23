@@ -5,225 +5,186 @@
   <meta name="viewport" content="width=1080, height=1920" />
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0a0d08; font-family: 'Noto Sans JP', sans-serif; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; font-family: 'Noto Sans JP', sans-serif; }
+
+    .bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, #1a3a1f 0%, #0a1a0f 50%, #050d05 100%);
+    }
+    .bg::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(34,139,34,0.08) 0%, transparent 50%);
+    }
 
     .grain { position: absolute; inset: 0; opacity: 0.03; pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
-    .safe { position: absolute; top: 150px; bottom: 250px; left: 60px; right: 60px; }
+    .safe { position: absolute; top: 150px; bottom: 200px; left: 60px; right: 60px; }
+    .clip { position: absolute; opacity: 0; }
+    .fukuro { text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; }
 
-    .card { width: 180px; height: 260px; border-radius: 14px; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; position: relative; overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(201,168,76,0.1);
-      background: linear-gradient(145deg, #1a2318 0%, #0f150e 100%);
-      border: 2px solid rgba(201,168,76,0.3); }
-    .card::before { content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%); }
-    .card-rank { font-size: 72px; font-weight: 900; line-height: 1; font-family: 'Inter', sans-serif; }
-    .card-suit { font-size: 52px; line-height: 1; margin-top: 4px; }
+    .progress-bar { position: absolute; bottom: 100px; left: 60px; right: 60px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .progress-fill { height: 100%; width: 0%; background: #c9a84c; border-radius: 2px; }
 
-    .board-card { width: 140px; height: 200px; border-radius: 12px; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; position: relative; overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-      background: linear-gradient(145deg, #1a2318 0%, #0f150e 100%);
-      border: 2px solid rgba(201,168,76,0.2); }
-    .board-card::before { content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%); }
-    .board-rank { font-size: 56px; font-weight: 900; line-height: 1; font-family: 'Inter', sans-serif; }
-    .board-suit { font-size: 40px; line-height: 1; margin-top: 4px; }
+    .flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 100; }
 
-    .glow-gold { text-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 40px rgba(201,168,76,0.2); }
+    .card-shape {
+      display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 160px; height: 220px; background: #1a1a1a; border: 3px solid #444;
+      border-radius: 12px; margin: 0 20px;
+    }
 
-    .fold-stamp { position: absolute; font-size: 80px; font-weight: 900; color: #c0392b;
-      border: 6px solid #c0392b; padding: 8px 32px; transform: rotate(-15deg);
-      text-shadow: 0 0 20px rgba(192,57,43,0.5); letter-spacing: 8px;
-      font-family: 'Inter', sans-serif; }
+    .fold-stamp {
+      color: #FF3B3B; font-size: 80px; font-weight: 900;
+      border: 6px solid #FF3B3B; padding: 8px 24px; border-radius: 8px;
+      transform: rotate(-15deg); opacity: 0;
+    }
 
-    .progress-bar { position: absolute; bottom: 260px; left: 60px; right: 60px; height: 4px;
-      background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #c9a84c; border-radius: 2px; width: 0%; }
-
-    .watermark { position: absolute; bottom: 270px; right: 60px; font-size: 20px;
-      font-weight: 700; color: rgba(201,168,76,0.3); font-family: 'Inter', sans-serif;
-      letter-spacing: 1px; }
+    .board-card {
+      display: inline-block; background: #222; border: 2px solid #555;
+      border-radius: 8px; padding: 12px 18px; margin: 0 8px;
+      font-size: 44px; font-weight: 700; opacity: 0;
+    }
   </style>
 </head>
 <body>
-  <div id="root" data-composition-id="v2-reel-06" data-start="0" data-duration="8" data-width="1080" data-height="1920">
+<div id="root" data-composition-id="v2-reel-06" data-start="0" data-duration="15" data-width="1080" data-height="1920">
+  <div class="bg"></div>
+  <div class="grain"></div>
+  <div class="flash" id="flash1"></div>
+  <div class="safe">
 
-    <!-- BG -->
-    <div id="bg" class="clip" data-start="0" data-duration="8" data-track-index="0"
-      style="position:absolute;inset:0;">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%, rgba(192,57,43,0.04) 0%, transparent 50%);"></div>
+    <!-- HOOK 0-3s -->
+    <div class="clip" id="hook" data-start="0" data-duration="3" data-track-index="0">
+      <div style="position:absolute; top:80px; left:0;">
+        <div style="color:#fff; font-size:44px; font-weight:700;">フォールドした後の</div>
+        <div style="color:#fff; font-size:44px; font-weight:700; margin-top:10px;">ボード見た時の</div>
+        <div id="hook-impact" style="color:#FFE136; font-size:80px; font-weight:900; transform:rotate(-2deg); margin-top:20px;" class="fukuro">絶望感ｗｗｗ</div>
+      </div>
+      <div style="position:absolute; top:40px; right:20px; font-size:80px; transform:rotate(12deg);">💀</div>
     </div>
 
-    <!-- Grain -->
-    <div id="grain-layer" class="clip" data-start="0" data-duration="8" data-track-index="1"
-      style="position:absolute;inset:0;"><div class="grain"></div></div>
-
-    <!-- SCENE 1: HOOK (0-2s) -->
-    <div id="scene1" class="clip" data-start="0" data-duration="2" data-track-index="2"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s1-text" style="text-align:center;">
-          <p style="font-size:68px;font-weight:900;color:#fff;line-height:1.3;">フォールドした後の<br/>ボード見る瞬間</p>
+    <!-- HERO HAND 3-5.5s -->
+    <div class="clip" id="hero-hand" data-start="3" data-duration="2.5" data-track-index="0">
+      <div style="position:absolute; top:300px; left:0; right:0; text-align:center;">
+        <div style="display:inline-flex; align-items:center; gap:40px;">
+          <div class="card-shape" id="card1">
+            <span style="color:#fff; font-size:56px; font-weight:900;">7</span>
+            <span style="color:#fff; font-size:44px;">&#9824;</span>
+          </div>
+          <div class="card-shape" id="card2">
+            <span style="color:#FF3B3B; font-size:56px; font-weight:900;">2</span>
+            <span style="color:#FF3B3B; font-size:44px;">&#9830;</span>
+          </div>
+        </div>
+        <div style="margin-top:40px;">
+          <div class="fold-stamp" id="fold-stamp">FOLD</div>
         </div>
       </div>
     </div>
 
-    <!-- SCENE 2: Hero hand + FOLD (2-4s) -->
-    <div id="scene2" class="clip" data-start="2" data-duration="2" data-track-index="3"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s2-label" style="margin-bottom:24px;">
-          <p style="font-size:28px;color:#6b7a66;letter-spacing:2px;">YOUR HAND</p>
-        </div>
-        <div id="s2-cards" style="display:flex;gap:20px;position:relative;">
-          <div class="card" id="hero-card-1">
-            <span class="card-rank" style="color:#ddd6c8;">7</span>
-            <span class="card-suit" style="color:#ddd6c8;">&#9824;</span>
-          </div>
-          <div class="card" id="hero-card-2">
-            <span class="card-rank" style="color:#c0392b;">2</span>
-            <span class="card-suit" style="color:#c0392b;">&#9830;</span>
-          </div>
-          <div id="fold-stamp" class="fold-stamp" style="opacity:0;">FOLD</div>
+    <!-- BOARD REVEAL 5.5-9.5s -->
+    <div class="clip" id="board" data-start="5.5" data-duration="4" data-track-index="0">
+      <div style="position:absolute; top:160px; left:0;">
+        <div style="color:#888; font-size:28px;">ボード：</div>
+      </div>
+      <div style="position:absolute; top:240px; left:0; right:0; text-align:center;">
+        <span class="board-card" id="bc1" style="color:#FF3B3B;">7&#9829;</span>
+        <span class="board-card" id="bc2" style="color:#FF3B3B;">7&#9830;</span>
+        <span class="board-card" id="bc3" style="color:#fff;">2&#9827;</span>
+      </div>
+      <div id="board-text" style="position:absolute; top:420px; left:0; right:0; text-align:center; opacity:0;">
+        <div style="color:#FF3B3B; font-size:52px; font-weight:900; transform:rotate(1deg);">...フルハウスだったわ</div>
+      </div>
+    </div>
+
+    <!-- REACTION 9.5-11.5s -->
+    <div class="clip" id="reaction" data-start="9.5" data-duration="2" data-track-index="0">
+      <div style="position:absolute; top:350px; left:0; right:0; text-align:center;">
+        <div id="skull-row" style="font-size:120px; opacity:0;">💀💀💀</div>
+        <div style="margin-top:30px;">
+          <span id="dot1" style="color:#fff; font-size:80px; opacity:0;">。</span>
+          <span id="dot2" style="color:#fff; font-size:80px; opacity:0;">。</span>
+          <span id="dot3" style="color:#fff; font-size:80px; opacity:0;">。</span>
         </div>
       </div>
     </div>
 
-    <!-- SCENE 3: Board reveal (4-6s) -->
-    <div id="scene3" class="clip" data-start="4" data-duration="2" data-track-index="4"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s3-label" style="margin-bottom:24px;">
-          <p style="font-size:28px;color:#6b7a66;letter-spacing:2px;">BOARD</p>
-        </div>
-        <div id="s3-board" style="display:flex;gap:16px;">
-          <div class="board-card" id="board-1">
-            <span class="board-rank" style="color:#c0392b;">7</span>
-            <span class="board-suit" style="color:#c0392b;">&#9829;</span>
-          </div>
-          <div class="board-card" id="board-2">
-            <span class="board-rank" style="color:#c0392b;">7</span>
-            <span class="board-suit" style="color:#c0392b;">&#9830;</span>
-          </div>
-          <div class="board-card" id="board-3">
-            <span class="board-rank" style="color:#ddd6c8;">2</span>
-            <span class="board-suit" style="color:#ddd6c8;">&#9827;</span>
-          </div>
-        </div>
-        <div id="s3-hand-label" style="margin-top:32px;">
-          <p style="font-size:36px;font-weight:700;color:#c0392b;">フルハウス…だった</p>
-        </div>
+    <!-- CTA 11.5-15s -->
+    <div class="clip" id="cta" data-start="11.5" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:300px; left:0; right:0; text-align:center;">
+        <div id="cta-logo" style="color:#c9a84c; font-size:80px; font-weight:900; opacity:0;">PokerTALK</div>
+        <div id="cta-tagline" style="color:#fff; font-size:32px; margin-top:30px; opacity:0;">テーブルの外でも、ポーカーを語ろう</div>
+        <div id="cta-link" style="color:#888; font-size:24px; margin-top:30px; opacity:0;">↓ プロフのリンクから</div>
       </div>
     </div>
-
-    <!-- SCENE 4: Reaction (6-7.5s) -->
-    <div id="scene4" class="clip" data-start="6" data-duration="1.5" data-track-index="5"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s4-emoji" style="text-align:center;">
-          <p style="font-size:200px;">💀</p>
-        </div>
-        <div id="s4-dots" style="margin-top:24px;">
-          <p style="font-size:64px;color:#9a8e7a;letter-spacing:16px;">。。。</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- SCENE 5: CTA + fade to black (7.5-8s) -->
-    <div id="scene5" class="clip" data-start="7.5" data-duration="0.5" data-track-index="6"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s5-logo" style="text-align:center;">
-          <p style="font-size:72px;font-weight:900;color:#c9a84c;letter-spacing:2px;font-family:'Inter',sans-serif;" class="glow-gold">PokerTALK</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Fade to black overlay for seamless loop -->
-    <div id="fade-black" class="clip" data-start="7.5" data-duration="0.5" data-track-index="13"
-      style="position:absolute;inset:0;background:#0a0d08;opacity:0;pointer-events:none;"></div>
-
-    <!-- Progress bar -->
-    <div id="progress" class="clip" data-start="0" data-duration="8" data-track-index="7"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
-    </div>
-
-    <!-- Watermark -->
-    <div id="wm" class="clip" data-start="0" data-duration="8" data-track-index="8"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="watermark">PokerTALK</div>
-    </div>
-
-    <!-- Flash transitions -->
-    <div id="flash1" class="clip" data-start="1.8" data-duration="0.4" data-track-index="9"
-      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
-    <div id="flash2" class="clip" data-start="3.8" data-duration="0.4" data-track-index="10"
-      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
-    <div id="flash3" class="clip" data-start="5.8" data-duration="0.4" data-track-index="11"
-      style="position:absolute;inset:0;background:#c0392b;opacity:0;pointer-events:none;"></div>
-
-    <!-- Screen shake container (wraps everything via GSAP) -->
 
   </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
   <script>
     window.__timelines = window.__timelines || {};
     const tl = gsap.timeline({ paused: true });
-
-    // SCENE 1: Hook slam (0-2s)
-    tl.from("#s1-text", { opacity: 0, scale: 1.5, duration: 0.4, ease: "power4.out" }, 0.2);
-
-    // Flash 1
-    tl.to("#flash1", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 1.9);
-    tl.to("#flash1", { opacity: 0, duration: 0.2, ease: "power2.out" }, 2.0);
-
-    // SCENE 2: Cards + FOLD stamp (2-4s)
-    tl.from("#s2-label", { opacity: 0, y: -20, duration: 0.3, ease: "power3.out" }, 2.1);
-    tl.from("#hero-card-1", { opacity: 0, rotationY: 180, x: -40, duration: 0.5, ease: "power4.out" }, 2.2);
-    tl.from("#hero-card-2", { opacity: 0, rotationY: 180, x: 40, duration: 0.5, ease: "power4.out" }, 2.4);
-    // FOLD stamp slams in
-    tl.to("#fold-stamp", { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(3)" }, 3.0);
-    tl.from("#fold-stamp", { scale: 2, duration: 0.3, ease: "back.out(3)" }, 3.0);
-
-    // Flash 2
-    tl.to("#flash2", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 3.9);
-    tl.to("#flash2", { opacity: 0, duration: 0.2, ease: "power2.out" }, 4.0);
-
-    // SCENE 3: Board cards reveal with suspense (4-6s)
-    tl.from("#s3-label", { opacity: 0, duration: 0.3, ease: "power2.out" }, 4.1);
-    tl.from("#board-1", { opacity: 0, rotationY: 180, duration: 0.4, ease: "power4.out" }, 4.3);
-    tl.from("#board-2", { opacity: 0, rotationY: 180, duration: 0.4, ease: "power4.out" }, 4.8);
-    tl.from("#board-3", { opacity: 0, rotationY: 180, duration: 0.4, ease: "power4.out" }, 5.2);
-    // Board glow red
-    tl.to("#s3-board .board-card", { boxShadow: "0 10px 40px rgba(0,0,0,0.6), 0 0 40px rgba(192,57,43,0.4)", duration: 0.4 }, 5.5);
-    tl.from("#s3-hand-label", { opacity: 0, y: 20, duration: 0.4, ease: "power3.out" }, 5.5);
-
-    // Flash 3 (red tint)
-    tl.to("#flash3", { opacity: 0.4, duration: 0.1, ease: "power4.in" }, 5.9);
-    tl.to("#flash3", { opacity: 0, duration: 0.2, ease: "power2.out" }, 6.0);
-
-    // SCENE 4: Skull reaction + screen shake (6-7.5s)
-    // Screen shake
-    tl.to("#root", { x: 8, duration: 0.05, yoyo: true, repeat: 8, ease: "none" }, 6.0);
-    tl.from("#s4-emoji", { opacity: 0, scale: 0, duration: 0.6, ease: "elastic.out(1, 0.4)" }, 6.1);
-    tl.from("#s4-dots", { opacity: 0, duration: 0.4, ease: "power2.out" }, 6.8);
-
-    // SCENE 5: Quick CTA + fade to black (7.5-8s)
-    tl.from("#s5-logo", { opacity: 0, duration: 0.3, ease: "power2.out" }, 7.5);
-    // Fade to black for seamless loop
-    tl.to("#fade-black", { opacity: 1, duration: 0.4, ease: "power2.in" }, 7.6);
+    window.__timelines["v2-reel-06"] = tl;
 
     // Progress bar
-    tl.to("#prog-fill", { width: "100%", duration: 8, ease: "none" }, 0);
+    tl.to("#progress", { width: "100%", duration: 15, ease: "none" }, 0);
 
-    window.__timelines["v2-reel-06"] = tl;
+    // HOOK
+    tl.to("#hook", { opacity: 1, duration: 0.3 }, 0);
+    tl.to("#hook-impact", { x: 5, duration: 0.05, yoyo: true, repeat: 5 }, 0.5);
+    tl.to("#hook-impact", { x: 0, duration: 0.05 }, 0.8);
+    tl.to("#hook", { opacity: 0, duration: 0.3 }, 2.7);
+
+    // HERO HAND
+    tl.to("#hero-hand", { opacity: 1, duration: 0.2 }, 3);
+    tl.fromTo("#card1", { rotateY: 180 }, { rotateY: 0, duration: 0.5, ease: "power2.out" }, 3.2);
+    tl.fromTo("#card2", { rotateY: 180 }, { rotateY: 0, duration: 0.5, ease: "power2.out" }, 3.6);
+    tl.fromTo("#fold-stamp", { scale: 2, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2)" }, 4.2);
+    tl.to("#fold-stamp", { x: 5, duration: 0.04, yoyo: true, repeat: 4 }, 4.3);
+    tl.to("#fold-stamp", { x: 0, duration: 0.04 }, 4.5);
+    tl.to("#hero-hand", { opacity: 0, duration: 0.3 }, 5.2);
+
+    // BOARD REVEAL
+    tl.to("#board", { opacity: 1, duration: 0.3 }, 5.5);
+    // Card 1
+    tl.to("#bc1", { opacity: 1, duration: 0.2 }, 5.8);
+    tl.to("#flash1", { opacity: 0.6, duration: 0.05 }, 5.8);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 5.85);
+    // Card 2
+    tl.to("#bc2", { opacity: 1, duration: 0.2 }, 6.8);
+    tl.to("#flash1", { opacity: 0.6, duration: 0.05 }, 6.8);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 6.85);
+    // Card 3
+    tl.to("#bc3", { opacity: 1, duration: 0.2 }, 7.8);
+    tl.to("#flash1", { opacity: 0.6, duration: 0.05 }, 7.8);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 7.85);
+    // Full house text
+    tl.to("#board-text", { opacity: 1, duration: 0.5 }, 8.3);
+    tl.to("#board", { x: 5, duration: 0.04, yoyo: true, repeat: 5 }, 8.3);
+    tl.to("#board", { x: 0, duration: 0.04 }, 8.6);
+    tl.to("#board", { opacity: 0, duration: 0.3 }, 9.2);
+
+    // REACTION
+    tl.to("#flash1", { opacity: 1, duration: 0.05 }, 9.5);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 9.55);
+    tl.to("#reaction", { opacity: 1, duration: 0.1 }, 9.5);
+    tl.fromTo("#skull-row", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "elastic.out(1,0.5)" }, 9.6);
+    tl.to("#dot1", { opacity: 1, duration: 0.2 }, 10.2);
+    tl.to("#dot2", { opacity: 1, duration: 0.2 }, 10.5);
+    tl.to("#dot3", { opacity: 1, duration: 0.2 }, 10.8);
+    tl.to("#reaction", { opacity: 0, duration: 0.3 }, 11.2);
+
+    // CTA
+    tl.to("#cta", { opacity: 1, duration: 0.1 }, 11.5);
+    tl.fromTo("#cta-logo", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: "elastic.out(1,0.5)" }, 11.5);
+    tl.to("#cta-tagline", { opacity: 1, duration: 0.5 }, 12.0);
+    tl.to("#cta-link", { opacity: 1, duration: 0.5 }, 13.0);
   </script>
+</div>
 </body>
 </html>

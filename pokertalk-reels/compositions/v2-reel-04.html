@@ -5,194 +5,176 @@
   <meta name="viewport" content="width=1080, height=1920" />
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0a0d08; font-family: 'Noto Sans JP', sans-serif; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; font-family: 'Noto Sans JP', sans-serif; }
 
-    /* Grain overlay */
+    .bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, #1a0f0f 0%, #120a0a 60%, #0a0505 100%);
+    }
+    .bg::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 30% 25%, rgba(255,200,80,0.02) 0%, transparent 30%),
+                  radial-gradient(circle at 75% 70%, rgba(255,180,60,0.015) 0%, transparent 25%),
+                  radial-gradient(circle at 60% 20%, rgba(255,160,40,0.01) 0%, transparent 20%);
+    }
+
     .grain { position: absolute; inset: 0; opacity: 0.03; pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
-    /* TikTok safe zone */
-    .safe { position: absolute; top: 150px; bottom: 250px; left: 60px; right: 60px; }
+    .safe { position: absolute; top: 150px; bottom: 200px; left: 60px; right: 60px; }
+    .clip { position: absolute; opacity: 0; }
+    .fukuro { text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; }
 
-    .glow-gold { text-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 40px rgba(201,168,76,0.2); }
+    .progress-bar { position: absolute; bottom: 100px; left: 60px; right: 60px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .progress-fill { height: 100%; width: 0%; background: #c9a84c; border-radius: 2px; }
 
-    .list-card {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      width: 100%;
-      background: linear-gradient(145deg, #1a2318 0%, #0f150e 100%);
-      border: 2px solid rgba(201,168,76,0.2);
+    .flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 100; }
+
+    .item-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
       padding: 28px 32px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 20px rgba(201,168,76,0.05);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 20px;
     }
-
-    .num-badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: #c9a84c;
-      color: #0a0d08;
-      font-family: 'Inter', sans-serif;
-      font-weight: 900;
-      font-size: 36px;
-      flex-shrink: 0;
+    .item-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, #c9a84c, #a08030);
+      color: #fff; font-size: 28px; font-weight: 900; flex-shrink: 0;
     }
-
-    .list-text {
-      font-size: 36px;
-      font-weight: 700;
-      color: #ddd6c8;
-      line-height: 1.3;
-    }
-
-    .progress-bar { position: absolute; bottom: 260px; left: 60px; right: 60px; height: 4px;
-      background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #c9a84c; border-radius: 2px; width: 0%; }
-
-    .watermark { position: absolute; bottom: 270px; right: 60px; font-size: 20px;
-      font-weight: 700; color: rgba(201,168,76,0.3); font-family: 'Inter', sans-serif;
-      letter-spacing: 1px; }
   </style>
 </head>
 <body>
-  <div id="root" data-composition-id="v2-reel-04" data-start="0" data-duration="12" data-width="1080" data-height="1920">
+<div id="root" data-composition-id="v2-reel-04" data-start="0" data-duration="20" data-width="1080" data-height="1920">
+  <div class="bg"></div>
+  <div class="grain"></div>
+  <div class="flash" id="flash1"></div>
+  <div class="safe">
 
-    <!-- BG -->
-    <div id="bg" class="clip" data-start="0" data-duration="12" data-track-index="0"
-      style="position:absolute;inset:0;">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.05) 0%, transparent 50%);"></div>
-      <div style="position:absolute;inset:0;background:radial-gradient(circle at 70% 60%, rgba(192,57,43,0.02) 0%, transparent 40%);"></div>
+    <!-- HOOK 0-3.5s -->
+    <div class="clip" id="hook" data-start="0" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:100px; left:0;">
+        <div style="color:#fff; font-size:40px; font-weight:400;">ライブポーカー初めて行った時の</div>
+      </div>
+      <div id="hook-big" style="position:absolute; top:300px; left:0; right:0; text-align:center; opacity:0;">
+        <div style="color:#FFE136; font-size:80px; font-weight:900; transform:rotate(-1.5deg);" class="fukuro">チップ重すぎて草ｗｗｗ</div>
+      </div>
+      <div style="position:absolute; top:80px; right:20px; font-size:80px;">💰</div>
     </div>
 
-    <!-- Grain -->
-    <div id="grain-layer" class="clip" data-start="0" data-duration="12" data-track-index="1"
-      style="position:absolute;inset:0;"><div class="grain"></div></div>
-
-    <!-- SCENE 1: HOOK (0-3s) -->
-    <div id="scene1" class="clip" data-start="0" data-duration="3" data-track-index="2"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px;">
-        <div id="s1-line1" style="text-align:center;">
-          <p style="font-size:52px;font-weight:700;color:#9a8e7a;line-height:1.3;">ライブポーカー<br/>初めて行った時</p>
+    <!-- 5 and 4 (3.5-7s) -->
+    <div class="clip" id="items54" data-start="3.5" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:180px; left:0; right:0;">
+        <div class="item-card" id="card5" style="transform:translateX(400px);">
+          <div class="item-num">5</div>
+          <div style="color:#fff; font-size:36px;">チップの重量感がリアルすぎる</div>
         </div>
-        <div id="s1-impact" style="text-align:center;">
-          <p style="font-size:88px;font-weight:900;color:#ddd6c8;line-height:1.1;letter-spacing:4px;" class="glow-gold">チップが重い。</p>
+        <div class="item-card" id="card4" style="transform:translateX(-400px);">
+          <div class="item-num">4</div>
+          <div style="color:#fff; font-size:36px;">ディーラーの手さばき速すぎて草</div>
         </div>
       </div>
     </div>
 
-    <!-- SCENE 2: Countdown list (3-10s) -->
-    <div id="scene2" class="clip" data-start="3" data-duration="7" data-track-index="3"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;justify-content:center;gap:24px;">
-
-        <div class="list-card" id="item5">
-          <div class="num-badge">5</div>
-          <span class="list-text">チップの重量感</span>
+    <!-- 3 and 2 (7-10.5s) -->
+    <div class="clip" id="items32" data-start="7" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:180px; left:0; right:0;">
+        <div class="item-card" id="card3" style="transform:translateX(400px);">
+          <div class="item-num">3</div>
+          <div style="color:#fff; font-size:36px;">常連怖い<span style="color:#888; font-size:28px;">（最初だけ）</span></div>
         </div>
-        <div class="list-card" id="item4">
-          <div class="num-badge">4</div>
-          <span class="list-text">ディーラーの手さばき<br/>速すぎ</span>
-        </div>
-        <div class="list-card" id="item3">
-          <div class="num-badge">3</div>
-          <span class="list-text">常連が怖い<span style="font-size:28px;color:#6b7a66;">（最初だけ）</span></span>
-        </div>
-        <div class="list-card" id="item2">
-          <div class="num-badge">2</div>
-          <span class="list-text">テーブルトーク<br/>何言ってるか分からない</span>
-        </div>
-        <div class="list-card" id="item1" style="border-color:rgba(201,168,76,0.5);">
-          <div class="num-badge" style="background:#c9a84c;box-shadow:0 0 20px rgba(201,168,76,0.4);">1</div>
-          <span class="list-text" style="color:#c9a84c;">あの「カチッ」って音、<br/>中毒性ヤバい</span>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- SCENE 3: CTA (10-12s) -->
-    <div id="scene3" class="clip" data-start="10" data-duration="2" data-track-index="4"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s3-cta" style="text-align:center;">
-          <p style="font-size:40px;color:#6b7a66;line-height:1.4;">初心者歓迎。仲間がいるよ</p>
-          <p style="font-size:80px;font-weight:900;color:#c9a84c;margin-top:16px;letter-spacing:2px;font-family:'Inter',sans-serif;" class="glow-gold">PokerTALK</p>
-          <p style="font-size:28px;color:#6b7a66;margin-top:16px;">↓ プロフのリンクから</p>
+        <div class="item-card" id="card2" style="transform:translateX(-400px);">
+          <div class="item-num">2</div>
+          <div style="color:#fff; font-size:36px;">テーブルトーク、<span style="color:#FF3B3B; font-weight:700;">何語？？</span></div>
         </div>
       </div>
     </div>
 
-    <!-- Progress bar -->
-    <div id="progress" class="clip" data-start="0" data-duration="12" data-track-index="5"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    <!-- 1 (10.5-14s) -->
+    <div class="clip" id="item1" data-start="10.5" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:200px; left:0; right:0; text-align:center;">
+        <div style="color:#fff; font-size:48px; font-weight:700;">① これ。</div>
+        <div id="item1-big" style="margin-top:50px; opacity:0;">
+          <div style="color:#FFE136; font-size:72px; font-weight:900;" class="fukuro">あの『カチッ』って音</div>
+          <div id="item1-fire" style="color:#FF3B3B; font-size:56px; font-weight:900; margin-top:20px;">中毒性やばい🔥</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Watermark -->
-    <div id="wm" class="clip" data-start="0" data-duration="12" data-track-index="6"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="watermark">PokerTALK</div>
+    <!-- BRIDGE 14-16.5s -->
+    <div class="clip" id="bridge" data-start="14" data-duration="2.5" data-track-index="0">
+      <div style="position:absolute; top:300px; left:0; right:0; text-align:center;">
+        <div style="color:#fff; font-size:52px; font-weight:700;">初めてでも全然OK。</div>
+        <div style="color:#4ECBFF; font-size:52px; font-weight:700; margin-top:20px;">仲間がいるから。</div>
+      </div>
     </div>
 
-    <!-- Flash transitions -->
-    <div id="flash1" class="clip" data-start="2.8" data-duration="0.4" data-track-index="7"
-      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
-    <div id="flash2" class="clip" data-start="9.8" data-duration="0.4" data-track-index="8"
-      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
+    <!-- CTA 16.5-20s -->
+    <div class="clip" id="cta" data-start="16.5" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:300px; left:0; right:0; text-align:center;">
+        <div id="cta-logo" style="color:#c9a84c; font-size:80px; font-weight:900; opacity:0;">PokerTALK</div>
+        <div id="cta-tagline" style="color:#fff; font-size:32px; margin-top:30px; opacity:0;">テーブルの外でも、ポーカーを語ろう</div>
+        <div id="cta-link" style="color:#888; font-size:24px; margin-top:30px; opacity:0;">↓ プロフのリンクから</div>
+      </div>
+    </div>
 
   </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
   <script>
     window.__timelines = window.__timelines || {};
     const tl = gsap.timeline({ paused: true });
-
-    /* --- SCENE 1: Hook (0-3s) --- */
-    tl.from("#s1-line1", { opacity: 0, y: -30, duration: 0.5, ease: "power3.out" }, 0.2);
-    tl.from("#s1-impact", { opacity: 0, scale: 1.4, duration: 0.5, ease: "power4.out" }, 0.9);
-    // Impact shake
-    tl.to("#s1-impact", { x: -8, duration: 0.05, yoyo: true, repeat: 5 }, 1.4);
-    // Glow pulse
-    tl.to("#s1-impact p", { textShadow: "0 0 40px rgba(201,168,76,0.6), 0 0 80px rgba(201,168,76,0.3)", duration: 0.5, yoyo: true, repeat: 1, ease: "power1.inOut" }, 1.8);
-
-    // Flash 1
-    tl.to("#flash1", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 2.9);
-    tl.to("#flash1", { opacity: 0, duration: 0.2, ease: "power2.out" }, 3.0);
-
-    /* --- SCENE 2: Countdown (3-10s) --- */
-    // Item 5 — from right
-    tl.from("#item5", { opacity: 0, x: 200, duration: 0.5, ease: "power4.out" }, 3.2);
-    // Item 4 — from left
-    tl.from("#item4", { opacity: 0, x: -200, duration: 0.5, ease: "power4.out" }, 4.4);
-    // Item 3 — from right
-    tl.from("#item3", { opacity: 0, x: 200, duration: 0.5, ease: "power4.out" }, 5.6);
-    // Item 2 — from left
-    tl.from("#item2", { opacity: 0, x: -200, duration: 0.5, ease: "power4.out" }, 6.8);
-    // Item 1 (best) — scale up with emphasis
-    tl.from("#item1", { opacity: 0, scale: 0.8, duration: 0.5, ease: "back.out(2)" }, 8.0);
-    // Glow on #1
-    tl.to("#item1", { boxShadow: "0 12px 40px rgba(0,0,0,0.6), 0 0 40px rgba(201,168,76,0.3)", duration: 0.5, yoyo: true, repeat: 1, ease: "power1.inOut" }, 8.6);
-
-    // Flash 2
-    tl.to("#flash2", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 9.9);
-    tl.to("#flash2", { opacity: 0, duration: 0.2, ease: "power2.out" }, 10.0);
-
-    /* --- SCENE 3: CTA (10-12s) --- */
-    tl.from("#s3-cta p:nth-child(1)", { opacity: 0, y: 20, duration: 0.3, ease: "power3.out" }, 10.1);
-    tl.from("#s3-cta p:nth-child(2)", { opacity: 0, scale: 0.7, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 10.3);
-    tl.from("#s3-cta p:nth-child(3)", { opacity: 0, duration: 0.3 }, 10.8);
-
-    // Progress bar
-    tl.to("#prog-fill", { width: "100%", duration: 12, ease: "none" }, 0);
-
     window.__timelines["v2-reel-04"] = tl;
+
+    tl.to("#progress", { width: "100%", duration: 20, ease: "none" }, 0);
+
+    // HOOK
+    tl.to("#hook", { opacity: 1, duration: 0.3 }, 0);
+    tl.to("#flash1", { opacity: 0.7, duration: 0.05 }, 0.6);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 0.65);
+    tl.to("#hook", { x: 5, duration: 0.05, yoyo: true, repeat: 3 }, 0.6);
+    tl.to("#hook", { x: 0, duration: 0.05 }, 0.9);
+    tl.to("#hook-big", { opacity: 1, duration: 0.3 }, 0.8);
+    tl.to("#hook", { opacity: 0, duration: 0.3 }, 3.2);
+
+    // Items 5 & 4
+    tl.to("#items54", { opacity: 1, duration: 0.1 }, 3.5);
+    tl.to("#card5", { x: 0, duration: 0.5, ease: "back.out(1.2)" }, 3.5);
+    tl.to("#card4", { x: 0, duration: 0.5, ease: "back.out(1.2)" }, 5.5);
+    tl.to("#items54", { opacity: 0, duration: 0.3 }, 6.7);
+
+    // Items 3 & 2
+    tl.to("#items32", { opacity: 1, duration: 0.1 }, 7);
+    tl.to("#card3", { x: 0, duration: 0.5, ease: "back.out(1.2)" }, 7);
+    tl.to("#card2", { x: 0, duration: 0.5, ease: "back.out(1.2)" }, 9);
+    tl.to("#items32", { opacity: 0, duration: 0.3 }, 10.2);
+
+    // Item 1
+    tl.to("#flash1", { opacity: 0.8, duration: 0.05 }, 10.5);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 10.55);
+    tl.to("#item1", { opacity: 1, duration: 0.3 }, 10.5);
+    tl.to("#item1-big", { opacity: 1, duration: 0.4 }, 11.5);
+    // shake on fire
+    tl.to("#item1-fire", { x: 5, duration: 0.05, yoyo: true, repeat: 5 }, 12);
+    tl.to("#item1-fire", { x: 0, duration: 0.05 }, 12.3);
+    tl.to("#item1", { opacity: 0, duration: 0.3 }, 13.7);
+
+    // BRIDGE
+    tl.to("#bridge", { opacity: 1, duration: 0.3 }, 14);
+    tl.to("#bridge", { opacity: 0, duration: 0.3 }, 16.2);
+
+    // CTA
+    tl.to("#cta", { opacity: 1, duration: 0.1 }, 16.5);
+    tl.fromTo("#cta-logo", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: "elastic.out(1,0.5)" }, 16.5);
+    tl.to("#cta-tagline", { opacity: 1, duration: 0.5 }, 17.0);
+    tl.to("#cta-link", { opacity: 1, duration: 0.5 }, 18.0);
   </script>
+</div>
 </body>
 </html>

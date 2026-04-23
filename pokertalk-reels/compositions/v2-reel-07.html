@@ -5,192 +5,144 @@
   <meta name="viewport" content="width=1080, height=1920" />
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0a0d08; font-family: 'Noto Sans JP', sans-serif; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; font-family: 'Noto Sans JP', sans-serif; }
+
+    .bg {
+      position: absolute; inset: 0;
+      background: #1a1a1a;
+    }
+    .bg::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 30%, rgba(30,40,60,0.3) 0%, transparent 60%);
+    }
 
     .grain { position: absolute; inset: 0; opacity: 0.03; pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
-    .safe { position: absolute; top: 150px; bottom: 250px; left: 60px; right: 60px; }
+    .safe { position: absolute; top: 150px; bottom: 200px; left: 60px; right: 60px; }
+    .clip { position: absolute; opacity: 0; }
+    .fukuro { text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; }
 
-    .glow-gold { text-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 40px rgba(201,168,76,0.2); }
+    .progress-bar { position: absolute; bottom: 100px; left: 60px; right: 60px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .progress-fill { height: 100%; width: 0%; background: #c9a84c; border-radius: 2px; }
 
-    /* LINE chat styles */
-    .chat-container { display: flex; flex-direction: column; gap: 20px; width: 100%; }
-    .chat-row { display: flex; align-items: flex-end; gap: 12px; }
-    .chat-row.right { flex-direction: row-reverse; }
-    .chat-avatar { font-size: 40px; flex-shrink: 0; }
-    .chat-bubble { max-width: 600px; padding: 20px 28px; border-radius: 20px; font-size: 34px;
-      font-weight: 700; line-height: 1.4; }
-    .bubble-right { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3);
-      color: #ddd6c8; border-bottom-right-radius: 4px; }
-    .bubble-left { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
-      color: #ddd6c8; border-bottom-left-radius: 4px; }
-    .read-text { font-size: 24px; color: #6b7a66; text-align: left; padding-left: 56px; margin-top: -8px; }
+    .flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 100; }
 
-    .progress-bar { position: absolute; bottom: 260px; left: 60px; right: 60px; height: 4px;
-      background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #c9a84c; border-radius: 2px; width: 0%; }
-
-    .watermark { position: absolute; bottom: 270px; right: 60px; font-size: 20px;
-      font-weight: 700; color: rgba(201,168,76,0.3); font-family: 'Inter', sans-serif;
-      letter-spacing: 1px; }
+    .bubble-right {
+      background: #2d5a3d; border-radius: 20px 20px 4px 20px;
+      padding: 20px 28px; margin-bottom: 20px; max-width: 600px;
+      margin-left: auto; text-align: left;
+    }
+    .bubble-left {
+      background: #333; border-radius: 20px 20px 20px 4px;
+      padding: 20px 28px; margin-bottom: 20px; max-width: 600px;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
-  <div id="root" data-composition-id="v2-reel-07" data-start="0" data-duration="12" data-width="1080" data-height="1920">
+<div id="root" data-composition-id="v2-reel-07" data-start="0" data-duration="20" data-width="1080" data-height="1920">
+  <div class="bg"></div>
+  <div class="grain"></div>
+  <div class="flash" id="flash1"></div>
+  <div class="safe">
 
-    <!-- BG -->
-    <div id="bg" class="clip" data-start="0" data-duration="12" data-track-index="0"
-      style="position:absolute;inset:0;">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.03) 0%, transparent 50%);"></div>
+    <!-- HOOK 0-3.5s -->
+    <div class="clip" id="hook" data-start="0" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:120px; left:0; right:0; text-align:center;">
+        <div style="color:#fff; font-size:48px; font-weight:700;">彼女にポーカー用語</div>
+        <div style="color:#fff; font-size:48px; font-weight:700; margin-top:10px;">使ったら</div>
+        <div id="hook-impact" style="color:#FF3B3B; font-size:72px; font-weight:900; transform:rotate(-1deg); margin-top:20px;" class="fukuro">ガチギレされた件</div>
+      </div>
+      <div style="position:absolute; bottom:100px; right:20px; font-size:80px; transform:rotate(-8deg);">😱</div>
     </div>
 
-    <!-- Grain -->
-    <div id="grain-layer" class="clip" data-start="0" data-duration="12" data-track-index="1"
-      style="position:absolute;inset:0;"><div class="grain"></div></div>
-
-    <!-- SCENE 1: HOOK (0-3s) -->
-    <div id="scene1" class="clip" data-start="0" data-duration="3" data-track-index="2"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s1-title" style="text-align:center;">
-          <p style="font-size:64px;font-weight:900;color:#fff;line-height:1.3;">彼女との会話に<br/>ポーカー用語<br/>混ぜてみた</p>
+    <!-- CHAT 3.5-14s -->
+    <div class="clip" id="chat" data-start="3.5" data-duration="10.5" data-track-index="0">
+      <div style="position:absolute; top:60px; left:0; right:0;">
+        <div id="msg1" class="bubble-right" style="opacity:0;">
+          <span style="color:#fff; font-size:32px;">今日のご飯、EV高いとこどこ？</span>
         </div>
-        <div id="s1-result" style="margin-top:40px;text-align:center;">
-          <p style="font-size:48px;font-weight:700;color:#c0392b;">結果：</p>
+        <div id="msg2" class="bubble-left" style="opacity:0;">
+          <span style="color:#fff; font-size:36px; font-weight:700;">は？？</span>
+        </div>
+        <div id="msg3" class="bubble-right" style="opacity:0;">
+          <span style="color:#fff; font-size:32px;">選択肢をレンジで絞ろう</span>
+        </div>
+        <div id="msg4" class="bubble-left" style="opacity:0;">
+          <span style="color:#fff; font-size:32px;">日本語で喋って 😡</span>
+        </div>
+        <div id="msg5" class="bubble-right" style="opacity:0;">
+          <span style="color:#fff; font-size:32px;">これがバランスだよ</span>
+        </div>
+        <div id="msg6" style="opacity:0; margin-top:10px;">
+          <span style="color:#888; font-size:24px;">既読</span>
         </div>
       </div>
     </div>
 
-    <!-- SCENE 2: LINE chat (3-9s) -->
-    <div id="scene2" class="clip" data-start="3" data-duration="6" data-track-index="3"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;justify-content:center;">
-        <!-- Chat header -->
-        <div id="s2-header" style="text-align:center;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);">
-          <p style="font-size:28px;color:#6b7a66;">LINE</p>
-        </div>
-        <div class="chat-container">
-          <!-- Message 1: Him -->
-          <div id="msg1" class="chat-row right">
-            <span class="chat-avatar">👨</span>
-            <div class="chat-bubble bubble-right">今日のご飯、EV高いのどこ？</div>
-          </div>
-          <!-- Message 2: Her -->
-          <div id="msg2" class="chat-row">
-            <span class="chat-avatar">👩</span>
-            <div class="chat-bubble bubble-left">は？</div>
-          </div>
-          <!-- Message 3: Him -->
-          <div id="msg3" class="chat-row right">
-            <span class="chat-avatar">👨</span>
-            <div class="chat-bubble bubble-right">じゃあ選択肢をレンジで考えよう</div>
-          </div>
-          <!-- Message 4: Her -->
-          <div id="msg4" class="chat-row">
-            <span class="chat-avatar">👩</span>
-            <div class="chat-bubble bubble-left">日本語で喋って</div>
-          </div>
-          <!-- Message 5: Him -->
-          <div id="msg5" class="chat-row right">
-            <span class="chat-avatar">👨</span>
-            <div class="chat-bubble bubble-right">これがバランスだよ</div>
-          </div>
-          <!-- Message 6: Her — "既読" -->
-          <div id="msg6" class="read-text">既読</div>
-        </div>
+    <!-- PUNCHLINE 14-16.5s -->
+    <div class="clip" id="punchline" data-start="14" data-duration="2.5" data-track-index="0">
+      <div style="position:absolute; top:280px; left:0; right:0; text-align:center;">
+        <div style="color:#fff; font-size:48px; font-weight:700;">ポーカー語が</div>
+        <div id="punch-glow" style="color:#FFE136; font-size:64px; font-weight:900; margin-top:20px; text-shadow: 0 0 20px rgba(255,225,54,0.5);">通じる場所がある。</div>
+        <div style="color:#888; font-size:28px; margin-top:30px;">（彼女には通じない）</div>
       </div>
     </div>
 
-    <!-- SCENE 3: Punchline (9-10.5s) -->
-    <div id="scene3" class="clip" data-start="9" data-duration="1.5" data-track-index="4"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s3-text" style="text-align:center;">
-          <p style="font-size:56px;font-weight:900;color:#ddd6c8;line-height:1.4;">ポーカー語が<br/>通じる場所がある。</p>
-        </div>
+    <!-- CTA 16.5-20s -->
+    <div class="clip" id="cta" data-start="16.5" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:300px; left:0; right:0; text-align:center;">
+        <div id="cta-logo" style="color:#c9a84c; font-size:80px; font-weight:900; opacity:0;">PokerTALK</div>
+        <div id="cta-tagline" style="color:#fff; font-size:32px; margin-top:30px; opacity:0;">テーブルの外でも、ポーカーを語ろう</div>
+        <div id="cta-link" style="color:#888; font-size:24px; margin-top:30px; opacity:0;">↓ プロフのリンクから</div>
       </div>
     </div>
-
-    <!-- SCENE 4: CTA (10.5-12s) -->
-    <div id="scene4" class="clip" data-start="10.5" data-duration="1.5" data-track-index="5"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s4-cta" style="text-align:center;">
-          <p style="font-size:80px;font-weight:900;color:#c9a84c;letter-spacing:2px;font-family:'Inter',sans-serif;" class="glow-gold">PokerTALK</p>
-          <p style="font-size:28px;color:#6b7a66;margin-top:16px;">↓ プロフのリンクから</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Progress bar -->
-    <div id="progress" class="clip" data-start="0" data-duration="12" data-track-index="6"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
-    </div>
-
-    <!-- Watermark -->
-    <div id="wm" class="clip" data-start="0" data-duration="12" data-track-index="7"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="watermark">PokerTALK</div>
-    </div>
-
-    <!-- Flash transitions -->
-    <div id="flash1" class="clip" data-start="2.8" data-duration="0.4" data-track-index="8"
-      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
-    <div id="flash2" class="clip" data-start="8.8" data-duration="0.4" data-track-index="9"
-      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
-    <div id="flash3" class="clip" data-start="10.3" data-duration="0.4" data-track-index="10"
-      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
 
   </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
   <script>
     window.__timelines = window.__timelines || {};
     const tl = gsap.timeline({ paused: true });
-
-    // SCENE 1: Hook (0-3s)
-    tl.from("#s1-title", { opacity: 0, scale: 1.3, duration: 0.5, ease: "power4.out" }, 0.3);
-    tl.from("#s1-result", { opacity: 0, y: 20, duration: 0.4, ease: "power3.out" }, 1.2);
-    // Pulse "結果："
-    tl.to("#s1-result", { scale: 1.1, duration: 0.3, yoyo: true, repeat: 2, ease: "power1.inOut" }, 1.8);
-
-    // Flash 1
-    tl.to("#flash1", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 2.9);
-    tl.to("#flash1", { opacity: 0, duration: 0.2, ease: "power2.out" }, 3.0);
-
-    // SCENE 2: Chat messages appear one by one (3-9s)
-    tl.from("#s2-header", { opacity: 0, y: -20, duration: 0.3, ease: "power3.out" }, 3.1);
-
-    tl.from("#msg1", { opacity: 0, x: 30, y: 10, duration: 0.4, ease: "back.out(2)" }, 3.4);
-    tl.from("#msg2", { opacity: 0, x: -30, y: 10, duration: 0.4, ease: "back.out(2)" }, 4.2);
-    tl.from("#msg3", { opacity: 0, x: 30, y: 10, duration: 0.4, ease: "back.out(2)" }, 5.0);
-    tl.from("#msg4", { opacity: 0, x: -30, y: 10, duration: 0.4, ease: "back.out(2)" }, 5.8);
-    tl.from("#msg5", { opacity: 0, x: 30, y: 10, duration: 0.4, ease: "back.out(2)" }, 6.6);
-    tl.from("#msg6", { opacity: 0, duration: 0.5, ease: "power2.out" }, 7.6);
-
-    // Flash 2
-    tl.to("#flash2", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 8.9);
-    tl.to("#flash2", { opacity: 0, duration: 0.2, ease: "power2.out" }, 9.0);
-
-    // SCENE 3: Punchline (9-10.5s)
-    tl.from("#s3-text", { opacity: 0, y: 30, duration: 0.5, ease: "power4.out" }, 9.1);
-
-    // Flash 3
-    tl.to("#flash3", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 10.4);
-    tl.to("#flash3", { opacity: 0, duration: 0.2, ease: "power2.out" }, 10.5);
-
-    // SCENE 4: CTA (10.5-12s)
-    tl.from("#s4-cta p:first-child", { opacity: 0, scale: 0.7, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 10.6);
-    tl.from("#s4-cta p:last-child", { opacity: 0, duration: 0.3, ease: "power2.out" }, 11.2);
+    window.__timelines["v2-reel-07"] = tl;
 
     // Progress bar
-    tl.to("#prog-fill", { width: "100%", duration: 12, ease: "none" }, 0);
+    tl.to("#progress", { width: "100%", duration: 20, ease: "none" }, 0);
 
-    window.__timelines["v2-reel-07"] = tl;
+    // HOOK
+    tl.to("#hook", { opacity: 1, duration: 0.3 }, 0);
+    tl.to("#hook-impact", { x: 5, duration: 0.05, yoyo: true, repeat: 4 }, 0.8);
+    tl.to("#hook-impact", { x: 0, duration: 0.05 }, 1.1);
+    tl.to("#hook", { opacity: 0, duration: 0.3 }, 3.2);
+
+    // CHAT
+    tl.to("#chat", { opacity: 1, duration: 0.2 }, 3.5);
+    tl.to("#msg1", { opacity: 1, duration: 0.3 }, 3.5);
+    tl.to("#msg2", { opacity: 1, duration: 0.3 }, 5.5);
+    tl.to("#msg3", { opacity: 1, duration: 0.3 }, 7.5);
+    tl.to("#msg4", { opacity: 1, duration: 0.3 }, 9.5);
+    tl.to("#msg5", { opacity: 1, duration: 0.3 }, 11.5);
+    tl.to("#msg6", { opacity: 1, duration: 0.3 }, 13.0);
+    tl.to("#chat", { opacity: 0, duration: 0.3 }, 13.7);
+
+    // PUNCHLINE
+    tl.to("#flash1", { opacity: 0.8, duration: 0.05 }, 14);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 14.05);
+    tl.to("#punchline", { opacity: 1, duration: 0.3 }, 14);
+    tl.to("#punch-glow", { textShadow: "0 0 40px rgba(255,225,54,0.8)", duration: 1, yoyo: true, repeat: 1 }, 14.5);
+    tl.to("#punchline", { opacity: 0, duration: 0.3 }, 16.2);
+
+    // CTA
+    tl.to("#cta", { opacity: 1, duration: 0.1 }, 16.5);
+    tl.fromTo("#cta-logo", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: "elastic.out(1,0.5)" }, 16.5);
+    tl.to("#cta-tagline", { opacity: 1, duration: 0.5 }, 17.0);
+    tl.to("#cta-link", { opacity: 1, duration: 0.5 }, 18.0);
   </script>
+</div>
 </body>
 </html>

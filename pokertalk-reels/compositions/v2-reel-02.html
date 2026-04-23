@@ -5,218 +5,146 @@
   <meta name="viewport" content="width=1080, height=1920" />
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0a0d08; font-family: 'Noto Sans JP', sans-serif; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; font-family: 'Noto Sans JP', sans-serif; }
 
-    /* Grain overlay */
+    .bg {
+      position: absolute; inset: 0;
+      background: #0d0a14;
+    }
+    .bg::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 20% 30%, rgba(255,180,50,0.03) 0%, transparent 40%),
+                  radial-gradient(circle at 70% 60%, rgba(255,160,40,0.025) 0%, transparent 35%),
+                  radial-gradient(circle at 50% 80%, rgba(255,200,80,0.02) 0%, transparent 30%),
+                  radial-gradient(circle at 85% 20%, rgba(255,140,60,0.02) 0%, transparent 25%);
+    }
+
     .grain { position: absolute; inset: 0; opacity: 0.03; pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
-    /* TikTok safe zone */
-    .safe { position: absolute; top: 150px; bottom: 250px; left: 60px; right: 60px; }
+    .safe { position: absolute; top: 150px; bottom: 200px; left: 60px; right: 60px; }
+    .clip { position: absolute; opacity: 0; }
+    .fukuro { text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; }
 
-    .glow-gold { text-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 40px rgba(201,168,76,0.2); }
+    .progress-bar { position: absolute; bottom: 100px; left: 60px; right: 60px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .progress-fill { height: 100%; width: 0%; background: #c9a84c; border-radius: 2px; }
 
-    .text-card {
-      background: linear-gradient(145deg, #1a2318 0%, #0f150e 100%);
-      border: 2px solid rgba(201,168,76,0.3);
-      border-radius: 16px;
-      padding: 32px 40px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(201,168,76,0.1);
-    }
+    .flash { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 100; }
 
-    .progress-bar { position: absolute; bottom: 260px; left: 60px; right: 60px; height: 4px;
-      background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #c9a84c; border-radius: 2px; width: 0%; }
-
-    .watermark { position: absolute; bottom: 270px; right: 60px; font-size: 20px;
-      font-weight: 700; color: rgba(201,168,76,0.3); font-family: 'Inter', sans-serif;
-      letter-spacing: 1px; }
+    .shock-box { display: inline-block; background: rgba(255,59,59,0.2); border: 2px solid #FF3B3B; padding: 4px 16px; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <div id="root" data-composition-id="v2-reel-02" data-start="0" data-duration="13" data-width="1080" data-height="1920">
+<div id="root" data-composition-id="v2-reel-02" data-start="0" data-duration="20" data-width="1080" data-height="1920">
+  <div class="bg"></div>
+  <div class="grain"></div>
+  <div class="flash" id="flash1"></div>
+  <div class="safe">
 
-    <!-- BG -->
-    <div id="bg" class="clip" data-start="0" data-duration="13" data-track-index="0"
-      style="position:absolute;inset:0;">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.04) 0%, transparent 50%);"></div>
-      <div style="position:absolute;inset:0;background:radial-gradient(circle at 70% 80%, rgba(192,57,43,0.02) 0%, transparent 40%);"></div>
+    <!-- HOOK 0-3.5s -->
+    <div class="clip" id="hook" data-start="0" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:150px; left:0;">
+        <div class="shock-box" style="font-size:36px; color:#FF3B3B; font-weight:900;">【衝撃】</div>
+        <div style="color:#fff; font-size:52px; font-weight:700; margin-top:20px;">ポーカー始めて半年で...</div>
+        <div id="hook-big" style="color:#FFE136; font-size:72px; font-weight:900; transform:rotate(-1deg); margin-top:30px; opacity:0;" class="fukuro">トーナメント優勝したんだが？？</div>
+      </div>
+      <div id="trophy" style="position:absolute; top:100px; right:20px; font-size:100px; opacity:0;">🏆</div>
     </div>
 
-    <!-- Grain -->
-    <div id="grain-layer" class="clip" data-start="0" data-duration="13" data-track-index="1"
-      style="position:absolute;inset:0;"><div class="grain"></div></div>
+    <!-- PROBLEM 3.5-7.5s -->
+    <div class="clip" id="problem" data-start="3.5" data-duration="4" data-track-index="0">
+      <div style="position:absolute; top:200px; right:0; text-align:right; width:100%;">
+        <div style="color:#fff; font-size:44px; font-weight:700;">でも周りに言っても</div>
+        <div id="problem-quote" style="color:#888; font-size:60px; font-style:italic; margin-top:40px; opacity:0;">'は？ポーカー？'</div>
+        <div id="problem-face" style="color:#fff; font-size:40px; margin-top:20px; opacity:0;">って顔される</div>
+      </div>
+      <div style="position:absolute; top:350px; left:20px; font-size:80px;">😐</div>
+    </div>
 
-    <!-- SCENE 1: HOOK (0-3s) — Typewriter on black -->
-    <div id="scene1" class="clip" data-start="0" data-duration="3" data-track-index="2"
-      style="position:absolute;inset:0;background:#000;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s1-line1" style="text-align:center;overflow:hidden;">
-          <p style="font-size:68px;font-weight:900;color:#fff;line-height:1.3;letter-spacing:2px;">
-            <span id="s1-char-wrap1"></span><span id="s1-cursor1" style="border-right:3px solid #fff;padding-right:4px;animation:none;">&#8203;</span>
-          </p>
+    <!-- EMOTION 7.5-11.5s -->
+    <div class="clip" id="emotion" data-start="7.5" data-duration="4" data-track-index="0">
+      <div style="position:absolute; top:250px; left:0;">
+        <div style="color:#fff; font-size:44px; font-weight:700;">ポーカーは</div>
+        <div style="margin-top:20px;">
+          <span style="color:#FFE136; font-size:72px; font-weight:900; text-decoration:underline wavy #FFE136; text-underline-offset:12px; transform:rotate(1deg); display:inline-block;">実力ゲーム</span>
         </div>
-        <div id="s1-line2" style="text-align:center;margin-top:40px;overflow:hidden;">
-          <p style="font-size:52px;font-weight:700;color:#9a8e7a;line-height:1.3;">
-            <span id="s1-char-wrap2"></span><span id="s1-cursor2" style="border-right:3px solid #9a8e7a;padding-right:4px;opacity:0;">&#8203;</span>
-          </p>
-        </div>
+        <div id="emotion-sub" style="color:#888; font-size:36px; margin-top:40px; opacity:0;">なのに伝わらない...</div>
       </div>
     </div>
 
-    <!-- SCENE 2: Text cards (3-6s) -->
-    <div id="scene2" class="clip" data-start="3" data-duration="3" data-track-index="3"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;">
-        <div id="s2-card1" class="text-card" style="text-align:center;">
-          <p style="font-size:52px;font-weight:700;color:#ddd6c8;line-height:1.4;">友達に言ったら</p>
-        </div>
-        <div id="s2-card2" class="text-card" style="text-align:center;">
-          <p style="font-size:60px;font-weight:900;color:#c0392b;line-height:1.4;">"ギャンブル？"<br/><span style="font-size:44px;color:#9a8e7a;font-weight:700;">って顔された</span></p>
-        </div>
+    <!-- SOLUTION 11.5-14.5s -->
+    <div class="clip" id="solution" data-start="11.5" data-duration="3" data-track-index="0">
+      <div style="position:absolute; top:300px; left:0; right:0; text-align:center;">
+        <div><span style="color:#FF3B3B; font-size:56px; font-weight:900;">この熱量</span></div>
+        <div style="color:#fff; font-size:44px; font-weight:700; margin-top:20px;">分かってくれる場所がほしかった。</div>
       </div>
     </div>
 
-    <!-- SCENE 3: Realization (6-9s) -->
-    <div id="scene3" class="clip" data-start="6" data-duration="3" data-track-index="4"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px;">
-        <div id="s3-line1" style="text-align:center;">
-          <p style="font-size:56px;font-weight:900;color:#ddd6c8;line-height:1.3;">ポーカーは<span style="color:#c9a84c;">実力ゲーム</span>なのに</p>
-        </div>
-        <div id="s3-line2" style="text-align:center;">
-          <p style="font-size:50px;font-weight:700;color:#6b7a66;line-height:1.4;">分かってくれる仲間が<br/>ほしかった</p>
-        </div>
+    <!-- BRIDGE 14.5-16.5s -->
+    <div class="clip" id="bridge" data-start="14.5" data-duration="2" data-track-index="0">
+      <div style="position:absolute; top:350px; left:0; right:0; text-align:center;">
+        <div id="bridge-text" style="color:#fff; font-size:64px; font-weight:900;">だから作った。</div>
       </div>
     </div>
 
-    <!-- SCENE 4: Resolution (9-11.5s) -->
-    <div id="scene4" class="clip" data-start="9" data-duration="2.5" data-track-index="5"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s4-text" style="text-align:center;">
-          <p style="font-size:64px;font-weight:900;color:#ddd6c8;line-height:1.3;" class="glow-gold">
-            だから<br/><span style="color:#c9a84c;">語れる場所</span>を作った。
-          </p>
-        </div>
+    <!-- CTA 16.5-20s -->
+    <div class="clip" id="cta" data-start="16.5" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:300px; left:0; right:0; text-align:center;">
+        <div id="cta-logo" style="color:#c9a84c; font-size:80px; font-weight:900; opacity:0;">PokerTALK</div>
+        <div id="cta-tagline" style="color:#fff; font-size:32px; margin-top:30px; opacity:0;">テーブルの外でも、ポーカーを語ろう</div>
+        <div id="cta-link" style="color:#888; font-size:24px; margin-top:30px; opacity:0;">↓ プロフのリンクから</div>
       </div>
     </div>
-
-    <!-- SCENE 5: CTA (11.5-13s) -->
-    <div id="scene5" class="clip" data-start="11.5" data-duration="1.5" data-track-index="6"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s5-cta" style="text-align:center;">
-          <p style="font-size:80px;font-weight:900;color:#c9a84c;letter-spacing:2px;font-family:'Inter',sans-serif;" class="glow-gold">PokerTALK</p>
-          <p style="font-size:28px;color:#6b7a66;margin-top:20px;">↓ プロフのリンクから</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Progress bar -->
-    <div id="progress" class="clip" data-start="0" data-duration="13" data-track-index="7"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
-    </div>
-
-    <!-- Watermark -->
-    <div id="wm" class="clip" data-start="0" data-duration="13" data-track-index="8"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="watermark">PokerTALK</div>
-    </div>
-
-    <!-- Flash transitions -->
-    <div id="flash1" class="clip" data-start="2.8" data-duration="0.4" data-track-index="9"
-      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
-    <div id="flash2" class="clip" data-start="5.8" data-duration="0.4" data-track-index="10"
-      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
-    <div id="flash3" class="clip" data-start="8.8" data-duration="0.4" data-track-index="11"
-      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
-    <div id="flash4" class="clip" data-start="11.3" data-duration="0.4" data-track-index="12"
-      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
 
   </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
   <script>
     window.__timelines = window.__timelines || {};
     const tl = gsap.timeline({ paused: true });
-
-    /* --- SCENE 1: Typewriter Hook (0-3s) --- */
-    var line1Text = "先月、ポーカーで給料超えた。";
-    var line2Text = "でも誰にも言えなかった。";
-    var wrap1 = document.getElementById("s1-char-wrap1");
-    var wrap2 = document.getElementById("s1-char-wrap2");
-
-    // Build character spans for line 1
-    for (var i = 0; i < line1Text.length; i++) {
-      var s = document.createElement("span");
-      s.textContent = line1Text[i];
-      s.style.opacity = "0";
-      s.className = "tw1";
-      wrap1.appendChild(s);
-    }
-    // Build character spans for line 2
-    for (var j = 0; j < line2Text.length; j++) {
-      var s2 = document.createElement("span");
-      s2.textContent = line2Text[j];
-      s2.style.opacity = "0";
-      s2.className = "tw2";
-      wrap2.appendChild(s2);
-    }
-
-    // Typewriter line 1
-    tl.to(".tw1", { opacity: 1, stagger: 0.04, duration: 0.01 }, 0.3);
-    // Hide cursor1 and show cursor2
-    tl.to("#s1-cursor1", { opacity: 0, duration: 0.01 }, 1.5);
-    tl.to("#s1-cursor2", { opacity: 1, duration: 0.01 }, 1.5);
-    // Typewriter line 2
-    tl.to(".tw2", { opacity: 1, stagger: 0.04, duration: 0.01 }, 1.7);
-    // Hide cursor2
-    tl.to("#s1-cursor2", { opacity: 0, duration: 0.2 }, 2.7);
-
-    // Flash 1
-    tl.to("#flash1", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 2.9);
-    tl.to("#flash1", { opacity: 0, duration: 0.2, ease: "power2.out" }, 3.0);
-
-    /* --- SCENE 2: Cards slide in (3-6s) --- */
-    tl.from("#s2-card1", { opacity: 0, x: -200, duration: 0.6, ease: "power4.out" }, 3.1);
-    tl.from("#s2-card2", { opacity: 0, x: 200, duration: 0.6, ease: "power4.out" }, 3.5);
-    // Emphasize the red text
-    tl.from("#s2-card2 p", { scale: 0.9, duration: 0.4, ease: "back.out(2)" }, 4.0);
-
-    // Flash 2
-    tl.to("#flash2", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 5.9);
-    tl.to("#flash2", { opacity: 0, duration: 0.2, ease: "power2.out" }, 6.0);
-
-    /* --- SCENE 3: Realization (6-9s) --- */
-    tl.from("#s3-line1", { opacity: 0, y: 40, duration: 0.6, ease: "power4.out" }, 6.1);
-    tl.from("#s3-line2", { opacity: 0, y: 40, duration: 0.6, ease: "power3.out" }, 6.8);
-    // Subtle pulse on "実力ゲーム"
-    tl.to("#s3-line1 span", { textShadow: "0 0 30px rgba(201,168,76,0.6), 0 0 60px rgba(201,168,76,0.3)", duration: 0.5, yoyo: true, repeat: 1, ease: "power1.inOut" }, 7.5);
-
-    // Flash 3
-    tl.to("#flash3", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 8.9);
-    tl.to("#flash3", { opacity: 0, duration: 0.2, ease: "power2.out" }, 9.0);
-
-    /* --- SCENE 4: Resolution (9-11.5s) --- */
-    tl.from("#s4-text", { opacity: 0, scale: 0.8, duration: 0.6, ease: "back.out(2)" }, 9.1);
-    tl.to("#s4-text span", { textShadow: "0 0 40px rgba(201,168,76,0.6), 0 0 80px rgba(201,168,76,0.3)", duration: 0.8, yoyo: true, repeat: 1, ease: "power1.inOut" }, 9.8);
-
-    // Flash 4
-    tl.to("#flash4", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 11.4);
-    tl.to("#flash4", { opacity: 0, duration: 0.2, ease: "power2.out" }, 11.5);
-
-    /* --- SCENE 5: CTA (11.5-13s) --- */
-    tl.from("#s5-cta p:first-child", { opacity: 0, scale: 0.7, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 11.6);
-    tl.from("#s5-cta p:last-child", { opacity: 0, duration: 0.3 }, 12.1);
-
-    // Progress bar
-    tl.to("#prog-fill", { width: "100%", duration: 13, ease: "none" }, 0);
-
     window.__timelines["v2-reel-02"] = tl;
+
+    tl.to("#progress", { width: "100%", duration: 20, ease: "none" }, 0);
+
+    // HOOK
+    tl.to("#hook", { opacity: 1, duration: 0.3 }, 0);
+    tl.to("#hook-big", { opacity: 1, duration: 0.4 }, 1.2);
+    tl.to("#trophy", { opacity: 1, duration: 0.3 }, 1.4);
+    tl.to("#trophy", { y: -10, duration: 0.4, yoyo: true, repeat: 3, ease: "sine.inOut" }, 1.5);
+    tl.to("#hook", { opacity: 0, duration: 0.3 }, 3.2);
+
+    // PROBLEM
+    tl.to("#problem", { opacity: 1, duration: 0.3 }, 3.5);
+    tl.to("#problem-quote", { opacity: 1, duration: 0.4 }, 5.5);
+    tl.to("#problem-face", { opacity: 1, duration: 0.3 }, 6.0);
+    tl.to("#problem", { opacity: 0, duration: 0.3 }, 7.2);
+
+    // EMOTION
+    tl.to("#emotion", { opacity: 1, duration: 0.3 }, 7.5);
+    tl.to("#emotion-sub", { opacity: 1, duration: 0.5 }, 9.5);
+    tl.to("#emotion", { opacity: 0, duration: 0.3 }, 11.2);
+
+    // SOLUTION
+    tl.to("#flash1", { opacity: 1, duration: 0.1 }, 11.5);
+    tl.to("#flash1", { opacity: 0, duration: 0.2 }, 11.6);
+    tl.to("#solution", { opacity: 1, duration: 0.3 }, 11.7);
+    tl.to("#solution", { opacity: 0, duration: 0.3 }, 14.2);
+
+    // BRIDGE
+    tl.to("#bridge", { opacity: 1, duration: 0.3 }, 14.5);
+    tl.fromTo("#bridge-text", { scale: 0.8 }, { scale: 1, duration: 0.5, ease: "back.out(1.5)" }, 14.5);
+    tl.to("#bridge", { opacity: 0, duration: 0.3 }, 16.2);
+
+    // CTA
+    tl.to("#cta", { opacity: 1, duration: 0.1 }, 16.5);
+    tl.fromTo("#cta-logo", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: "elastic.out(1,0.5)" }, 16.5);
+    tl.to("#cta-tagline", { opacity: 1, duration: 0.5 }, 17.0);
+    tl.to("#cta-link", { opacity: 1, duration: 0.5 }, 18.0);
   </script>
+</div>
 </body>
 </html>

@@ -5,219 +5,161 @@
   <meta name="viewport" content="width=1080, height=1920" />
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0a0d08; font-family: 'Noto Sans JP', sans-serif; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; font-family: 'Noto Sans JP', sans-serif; }
+
+    .bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(to right, #120a0a 0%, #120a0a 49.8%, #0a120a 50.2%, #0a120a 100%);
+    }
+    .bg-line {
+      position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
+      background: linear-gradient(to bottom, transparent 10%, #c9a84c 30%, #c9a84c 70%, transparent 90%);
+    }
 
     .grain { position: absolute; inset: 0; opacity: 0.03; pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
-    .safe { position: absolute; top: 150px; bottom: 250px; left: 60px; right: 60px; }
-    .glow-gold { text-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 40px rgba(201,168,76,0.2); }
+    .safe { position: absolute; top: 150px; bottom: 200px; left: 60px; right: 60px; }
+    .clip { position: absolute; opacity: 0; }
+    .fukuro { text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; }
 
-    .progress-bar { position: absolute; bottom: 260px; left: 60px; right: 60px; height: 4px;
-      background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #c9a84c; border-radius: 2px; width: 0%; }
+    .progress-bar { position: absolute; bottom: 100px; left: 60px; right: 60px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .progress-fill { height: 100%; width: 0%; background: #c9a84c; border-radius: 2px; }
 
-    .watermark { position: absolute; bottom: 270px; right: 60px; font-size: 20px;
-      font-weight: 700; color: rgba(201,168,76,0.3); font-family: 'Inter', sans-serif;
-      letter-spacing: 1px; }
+    .flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 100; }
 
-    .split-left {
-      position: absolute; left: 0; top: 0; width: 50%; height: 100%;
-      background: rgba(192,57,43,0.06);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 0 30px;
-    }
-    .split-right {
-      position: absolute; right: 0; top: 0; width: 50%; height: 100%;
-      background: rgba(76,175,80,0.06);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 0 30px;
-    }
-    .divider {
-      position: absolute; left: 50%; top: 150px; bottom: 250px; width: 2px;
-      background: #c9a84c; transform: translateX(-50%);
+    .wavy-underline {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='6'%3E%3Cpath d='M0 3 Q5 0 10 3 T20 3' fill='none' stroke='%23FFE136' stroke-width='2'/%3E%3C/svg%3E");
+      background-repeat: repeat-x;
+      background-position: bottom;
+      padding-bottom: 8px;
     }
   </style>
 </head>
 <body>
-  <div id="root" data-composition-id="v2-reel-09" data-start="0" data-duration="12" data-width="1080" data-height="1920">
+<div id="root" data-composition-id="v2-reel-09" data-start="0" data-duration="20" data-width="1080" data-height="1920">
+  <div class="bg"></div>
+  <div class="bg-line"></div>
+  <div class="grain"></div>
+  <div class="flash" id="flash1"></div>
+  <div class="safe">
 
-    <!-- BG -->
-    <div id="bg" class="clip" data-start="0" data-duration="12" data-track-index="0"
-      style="position:absolute;inset:0;">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.04) 0%, transparent 50%);"></div>
-    </div>
-
-    <!-- Grain -->
-    <div id="grain-layer" class="clip" data-start="0" data-duration="12" data-track-index="1"
-      style="position:absolute;inset:0;"><div class="grain"></div></div>
-
-    <!-- SCENE 1: HOOK (0-3s) -->
-    <div id="scene1" class="clip" data-start="0" data-duration="3" data-track-index="2"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;">
-        <div id="s1-line1" style="text-align:center;">
-          <p style="font-size:58px;font-weight:900;color:#ddd6c8;line-height:1.3;">ポーカーで<br/>勝つ人と負ける人</p>
-        </div>
-        <div id="s1-big" style="text-align:center;">
-          <p style="font-size:80px;font-weight:900;color:#fff;line-height:1.2;letter-spacing:3px;">唯一の違い。</p>
-        </div>
-        <div id="s1-pulse" style="text-align:center;">
-          <p style="font-size:44px;font-weight:700;color:#c9a84c;line-height:1.4;" class="glow-gold">'セッション後' にある。</p>
-        </div>
+    <!-- HOOK 0-3.5s -->
+    <div class="clip" id="hook" data-start="0" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:180px; left:0; right:0; text-align:center;">
+        <div style="color:#fff; font-size:52px; font-weight:700;">勝ってる奴と負けてる奴</div>
+        <div id="hook-impact" style="color:#FFE136; font-size:72px; font-weight:900; margin-top:30px;" class="fukuro">マジでこれだけ違う。</div>
+        <div id="hook-sub" style="color:#FF3B3B; font-size:32px; margin-top:20px; opacity:0;">'セッション後' に差が出る</div>
       </div>
     </div>
 
-    <!-- SCENE 2: Split Comparison (3-6.5s) -->
-    <div id="scene2" class="clip" data-start="3" data-duration="3.5" data-track-index="3"
-      style="position:absolute;inset:0;">
-      <div class="split-left">
-        <div id="s2-left-title" style="text-align:center;margin-bottom:40px;">
-          <p style="font-size:52px;font-weight:900;color:#c0392b;line-height:1.3;">&#10007; 負ける人</p>
-        </div>
-        <div id="s2-left-1" style="text-align:center;margin-bottom:24px;">
-          <p style="font-size:40px;font-weight:700;color:#ddd6c8;line-height:1.4;">帰って寝る。</p>
-        </div>
-        <div id="s2-left-2" style="text-align:center;">
-          <p style="font-size:36px;font-weight:700;color:#9a8e7a;line-height:1.4;">次も同じミスする。</p>
-        </div>
+    <!-- COMPARISON 3.5-8.5s -->
+    <div class="clip" id="compare" data-start="3.5" data-duration="5" data-track-index="0">
+      <!-- Left side: loser -->
+      <div style="position:absolute; top:100px; left:0; width:440px;">
+        <div style="color:#FF3B3B; font-size:36px; font-weight:700;">&#10007; 負ける人</div>
+        <div style="color:#fff; font-size:40px; font-weight:700; margin-top:30px;">帰って寝る。</div>
+        <div id="lose-detail" style="color:#888; font-size:32px; margin-top:20px; opacity:0;">次も同じミスする</div>
+        <div style="font-size:60px; margin-top:20px;">📉</div>
       </div>
-      <div class="split-right">
-        <div id="s2-right-title" style="text-align:center;margin-bottom:40px;">
-          <p style="font-size:52px;font-weight:900;color:#4CAF50;line-height:1.3;">&#9675; 勝つ人</p>
-        </div>
-        <div id="s2-right-1" style="text-align:center;margin-bottom:24px;">
-          <p style="font-size:40px;font-weight:700;color:#ddd6c8;line-height:1.4;">ハンドを記録する。</p>
-        </div>
-        <div id="s2-right-2" style="text-align:center;">
-          <p style="font-size:36px;font-weight:700;color:#9a8e7a;line-height:1.4;">振り返る。改善する。</p>
-        </div>
-      </div>
-      <div id="s2-divider" class="divider"></div>
-    </div>
-
-    <!-- SCENE 3: Key Insight (6.5-9.5s) -->
-    <div id="scene3" class="clip" data-start="6.5" data-duration="3" data-track-index="4"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s3-text" style="text-align:center;">
-          <p style="font-size:54px;font-weight:900;color:#ddd6c8;line-height:1.4;">つまり<br/><span style="color:#c9a84c;" class="glow-gold">'ポーカー日記'</span><br/>をつけてるかどうか。</p>
-        </div>
+      <!-- Right side: winner -->
+      <div style="position:absolute; top:100px; right:0; width:440px; text-align:right;">
+        <div style="color:#4CAF50; font-size:36px; font-weight:700;">○ 勝つ人</div>
+        <div style="color:#fff; font-size:40px; font-weight:700; margin-top:30px;">ハンドを記録する。</div>
+        <div id="win-detail" style="color:#4ECBFF; font-size:32px; margin-top:20px; opacity:0;">振り返る。改善する。</div>
+        <div style="font-size:60px; margin-top:20px; text-align:right;">📈</div>
       </div>
     </div>
 
-    <!-- SCENE 4: Bridge (9.5-10.5s) -->
-    <div id="scene4" class="clip" data-start="9.5" data-duration="1" data-track-index="5"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s4-text" style="text-align:center;">
-          <p style="font-size:46px;font-weight:700;color:#ddd6c8;line-height:1.4;">それを投稿形式で<br/>やれる場所がある。</p>
+    <!-- KEY POINT 8.5-12s -->
+    <div class="clip" id="keypoint" data-start="8.5" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:220px; left:0; right:0; text-align:center;">
+        <div style="color:#fff; font-size:44px; font-weight:700;">つまり</div>
+        <div id="kp-main" style="margin-top:30px;">
+          <span class="wavy-underline fukuro" style="color:#FFE136; font-size:80px; font-weight:900; transform:rotate(-1deg); display:inline-block;">'ポーカー日記'</span>
         </div>
+        <div style="color:#fff; font-size:48px; font-weight:700; margin-top:30px;">つけてるかどうか。</div>
       </div>
     </div>
 
-    <!-- SCENE 5: CTA (10.5-12s) -->
-    <div id="scene5" class="clip" data-start="10.5" data-duration="1.5" data-track-index="6"
-      style="position:absolute;inset:0;">
-      <div class="safe" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="s5-cta" style="text-align:center;">
-          <p style="font-size:80px;font-weight:900;color:#c9a84c;letter-spacing:2px;font-family:'Inter',sans-serif;" class="glow-gold">PokerTALK</p>
-          <p style="font-size:28px;color:#6b7a66;margin-top:20px;">↓ プロフのリンクから</p>
-        </div>
+    <!-- SOLUTION 12-14.5s -->
+    <div class="clip" id="solution" data-start="12" data-duration="2.5" data-track-index="0">
+      <div style="position:absolute; top:280px; left:0; right:0; text-align:center;">
+        <div style="color:#fff; font-size:48px; font-weight:700;">それ、</div>
+        <div style="color:#4ECBFF; font-size:44px; font-weight:700; margin-top:20px;">投稿形式でやれる場所がある。</div>
+        <div style="color:#888; font-size:28px; margin-top:25px;">（しかも仲間からレビューもらえる）</div>
       </div>
     </div>
 
-    <!-- Progress bar -->
-    <div id="progress" class="clip" data-start="0" data-duration="12" data-track-index="7"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    <!-- BRIDGE 14.5-16.5s -->
+    <div class="clip" id="bridge" data-start="14.5" data-duration="2" data-track-index="0">
+      <div style="position:absolute; top:320px; left:0; right:0; text-align:center;">
+        <div style="color:#fff; font-size:52px; font-weight:700;">セッション後、すぐ投稿。</div>
+        <div id="bridge-punch" style="color:#FFE136; font-size:56px; font-weight:900; margin-top:25px;">これだけ。</div>
+      </div>
     </div>
 
-    <!-- Watermark -->
-    <div id="wm" class="clip" data-start="0" data-duration="12" data-track-index="8"
-      style="position:absolute;inset:0;pointer-events:none;">
-      <div class="watermark">PokerTALK</div>
+    <!-- CTA 16.5-20s -->
+    <div class="clip" id="cta" data-start="16.5" data-duration="3.5" data-track-index="0">
+      <div style="position:absolute; top:300px; left:0; right:0; text-align:center;">
+        <div id="cta-logo" style="color:#c9a84c; font-size:80px; font-weight:900; opacity:0;">PokerTALK</div>
+        <div id="cta-tagline" style="color:#fff; font-size:32px; margin-top:30px; opacity:0;">テーブルの外でも、ポーカーを語ろう</div>
+        <div id="cta-link" style="color:#888; font-size:24px; margin-top:30px; opacity:0;">↓ プロフのリンクから</div>
+      </div>
     </div>
-
-    <!-- Flash transitions -->
-    <div id="flash1" class="clip" data-start="1.3" data-duration="0.4" data-track-index="9"
-      style="position:absolute;inset:0;background:#c0392b;opacity:0;pointer-events:none;"></div>
-    <div id="flash2" class="clip" data-start="2.8" data-duration="0.4" data-track-index="10"
-      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
-    <div id="flash3" class="clip" data-start="6.3" data-duration="0.4" data-track-index="11"
-      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
-    <div id="flash4" class="clip" data-start="9.3" data-duration="0.4" data-track-index="12"
-      style="position:absolute;inset:0;background:#c9a84c;opacity:0;pointer-events:none;"></div>
-    <div id="flash5" class="clip" data-start="10.3" data-duration="0.4" data-track-index="13"
-      style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
 
   </div>
 
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
   <script>
     window.__timelines = window.__timelines || {};
-    var tl = gsap.timeline({ paused: true });
-
-    /* --- SCENE 1: HOOK (0-3s) --- */
-    tl.from("#s1-line1", { opacity: 0, y: 40, duration: 0.5, ease: "power4.out" }, 0.2);
-
-    // Red flash
-    tl.to("#flash1", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 1.4);
-    tl.to("#flash1", { opacity: 0, duration: 0.2, ease: "power2.out" }, 1.5);
-
-    tl.from("#s1-big", { opacity: 0, scale: 0.6, duration: 0.5, ease: "back.out(3)" }, 1.5);
-    tl.from("#s1-pulse", { opacity: 0, y: 30, duration: 0.4, ease: "power4.out" }, 2.1);
-    // Pulse animation on "セッション後"
-    tl.to("#s1-pulse p", { scale: 1.05, duration: 0.3, yoyo: true, repeat: 1, ease: "power1.inOut" }, 2.5);
-
-    // Flash 2
-    tl.to("#flash2", { opacity: 0.6, duration: 0.1, ease: "power4.in" }, 2.9);
-    tl.to("#flash2", { opacity: 0, duration: 0.2, ease: "power2.out" }, 3.0);
-
-    /* --- SCENE 2: Split Comparison (3-6.5s) --- */
-    // Divider grows from center
-    gsap.set("#s2-divider", { scaleY: 0, transformOrigin: "50% 50%" });
-    tl.to("#s2-divider", { scaleY: 1, duration: 0.5, ease: "power4.out" }, 3.1);
-
-    // Left side (losers)
-    tl.from("#s2-left-title", { opacity: 0, x: -100, duration: 0.5, ease: "power4.out" }, 3.3);
-    tl.from("#s2-left-1", { opacity: 0, x: -80, duration: 0.4, ease: "power4.out" }, 3.8);
-    tl.from("#s2-left-2", { opacity: 0, x: -80, duration: 0.4, ease: "power4.out" }, 4.2);
-
-    // Right side (winners)
-    tl.from("#s2-right-title", { opacity: 0, x: 100, duration: 0.5, ease: "power4.out" }, 3.5);
-    tl.from("#s2-right-1", { opacity: 0, x: 80, duration: 0.4, ease: "power4.out" }, 4.0);
-    tl.from("#s2-right-2", { opacity: 0, x: 80, duration: 0.4, ease: "power4.out" }, 4.4);
-
-    // Flash 3
-    tl.to("#flash3", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 6.4);
-    tl.to("#flash3", { opacity: 0, duration: 0.2, ease: "power2.out" }, 6.5);
-
-    /* --- SCENE 3: Key Insight (6.5-9.5s) --- */
-    tl.from("#s3-text", { opacity: 0, scale: 0.85, duration: 0.6, ease: "back.out(2)" }, 6.6);
-    tl.to("#s3-text span", { textShadow: "0 0 40px rgba(201,168,76,0.6), 0 0 80px rgba(201,168,76,0.3)", duration: 0.6, yoyo: true, repeat: 2, ease: "power1.inOut" }, 7.3);
-
-    // Flash 4
-    tl.to("#flash4", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 9.4);
-    tl.to("#flash4", { opacity: 0, duration: 0.2, ease: "power2.out" }, 9.5);
-
-    /* --- SCENE 4: Bridge (9.5-10.5s) --- */
-    tl.from("#s4-text", { opacity: 0, y: 40, duration: 0.5, ease: "power4.out" }, 9.6);
-
-    // Flash 5
-    tl.to("#flash5", { opacity: 0.5, duration: 0.1, ease: "power4.in" }, 10.4);
-    tl.to("#flash5", { opacity: 0, duration: 0.2, ease: "power2.out" }, 10.5);
-
-    /* --- SCENE 5: CTA (10.5-12s) --- */
-    tl.from("#s5-cta p:first-child", { opacity: 0, scale: 0.7, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 10.6);
-    tl.from("#s5-cta p:last-child", { opacity: 0, duration: 0.3 }, 11.1);
+    const tl = gsap.timeline({ paused: true });
+    window.__timelines["v2-reel-09"] = tl;
 
     // Progress bar
-    tl.to("#prog-fill", { width: "100%", duration: 12, ease: "none" }, 0);
+    tl.to("#progress", { width: "100%", duration: 20, ease: "none" }, 0);
 
-    window.__timelines["v2-reel-09"] = tl;
+    // HOOK
+    tl.to("#hook", { opacity: 1, duration: 0.3 }, 0);
+    tl.to("#flash1", { opacity: 0.7, duration: 0.05 }, 0.8);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 0.85);
+    tl.to("#hook-impact", { x: 5, duration: 0.05, yoyo: true, repeat: 5 }, 1.0);
+    tl.to("#hook-impact", { x: 0, duration: 0.05 }, 1.3);
+    tl.to("#hook-sub", { opacity: 1, duration: 0.3 }, 1.8);
+    tl.to("#hook", { opacity: 0, duration: 0.3 }, 3.2);
+
+    // COMPARISON
+    tl.to("#compare", { opacity: 1, duration: 0.3 }, 3.5);
+    tl.to("#lose-detail", { opacity: 1, duration: 0.4 }, 5.5);
+    tl.to("#win-detail", { opacity: 1, duration: 0.4 }, 5.5);
+    tl.to("#compare", { opacity: 0, duration: 0.3 }, 8.2);
+
+    // KEY POINT
+    tl.to("#flash1", { opacity: 0.9, duration: 0.05 }, 8.5);
+    tl.to("#flash1", { opacity: 0, duration: 0.15 }, 8.55);
+    tl.to("#keypoint", { opacity: 1, duration: 0.3 }, 8.5);
+    tl.fromTo("#kp-main", { scale: 1.2 }, { scale: 1, duration: 0.4, ease: "back.out(2)" }, 8.8);
+    tl.to("#keypoint", { opacity: 0, duration: 0.3 }, 11.7);
+
+    // SOLUTION
+    tl.to("#solution", { opacity: 1, duration: 0.3 }, 12);
+    tl.to("#solution", { opacity: 0, duration: 0.3 }, 14.2);
+
+    // BRIDGE
+    tl.to("#bridge", { opacity: 1, duration: 0.3 }, 14.5);
+    tl.fromTo("#bridge-punch", { scale: 1 }, { scale: 1.08, duration: 0.3, yoyo: true, repeat: 1, ease: "sine.inOut" }, 15.0);
+    tl.to("#bridge", { opacity: 0, duration: 0.3 }, 16.2);
+
+    // CTA
+    tl.to("#cta", { opacity: 1, duration: 0.1 }, 16.5);
+    tl.fromTo("#cta-logo", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: "elastic.out(1,0.5)" }, 16.5);
+    tl.to("#cta-tagline", { opacity: 1, duration: 0.5 }, 17.0);
+    tl.to("#cta-link", { opacity: 1, duration: 0.5 }, 18.0);
   </script>
+</div>
 </body>
 </html>
