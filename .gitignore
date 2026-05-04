@@ -55,3 +55,7 @@ postgres-data/
 # Hyperframes rendered output (large MP4 files)
 pokertalk-reels/output/
 pokertalk-reels/.hyperframes/
+pokertalk-reels/*.mp4
+hyperframes-marketing-reels/output/
+hyperframes-marketing-reels/.hyperframes/
+hyperframes-marketing-reels/*.mp4

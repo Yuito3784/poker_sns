@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        font-family: "Noto Sans JP", sans-serif;
+        background: #050508;
+      }
+
+      .bg {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 80% 60% at 50% 35%, #1a1030 0%, #050508 55%);
+      }
+      .vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        box-shadow: inset 0 -120px 160px rgba(0, 0, 0, 0.65);
+      }
+      .noise {
+        position: absolute;
+        inset: 0;
+        opacity: 0.04;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      .clip {
+        position: absolute;
+        opacity: 0;
+      }
+
+      .safe {
+        position: absolute;
+        top: 140px;
+        bottom: 220px;
+        left: 48px;
+        right: 48px;
+      }
+
+      .flash {
+        position: absolute;
+        inset: 0;
+        background: #fff;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 50;
+      }
+      .flash-cyan {
+        background: #22d3ee;
+      }
+
+      .hook-line {
+        color: #fafafa;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        text-shadow: 0 0 40px rgba(99, 102, 241, 0.45);
+      }
+      .accent {
+        color: #a5b4fc;
+      }
+      .hot {
+        color: #fb7185;
+      }
+      .cyan {
+        color: #22d3ee;
+      }
+
+      .lower-third {
+        display: inline-block;
+        padding: 10px 22px;
+        border-radius: 10px;
+        background: rgba(15, 15, 25, 0.82);
+        border: 1px solid rgba(165, 180, 252, 0.35);
+        font-size: 30px;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-bottom: 16px;
+      }
+
+      .model-slot {
+        position: absolute;
+        left: 48px;
+        right: 48px;
+        bottom: 200px;
+        height: 320px;
+        border-radius: 24px;
+        border: 2px dashed rgba(148, 163, 184, 0.35);
+        background: linear-gradient(135deg, rgba(30, 27, 75, 0.5), rgba(15, 23, 42, 0.35));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(226, 232, 240, 0.55);
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .progress-bar {
+        position: absolute;
+        bottom: 88px;
+        left: 48px;
+        right: 48px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 4px;
+        z-index: 40;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #6366f1, #22d3ee);
+      }
+
+      .se-label {
+        position: absolute;
+        top: 72px;
+        right: 48px;
+        font-size: 22px;
+        font-weight: 700;
+        color: rgba(148, 163, 184, 0.85);
+        letter-spacing: 0.12em;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="reel-hyperframes-article"
+      data-start="0"
+      data-duration="30"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="bg"></div>
+      <div class="vignette"></div>
+      <div class="noise"></div>
+
+      <div class="flash" id="flash-a"></div>
+      <div class="flash flash-cyan" id="flash-b"></div>
+
+      <!-- 常時: インスタ用セーフゾーン意識の軽いガイド（視覚ノイズにならない程度） -->
+      <div class="clip se-label" data-start="0" data-duration="30" data-track-index="2" id="se-hint">
+        REEL / 9:16
+      </div>
+
+      <!-- HOOK 0–3s : 強烈な頭3秒 -->
+      <div class="clip" id="scene-hook" data-start="0" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third" id="hook-badge">スクロール止めて3秒だけ</div>
+          <div class="hook-line" style="font-size: 56px; line-height: 1.25; margin-top: 8px" id="hook-l1">
+            まだ指、止めないで。
+          </div>
+          <div style="margin-top: 36px" id="hook-l2">
+            <span class="hot" style="font-size: 120px; font-weight: 900; line-height: 1">2026.4.16</span>
+          </div>
+          <div class="hook-line" style="font-size: 52px; margin-top: 28px; max-width: 920px" id="hook-l3">
+            動画編集の「常識」が、<span class="cyan">今日</span>終わった。
+          </div>
+        </div>
+      </div>
+
+      <!-- 3–6s : 何が起きたか -->
+      <div class="clip" id="scene-what" data-start="3" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third">WHAT</div>
+          <div class="hook-line" style="font-size: 64px; line-height: 1.2">
+            HeyGen が GitHub に置いた<br /><span class="accent" style="font-size: 86px">Hyperframes</span>
+          </div>
+          <div style="margin-top: 36px; color: #cbd5e1; font-size: 36px; font-weight: 700; line-height: 1.55">
+            HTML を書くと、<span class="cyan">そのまま MP4</span> になる。
+          </div>
+        </div>
+      </div>
+
+      <!-- 6–9s : AI×動画の壁 -->
+      <div class="clip" id="scene-why" data-start="6" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third">WHY NOW</div>
+          <div style="color: #e2e8f0; font-size: 40px; font-weight: 700; line-height: 1.45">
+            AE / Premiere は<br />タイムラインが「人間向け」。
+          </div>
+          <div style="margin-top: 32px; color: #94a3b8; font-size: 34px; font-weight: 700; line-height: 1.5">
+            でも LLM の母語は <span class="accent">HTML</span>。<br />だからエージェントが動いた。
+          </div>
+        </div>
+      </div>
+
+      <!-- 9–12s : ワークフロー破壊 -->
+      <div class="clip" id="scene-workflow" data-start="9" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third">WORKFLOW</div>
+          <div class="hook-line" style="font-size: 58px; line-height: 1.25">
+            After Effects を開かない。<br />DaVinci も要らない。
+          </div>
+          <div style="margin-top: 40px; font-size: 44px; font-weight: 900; color: #f8fafc">
+            ターミナルに <span class="cyan">1 行</span> → 動画が出る。
+          </div>
+        </div>
+      </div>
+
+      <!-- 12–15s : Claude Code -->
+      <div class="clip" id="scene-agent" data-start="12" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third">AGENT</div>
+          <div style="font-size: 52px; font-weight: 900; color: #fafafa; line-height: 1.2">
+            <span class="accent">Claude Code</span> × Hyperframes
+          </div>
+          <div style="margin-top: 36px; color: #cbd5e1; font-size: 36px; font-weight: 700; line-height: 1.55">
+            「縦動画、テロップ、カット、BGM」<br />を喋るだけ。裏で HTML が組み上がる。
+          </div>
+        </div>
+      </div>
+
+      <!-- 15–18s : コスト破壊 -->
+      <div class="clip" id="scene-cost" data-start="15" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third">COST</div>
+          <div style="font-size: 44px; font-weight: 800; color: #cbd5e1; line-height: 1.4">
+            外注でモーショングラフィックス<br /><span class="hot">5〜10 万円</span>・納期 2 週間…
+          </div>
+          <div style="margin-top: 40px; font-size: 64px; font-weight: 900; color: #fafafa">
+            → <span class="cyan">ほぼゼロ</span>に近い。<span class="accent">数十分</span>の世界線。
+          </div>
+        </div>
+      </div>
+
+      <!-- 18–21s : 発信者メリット -->
+      <div class="clip" id="scene-creator" data-start="18" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third">CREATOR</div>
+          <div style="font-size: 48px; font-weight: 900; color: #f1f5f9; line-height: 1.3">
+            X / ショート / note / LP の冒頭<br />全部「毎日回せる」側に寄る。
+          </div>
+          <div style="margin-top: 36px; font-size: 36px; font-weight: 700; color: #94a3b8; line-height: 1.5">
+            半年後、差がつくのは<br /><span class="accent">動画も書ける人</span>。
+          </div>
+        </div>
+      </div>
+
+      <!-- 21–24s : 今週の3ステップ -->
+      <div class="clip" id="scene-steps" data-start="21" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third">THIS WEEK</div>
+          <div style="font-size: 46px; font-weight: 900; color: #fafafa; margin-bottom: 28px">
+            今週やることは 3 つだけ
+          </div>
+          <div style="font-size: 34px; font-weight: 700; color: #cbd5e1; line-height: 1.65">
+            ① Node 22+ と FFmpeg を入れる<br />② <span class="cyan">npx skills add heygen-com/hyperframes</span><br />③ <span class="accent">1 本レンダーして公開</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 24–27s : 写真差し込み予定 -->
+      <div class="clip" id="scene-face" data-start="24" data-duration="3" data-track-index="0">
+        <div class="safe">
+          <div class="lower-third">FACE / BRAND</div>
+          <div style="font-size: 44px; font-weight: 900; color: #f8fafc; line-height: 1.35">
+            顔・商品・実績カットはここに。<br /><span style="font-size: 34px; font-weight: 700; color: #94a3b8"
+              >（後から assets に置いて差し替え）</span
+            >
+          </div>
+        </div>
+        <div class="model-slot" id="model-slot">MODEL PHOTO / LOGO</div>
+      </div>
+
+      <!-- 27–30s : CTA -->
+      <div class="clip" id="scene-cta" data-start="27" data-duration="3" data-track-index="0">
+        <div class="safe" style="text-align: center; display: flex; flex-direction: column; align-items: center">
+          <div class="lower-third">CTA</div>
+          <div style="font-size: 56px; font-weight: 900; color: #fafafa; line-height: 1.2; margin-top: 12px">
+            いま触った人が<br /><span class="cyan">一番早い</span>
+          </div>
+          <div style="margin-top: 40px; font-size: 34px; font-weight: 700; color: #94a3b8; line-height: 1.55">
+            記事を読み終わったら<br />ターミナルを開いて、1 本出す。
+          </div>
+          <div style="margin-top: 48px; font-size: 30px; font-weight: 800; color: #64748b; letter-spacing: 0.08em">
+            #Hyperframes #ClaudeCode #HeyGen
+          </div>
+        </div>
+      </div>
+
+      <!-- プログレス（常時） -->
+      <div class="clip" id="progress-clip" data-start="0" data-duration="30" data-track-index="1">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        window.__timelines["reel-hyperframes-article"] = tl;
+
+        tl.to("#progress-fill", { width: "100%", duration: 30, ease: "none" }, 0);
+        tl.to("#progress-clip", { opacity: 1, duration: 0.2 }, 0);
+        tl.to("#se-hint", { opacity: 0.9, duration: 0.35, ease: "power2.out" }, 0.1);
+
+        /* ---- SE 相当: フラッシュ + 短い画面シェイク（0〜3s 集中） ---- */
+        tl.to("#flash-a", { opacity: 0.95, duration: 0.04 }, 0.05);
+        tl.to("#flash-a", { opacity: 0, duration: 0.12 }, 0.09);
+        tl.to("#flash-b", { opacity: 0.35, duration: 0.05 }, 0.22);
+        tl.to("#flash-b", { opacity: 0, duration: 0.14 }, 0.27);
+
+        tl.to("#scene-hook", { opacity: 1, duration: 0.12 }, 0);
+        tl.fromTo("#hook-badge", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 0.05);
+        tl.fromTo(
+          "#hook-l1",
+          { y: 40, opacity: 0, skewX: 6 },
+          { y: 0, opacity: 1, skewX: 0, duration: 0.45, ease: "power4.out" },
+          0.12
+        );
+        tl.fromTo(
+          "#hook-l2",
+          { scale: 1.35, opacity: 0, rotate: -4 },
+          { scale: 1, opacity: 1, rotate: -1, duration: 0.55, ease: "back.out(1.6)" },
+          0.35
+        );
+        tl.fromTo("#hook-l3", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 0.78);
+        tl.to("#scene-hook", { x: 6, duration: 0.04, yoyo: true, repeat: 5, ease: "none" }, 1.55);
+        tl.to("#scene-hook", { x: 0, duration: 0.06 }, 2.05);
+        tl.to("#flash-a", { opacity: 0.75, duration: 0.05 }, 2.45);
+        tl.to("#flash-a", { opacity: 0, duration: 0.12 }, 2.5);
+        tl.to("#scene-hook", { opacity: 0, duration: 0.22 }, 2.78);
+        tl.set("#scene-hook", { opacity: 0, x: 0 }, 3);
+
+        /* 3–6 */
+        tl.to("#scene-what", { opacity: 1, duration: 0.18 }, 3);
+        tl.fromTo("#scene-what .safe", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 3.05);
+        tl.to("#scene-what", { opacity: 0, duration: 0.2 }, 5.78);
+        tl.set("#scene-what", { opacity: 0 }, 6);
+
+        /* 6–9 */
+        tl.to("#scene-why", { opacity: 1, duration: 0.18 }, 6);
+        tl.fromTo("#scene-why .safe", { scale: 0.96, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" }, 6.05);
+        tl.to("#flash-b", { opacity: 0.2, duration: 0.04 }, 7.85);
+        tl.to("#flash-b", { opacity: 0, duration: 0.1 }, 7.89);
+        tl.to("#scene-why", { opacity: 0, duration: 0.2 }, 8.78);
+        tl.set("#scene-why", { opacity: 0 }, 9);
+
+        /* 9–12 */
+        tl.to("#scene-workflow", { opacity: 1, duration: 0.18 }, 9);
+        tl.fromTo(
+          "#scene-workflow .safe",
+          { x: -40, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+          9.05
+        );
+        tl.to("#scene-workflow", { opacity: 0, duration: 0.2 }, 11.78);
+        tl.set("#scene-workflow", { opacity: 0 }, 12);
+
+        /* 12–15 */
+        tl.to("#scene-agent", { opacity: 1, duration: 0.18 }, 12);
+        tl.fromTo(
+          "#scene-agent .safe",
+          { y: -30, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+          12.05
+        );
+        tl.to("#scene-agent", { opacity: 0, duration: 0.2 }, 14.78);
+        tl.set("#scene-agent", { opacity: 0 }, 15);
+
+        /* 15–18 */
+        tl.to("#scene-cost", { opacity: 1, duration: 0.18 }, 15);
+        tl.fromTo(
+          "#scene-cost .safe",
+          { scale: 1.06, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.45, ease: "power2.out" },
+          15.05
+        );
+        tl.to("#flash-a", { opacity: 0.5, duration: 0.05 }, 16.55);
+        tl.to("#flash-a", { opacity: 0, duration: 0.12 }, 16.6);
+        tl.to("#scene-cost", { opacity: 0, duration: 0.2 }, 17.78);
+        tl.set("#scene-cost", { opacity: 0 }, 18);
+
+        /* 18–21 */
+        tl.to("#scene-creator", { opacity: 1, duration: 0.18 }, 18);
+        tl.fromTo(
+          "#scene-creator .safe",
+          { y: 24, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.42, ease: "power3.out" },
+          18.05
+        );
+        tl.to("#scene-creator", { opacity: 0, duration: 0.2 }, 20.78);
+        tl.set("#scene-creator", { opacity: 0 }, 21);
+
+        /* 21–24 */
+        tl.to("#scene-steps", { opacity: 1, duration: 0.18 }, 21);
+        tl.fromTo(
+          "#scene-steps .safe",
+          { y: 20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.42, ease: "power2.out" },
+          21.05
+        );
+        tl.to("#scene-steps", { opacity: 0, duration: 0.2 }, 23.78);
+        tl.set("#scene-steps", { opacity: 0 }, 24);
+
+        /* 24–27 */
+        tl.to("#scene-face", { opacity: 1, duration: 0.18 }, 24);
+        tl.fromTo("#model-slot", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 24.1);
+        tl.to("#scene-face", { opacity: 0, duration: 0.2 }, 26.78);
+        tl.set("#scene-face", { opacity: 0 }, 27);
+
+        /* 27–30 */
+        tl.to("#scene-cta", { opacity: 1, duration: 0.18 }, 27);
+        tl.fromTo(
+          "#scene-cta .safe",
+          { scale: 0.92, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.4)" },
+          27.05
+        );
+        tl.to("#flash-b", { opacity: 0.25, duration: 0.05 }, 29.35);
+        tl.to("#flash-b", { opacity: 0, duration: 0.12, ease: "none" }, 29.41);
+      </script>
+    </div>
+  </body>
+</html>
