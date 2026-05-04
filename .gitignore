@@ -56,7 +56,3 @@ postgres-data/
 pokertalk-reels/output/
 pokertalk-reels/.hyperframes/
 pokertalk-reels/*.mp4
-hyperframes-marketing-reels/output/
-hyperframes-marketing-reels/.hyperframes/
-hyperframes-marketing-reels/*.mp4
-hyperframes-marketing-reels/compositions/_generated_from_prompt.html
