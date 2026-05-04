@@ -1,5 +1,10 @@
 # 音声・画像素材（Git 管理方針）
 
+## インフルエンサー／広告塔（静止画）
+
+- `influencer.png` — 24〜27 秒の **HOST / PR** カットで使用（`compositions/reel-hyperframes-article.html`）。差し替え時は同ファイル名で上書きするか、HTML の `src` を変更。
+- 台本・ナレーション案は `scripts/reel-influencer-tower-script.md`。
+
 ## BGM（背景音楽）
 
 著作権フリーのトラックを `bgm.mp3` としてこのフォルダに置き、`index.html` に `<audio class="clip" ... src="assets/bgm.mp3">` を追加してください。長さは本リールは **30 秒** 想定です（ループやフェードは編集ソフトまたは Hyperframes の `data-volume` で調整）。
